@@ -10,11 +10,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@babylonjs/core": "^8.22.2",
+    "@babylonjs/gui": "^8.22.2",
+    "@tailwindcss/vite": "^4.1.11",
+    "@tanstack/react-query": "^5.84.2",
+    "@tanstack/react-query-devtools": "^5.84.2",
+    "@tanstack/react-router": "^1.131.3",
+    "@tanstack/react-router-devtools": "^1.131.3",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-babylonjs": "^3.2.2",
+    "react-dom": "^19.1.1",
+    "react-use-websocket": "^4.13.0",
+    "tailwindcss": "^4.1.11",
+    "zod": "^4.0.17"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@tanstack/eslint-plugin-query": "^5.83.1",
+    "@tanstack/router-plugin": "^1.131.3",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^4.7.0",
