@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useGameData, type Game, type Seek } from '../../gameData';
 import { useRatings } from '../../api/ratings';
 import { useMemo } from 'react';
@@ -18,6 +18,7 @@ function getDefaultPieces(
 
 function RouteComponent() {
   const { seeks, games } = useGameData();
+  const spectateRoute = useNavigate();
 
   const tagClass = 'rounded-full bg-surface-600 px-2';
 
@@ -40,6 +41,13 @@ function RouteComponent() {
   const ratingByName = Object.fromEntries(
     ratings.data.flatMap((data) => (data ? [[data.name, data.rating]] : [])),
   );
+
+  const onClickSpectate = (gameId: number) => {
+    spectateRoute({
+      to: '/spectate/$gameId',
+      params: { gameId: gameId.toString() },
+    });
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-2 w-full max-w-4xl mx-auto p-2">
@@ -109,7 +117,10 @@ function RouteComponent() {
                 )}
               </div>
             </div>
-            <button className="bg-primary-500 text-primary-text px-4 p-2 rounded-md h-10 min-w-16 hover:bg-primary-550 active:bg-primary-600">
+            <button
+              className="bg-primary-500 text-primary-text px-4 p-2 rounded-md h-10 min-w-16 hover:bg-primary-550 active:bg-primary-600"
+              onClick={() => onClickSpectate(game.id)}
+            >
               Spectate
             </button>
           </div>

@@ -1,5 +1,5 @@
 import { Color3, Mesh, Vector3, type Nullable } from '@babylonjs/core';
-import { useRef, useState, type FC } from 'react';
+import { useEffect, useRef, useState, type FC } from 'react';
 import {
   Engine,
   Scene,
@@ -61,12 +61,40 @@ const MovingBox: FC<MovingBoxProps> = (props) => {
 };
 
 export const BabylonApp: FC = () => {
+  const canvasContainer = useRef<HTMLDivElement | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 1, height: 2 });
+
+  function handleResize() {
+    const boundingRect = canvasContainer.current?.getBoundingClientRect();
+    const { width, height } = boundingRect || { width: 0, height: 0 };
+    console.log('resize', width, height);
+    setDimensions({ width: Math.round(width), height: Math.round(height) });
+  }
+
+  useEffect(() => {
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    handleResize();
+  }, [canvasContainer]);
+
   return (
-    <div style={{ flex: 1, display: 'flex' }}>
+    <div className="w-dvw grow" ref={canvasContainer}>
       <Engine
         antialias
-        adaptToDeviceRatio
         canvasId="babylon-js"
+        width={dimensions.width}
+        height={dimensions.height}
+        style={{
+          width: dimensions.width,
+          height: dimensions.height,
+        }}
+        adaptToDeviceRatio={false}
         renderOptions={{
           whenVisibleOnly: true,
         }}
@@ -78,8 +106,11 @@ export const BabylonApp: FC = () => {
             beta={Math.PI / 4}
             radius={10}
             target={new Vector3(0, 1, 0)}
+            lockedTarget={new Vector3(0, 1, 0)}
             allowUpsideDown={false}
             upperBetaLimit={Math.PI / 2 - 0.01}
+            lowerRadiusLimit={5}
+            upperRadiusLimit={100}
           />
           <hemisphericLight
             name="light1"

@@ -1,6 +1,5 @@
 import useWebSocket from 'react-use-websocket';
-import { WS_URL } from './auth';
-import { wsOptions } from './websocket';
+import { WS_URL, wsOptions } from './websocket';
 import { useSeeks } from './api/seeks';
 import { createContext, useContext, useEffect, useState } from 'react';
 

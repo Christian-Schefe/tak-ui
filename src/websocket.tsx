@@ -10,3 +10,16 @@ export const wsOptions = {
   },
   protocols: ['binary'],
 };
+
+export const WS_URL = 'wss://playtak.com/ws';
+
+export async function msgToString(
+  msg: MessageEvent<any>,
+): Promise<string | null> {
+  try {
+    const text = await (msg.data as Blob).text();
+    return text;
+  } catch (error) {
+    return null;
+  }
+}

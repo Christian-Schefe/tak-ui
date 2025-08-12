@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 import useWebSocket from 'react-use-websocket';
-import { wsOptions } from './websocket';
+import { WS_URL, wsOptions } from './websocket';
 import { router } from './router';
 
 interface User {
@@ -21,8 +21,6 @@ export interface AuthState {
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
-
-export const WS_URL = 'wss://playtak.com/ws';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
