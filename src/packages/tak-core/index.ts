@@ -60,6 +60,12 @@ export type Game = {
   history: MoveRecord[];
 };
 
+export type GameSettings = {
+  boardSize: number;
+  komi: number;
+  reserve: Reserve;
+};
+
 export function playerOpposite(player: Player): Player {
   return player === 'white' ? 'black' : 'white';
 }

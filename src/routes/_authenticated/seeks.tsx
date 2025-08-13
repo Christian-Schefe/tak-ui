@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useGameData, type Game, type Seek } from '../../gameData';
+import { useGameData, type GameEntry, type SeekEntry } from '../../gameData';
 import { useRatings } from '../../api/ratings';
 import { useMemo } from 'react';
+import { useSharedWebSocket } from '../../websocket';
 
 export const Route = createFileRoute('/_authenticated/seeks')({
   component: RouteComponent,
@@ -18,11 +19,12 @@ function getDefaultPieces(
 
 function RouteComponent() {
   const { seeks, games } = useGameData();
-  const spectateRoute = useNavigate();
+  const nav = useNavigate();
+  const { sendMessage } = useSharedWebSocket();
 
   const tagClass = 'rounded-full bg-surface-600 px-2';
 
-  function hasDefaultPieceCount(seekOrGame: Seek | Game) {
+  function hasDefaultPieceCount(seekOrGame: SeekEntry | GameEntry) {
     const defaultPieces = getDefaultPieces(seekOrGame.boardSize);
     return (
       defaultPieces &&
@@ -43,10 +45,15 @@ function RouteComponent() {
   );
 
   const onClickSpectate = (gameId: number) => {
-    spectateRoute({
+    nav({
       to: '/spectate/$gameId',
       params: { gameId: gameId.toString() },
     });
+  };
+
+  const onClickJoin = (seekId: number) => {
+    sendMessage(`Accept ${seekId}`);
+    nav({ to: '/play' });
   };
 
   return (
@@ -80,7 +87,10 @@ function RouteComponent() {
                 )}
               </div>
             </div>
-            <button className="bg-primary-500 text-primary-text px-4 p-2 rounded-md h-10 min-w-16 hover:bg-primary-550 active:bg-primary-600">
+            <button
+              className="bg-primary-500 text-primary-text px-4 p-2 rounded-md h-10 min-w-16 hover:bg-primary-550 active:bg-primary-600"
+              onClick={() => onClickJoin(seek.id)}
+            >
               Join
             </button>
           </div>

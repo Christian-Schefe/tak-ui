@@ -28,17 +28,17 @@ export function useRatings(playerNames: string[]) {
       queryKey: ['ratings', playerName],
       staleTime: 1000 * 60 * 5,
       queryFn: async () => {
-        const res = await fetch(`${API_BASE_URL}/v1/ratings/${playerName}`);
-        if (!res.ok)
-          return {
-            name: playerName,
-            rating: 1000,
-            maxrating: 0,
-            ratedgames: 0,
-            isbot: false,
-            participation_rating: 0,
-          };
-        return RatingSchema.parse(await res.json());
+        //const res = await fetch(`${API_BASE_URL}/v1/ratings/${playerName}`);
+        //if (!res.ok)
+        return {
+          name: playerName,
+          rating: 1000,
+          maxrating: 0,
+          ratedgames: 0,
+          isbot: false,
+          participation_rating: 0,
+        };
+        //return RatingSchema.parse(await res.json());
       },
     })),
     combine: (results) => {

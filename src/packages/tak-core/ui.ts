@@ -30,6 +30,7 @@ export type GameUI = {
     dir: Direction | null;
   } | null;
   onUpdate?: () => void;
+  onMove?: (player: Player, move: Move) => void;
 };
 
 export function boardSize(ui: GameUI): number {
@@ -66,12 +67,15 @@ export function canDoMove(ui: GameUI, move: Move): boolean {
   return true;
 }
 
-export function doMove(ui: GameUI, move: Move) {
-  console.log(move);
+export function doMove(ui: GameUI, move: Move, triggerMove: boolean) {
+  const player = ui.actualGame.currentPlayer;
   game.doMove(ui.actualGame, move);
   ui.shownGame = JSON.parse(JSON.stringify(ui.actualGame));
   ui.partialMove = null;
   onGameUpdate(ui);
+  if (triggerMove) {
+    ui.onMove?.(player, move);
+  }
 }
 
 function doPartialMove(ui: GameUI, move: Move) {
@@ -91,7 +95,7 @@ export function tryPlaceOrAddToPartialMove(
     variant,
   };
   if (!ui.partialMove && canDoMove(ui, move)) {
-    doMove(ui, move);
+    doMove(ui, move, true);
   } else {
     addToPartialMove(ui, pos);
   }
@@ -116,7 +120,7 @@ export function addToPartialMove(ui: GameUI, pos: Coord) {
     };
 
     if (floatingCount === 0) {
-      doMove(ui, move);
+      doMove(ui, move, true);
     } else {
       doPartialMove(ui, move);
     }

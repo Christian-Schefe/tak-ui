@@ -4,11 +4,11 @@ import { useSeeks } from './api/seeks';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 export interface GameDataState {
-  seeks: Seek[];
-  games: Game[];
+  seeks: SeekEntry[];
+  games: GameEntry[];
 }
 
-export type Seek = {
+export type SeekEntry = {
   id: number;
   creator: string;
   timeContingent: number;
@@ -29,7 +29,7 @@ export type Seek = {
     | undefined;
 };
 
-export type Game = {
+export type GameEntry = {
   id: number;
   white: string;
   black: string;
@@ -56,8 +56,8 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
 
   let { data: freshSeeks } = useSeeks();
 
-  let [seeks, setSeeks] = useState<Seek[]>([]);
-  let [games, setGames] = useState<Game[]>([]);
+  let [seeks, setSeeks] = useState<SeekEntry[]>([]);
+  let [games, setGames] = useState<GameEntry[]>([]);
 
   const seekAddRegex =
     /^Seek new (\d+) ([A-Za-z0-9_]+) (\d+) (\d+) (\d+) ([WBA]) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+) ([A-Za-z0-9_]*)/;
@@ -67,7 +67,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     /^GameList Add (\d+) ([A-Za-z0-9_]+) ([A-Za-z0-9_]+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+)/;
   const gameRemoveRegex = /^GameList Remove (\d+)/;
 
-  function parseAddSeekMessage(message: string): Seek | null {
+  function parseAddSeekMessage(message: string): SeekEntry | null {
     let matches = message.match(seekAddRegex);
     if (!matches) return null;
 
@@ -104,7 +104,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     return parseInt(matches[1]);
   }
 
-  function parseGameAddMessage(message: string): Game | null {
+  function parseGameAddMessage(message: string): GameEntry | null {
     let matches = message.match(gameAddRegex);
     if (!matches) return null;
 
@@ -147,23 +147,31 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
             setSeeks((prev) =>
               prev.find((s) => s.id === newSeek.id) ? prev : [...prev, newSeek],
             );
+          } else {
+            console.error('Failed to add seek:', text);
           }
         } else if (text.startsWith('Seek remove')) {
           const removedSeek = parseRemoveSeekMessage(text);
           if (removedSeek) {
             setSeeks((prev) => prev.filter((s) => s.id !== removedSeek));
+          } else {
+            console.error('Failed to remove seek:', text);
           }
-        } else if (text.startsWith('GameList')) {
+        } else if (text.startsWith('GameList Add')) {
           const newGame = parseGameAddMessage(text);
           if (newGame) {
             setGames((prev) =>
               prev.find((g) => g.id === newGame.id) ? prev : [...prev, newGame],
             );
+          } else {
+            console.error('Failed to add game:', text);
           }
         } else if (text.startsWith('GameList Remove')) {
           const removedGame = parseRemoveGameMessage(text);
           if (removedGame) {
             setGames((prev) => prev.filter((g) => g.id !== removedGame));
+          } else {
+            console.error('Failed to remove game:', text);
           }
         }
       })();

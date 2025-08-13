@@ -1,3 +1,5 @@
+import useWebSocket from 'react-use-websocket';
+
 export const wsOptions = {
   onOpen: () => console.log('opened'),
   //Will attempt to reconnect on all close events, such as server shutting down
@@ -22,4 +24,8 @@ export async function msgToString(
   } catch (error) {
     return null;
   }
+}
+
+export function useSharedWebSocket() {
+  return useWebSocket(WS_URL, wsOptions);
 }

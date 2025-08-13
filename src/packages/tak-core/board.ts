@@ -22,7 +22,8 @@ export function newBoard(size: number): Board {
 }
 
 export function canPlacePiece(board: Board, pos: Coord): string | null {
-  if (!isValidCoord(board.size, pos)) return 'Invalid position';
+  if (!isValidCoord(board.size, pos))
+    return 'Invalid place position: ' + coordToString(pos);
 
   const stack = board.pieces[pos.y][pos.x];
   return !stack ? null : 'Position is already occupied';
@@ -67,9 +68,11 @@ export function canMovePiece(
   drops: number[],
   player: Player,
 ): string | null {
-  if (!isValidCoord(board.size, from)) return 'Invalid position';
+  if (!isValidCoord(board.size, from))
+    return 'Invalid move start position: ' + coordToString(from);
   const to = offsetCoord(from, dir, drops.length);
-  if (!isValidCoord(board.size, to)) return 'Invalid position';
+  if (!isValidCoord(board.size, to))
+    return 'Invalid move end position: ' + coordToString(to);
   const take = drops.reduce((acc, drop) => acc + drop, 0);
   if (drops.length == 0 || take == 0) return 'Invalid move';
 
@@ -156,11 +159,20 @@ export function findRoads(board: Board, player: Player): Coord[] | null {
   function findRoadsHelper(starts: Coord[], ends: Coord[]): Coord[] | null {
     const visited = new Set<string>();
     const prev = new Map<string, Coord | null>();
-    const queue: Coord[] = [...starts];
+    const queue: Coord[] = [];
     for (const start of starts) {
-      const key = coordToString(start);
-      visited.add(key);
-      prev.set(key, null);
+      const stack = board.pieces[start.y][start.x];
+      if (
+        stack &&
+        stack.composition.length > 0 &&
+        stack.composition[stack.composition.length - 1].player === player &&
+        stack.variant !== 'standing'
+      ) {
+        const key = coordToString(start);
+        visited.add(key);
+        prev.set(key, null);
+        queue.push(start);
+      }
     }
 
     while (queue.length > 0) {

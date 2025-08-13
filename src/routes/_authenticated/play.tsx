@@ -2,18 +2,18 @@ import { createFileRoute, Navigate } from '@tanstack/react-router';
 import { ObservedGame } from '../../components/ObservedGame';
 import { useGameData } from '../../gameData';
 import type { GameSettings } from '../../packages/tak-core';
-import { useMemo } from 'react';
+import { useAuth } from '../../auth';
 
-export const Route = createFileRoute('/_authenticated/spectate/$gameId')({
+export const Route = createFileRoute('/_authenticated/play')({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { gameId } = Route.useParams();
   const gameData = useGameData();
-  const gameEntry = useMemo(
-    () => gameData.games.find((g) => g.id.toString() === gameId),
-    [gameData.games, gameId],
+  const auth = useAuth();
+  const username = auth.user!.username;
+  const gameEntry = gameData.games.find(
+    (g) => g.white === username || g.black === username,
   );
   if (!gameEntry) {
     return <Navigate to="/seeks" />;
@@ -27,6 +27,10 @@ function RouteComponent() {
     },
   };
   return (
-    <ObservedGame gameId={gameId} settings={settings} interactive={false} />
+    <ObservedGame
+      gameId={gameEntry.id.toString()}
+      settings={settings}
+      interactive={true}
+    />
   );
 }

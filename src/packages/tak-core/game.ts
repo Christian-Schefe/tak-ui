@@ -1,4 +1,10 @@
-import { playerOpposite, type Game, type Move, type MoveRecord } from '.';
+import {
+  playerOpposite,
+  type Game,
+  type GameSettings,
+  type Move,
+  type MoveRecord,
+} from '.';
 import {
   canMovePiece,
   canPlacePiece,
@@ -9,18 +15,17 @@ import {
   newBoard,
   placePiece,
 } from './board';
-import { defaultReserve } from './piece';
 
-export function newGame(size: number, komi: number): Game {
-  const board = newBoard(size);
+export function newGame(settings: GameSettings): Game {
+  const board = newBoard(settings.boardSize);
   return {
     board,
-    komi,
+    komi: settings.komi,
     currentPlayer: 'white',
     history: [],
     reserves: {
-      white: defaultReserve(size),
-      black: defaultReserve(size),
+      white: structuredClone(settings.reserve),
+      black: structuredClone(settings.reserve),
     },
     gameState: { type: 'ongoing' },
   };
@@ -52,6 +57,13 @@ export function canDoMove(game: Game, move: Move): string | null {
       game.currentPlayer,
     );
   }
+}
+
+function isReserveEmpty(game: Game) {
+  return (
+    (game.reserves.white.pieces === 0 && game.reserves.white.capstones === 0) ||
+    (game.reserves.black.pieces === 0 && game.reserves.black.capstones === 0)
+  );
 }
 
 export function doMove(game: Game, move: Move) {
@@ -97,7 +109,8 @@ export function doMove(game: Game, move: Move) {
       player,
       reason: 'road',
     };
-  } else if (isFilled(game.board)) {
+    console.log('Road: ', road);
+  } else if (isReserveEmpty(game) || isFilled(game.board)) {
     const flatCounts = countFlats(game.board);
     const whiteScore = flatCounts.white;
     const blackScore = flatCounts.black + game.komi;

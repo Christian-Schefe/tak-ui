@@ -18,6 +18,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         <Link to="/" className="[&.active]:font-bold">
           Home
         </Link>
+        <Link to="/play" className="[&.active]:font-bold">
+          Play
+        </Link>
         <Link to="/seeks" className="[&.active]:font-bold">
           Seeks
         </Link>

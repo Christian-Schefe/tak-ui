@@ -38,17 +38,17 @@ export function dirToString(dir: Direction) {
   }
 }
 
-export function dirFromAdjacent(a: Coord, b: Coord): Direction | null {
-  if (a.x === b.x && a.y === b.y + 1) return 'up';
-  if (a.x === b.x && a.y === b.y - 1) return 'down';
-  if (a.y === b.y && a.x === b.x + 1) return 'right';
-  if (a.y === b.y && a.x === b.x - 1) return 'left';
+export function dirFromAdjacent(to: Coord, from: Coord): Direction | null {
+  if (to.x === from.x && to.y === from.y + 1) return 'up';
+  if (to.x === from.x && to.y === from.y - 1) return 'down';
+  if (to.y === from.y && to.x === from.x + 1) return 'right';
+  if (to.y === from.y && to.x === from.x - 1) return 'left';
   return null;
 }
-export function dirFromAligned(a: Coord, b: Coord): Direction | null {
-  if (a.x === b.x && a.y > b.y) return 'up';
-  if (a.x === b.x && a.y < b.y) return 'down';
-  if (a.y === b.y && a.x > b.x) return 'right';
-  if (a.y === b.y && a.x < b.x) return 'left';
+export function dirFromAligned(to: Coord, from: Coord): Direction | null {
+  if (to.x === from.x && to.y > from.y) return 'up';
+  if (to.x === from.x && to.y < from.y) return 'down';
+  if (to.y === from.y && to.x > from.x) return 'right';
+  if (to.y === from.y && to.x < from.x) return 'left';
   return null;
 }

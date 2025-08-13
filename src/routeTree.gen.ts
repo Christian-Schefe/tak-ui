@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSeeksRouteImport } from './routes/_authenticated/seeks'
+import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/play'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedSpectateGameIdRouteImport } from './routes/_authenticated/spectate.$gameId'
 
@@ -35,6 +36,11 @@ const AuthenticatedSeeksRoute = AuthenticatedSeeksRouteImport.update({
   path: '/seeks',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPlayRoute = AuthenticatedPlayRouteImport.update({
+  id: '/play',
+  path: '/play',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/play': typeof AuthenticatedPlayRoute
   '/seeks': typeof AuthenticatedSeeksRoute
   '/spectate/$gameId': typeof AuthenticatedSpectateGameIdRoute
 }
@@ -58,6 +65,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/play': typeof AuthenticatedPlayRoute
   '/seeks': typeof AuthenticatedSeeksRoute
   '/spectate/$gameId': typeof AuthenticatedSpectateGameIdRoute
 }
@@ -67,20 +75,28 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/play': typeof AuthenticatedPlayRoute
   '/_authenticated/seeks': typeof AuthenticatedSeeksRoute
   '/_authenticated/spectate/$gameId': typeof AuthenticatedSpectateGameIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/account' | '/seeks' | '/spectate/$gameId'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/account'
+    | '/play'
+    | '/seeks'
+    | '/spectate/$gameId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/account' | '/seeks' | '/spectate/$gameId'
+  to: '/' | '/login' | '/account' | '/play' | '/seeks' | '/spectate/$gameId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/login'
     | '/_authenticated/account'
+    | '/_authenticated/play'
     | '/_authenticated/seeks'
     | '/_authenticated/spectate/$gameId'
   fileRoutesById: FileRoutesById
@@ -121,6 +137,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSeeksRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/play': {
+      id: '/_authenticated/play'
+      path: '/play'
+      fullPath: '/play'
+      preLoaderRoute: typeof AuthenticatedPlayRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/account': {
       id: '/_authenticated/account'
       path: '/account'
@@ -140,12 +163,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedPlayRoute: typeof AuthenticatedPlayRoute
   AuthenticatedSeeksRoute: typeof AuthenticatedSeeksRoute
   AuthenticatedSpectateGameIdRoute: typeof AuthenticatedSpectateGameIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedPlayRoute: AuthenticatedPlayRoute,
   AuthenticatedSeeksRoute: AuthenticatedSeeksRoute,
   AuthenticatedSpectateGameIdRoute: AuthenticatedSpectateGameIdRoute,
 }
