@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useGameData, type GameEntry, type SeekEntry } from '../../gameData';
+import { useGameData, type GameListEntry, type SeekEntry } from '../../gameData';
 import { useRatings } from '../../api/ratings';
 import { useMemo } from 'react';
 import { useSharedWebSocket } from '../../websocket';
@@ -24,7 +24,7 @@ function RouteComponent() {
 
   const tagClass = 'rounded-full bg-surface-600 px-2';
 
-  function hasDefaultPieceCount(seekOrGame: SeekEntry | GameEntry) {
+  function hasDefaultPieceCount(seekOrGame: SeekEntry | GameListEntry) {
     const defaultPieces = getDefaultPieces(seekOrGame.boardSize);
     return (
       defaultPieces &&

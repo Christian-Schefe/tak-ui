@@ -1,12 +1,13 @@
-import useWebSocket from 'react-use-websocket';
+import useWebSocket, { type Options } from 'react-use-websocket';
 
-export const wsOptions = {
+export const wsOptions: Options = {
   onOpen: () => console.log('opened'),
+  onClose: (ev) => console.log('closed: ', ev),
   //Will attempt to reconnect on all close events, such as server shutting down
   shouldReconnect: () => true,
   share: true,
   heartbeat: {
-    interval: 30000,
+    interval: 10000,
     message: 'PING',
     returnMessage: 'OK',
   },

@@ -15,11 +15,11 @@ export type UITile = {
   owner: Player | null;
   highlighted: boolean;
   selectable: boolean;
+  hoverable: boolean;
   lastMove: boolean;
 };
 
 export type GameUI = {
-  shownGame: Game;
   actualGame: Game;
   pieces: Map<number, UIPiece>;
   tiles: UITile[][];
@@ -44,19 +44,22 @@ export function newGameUI(game: Game): GameUI {
       owner: null,
       highlighted: false,
       selectable: false,
+      hoverable: false,
       lastMove: false,
     })),
   );
 
   const pieces = new Map<number, UIPiece>();
 
-  return {
+  const gameUI = {
     shownGame: game,
     actualGame: game,
     pieces,
     tiles,
     partialMove: null,
   };
+  onGameUpdate(gameUI);
+  return gameUI;
 }
 
 export function canDoMove(ui: GameUI, move: Move): boolean {
@@ -70,18 +73,11 @@ export function canDoMove(ui: GameUI, move: Move): boolean {
 export function doMove(ui: GameUI, move: Move, triggerMove: boolean) {
   const player = ui.actualGame.currentPlayer;
   game.doMove(ui.actualGame, move);
-  ui.shownGame = JSON.parse(JSON.stringify(ui.actualGame));
   ui.partialMove = null;
   onGameUpdate(ui);
   if (triggerMove) {
     ui.onMove?.(player, move);
   }
-}
-
-function doPartialMove(ui: GameUI, move: Move) {
-  ui.shownGame = JSON.parse(JSON.stringify(ui.actualGame));
-  game.doMove(ui.shownGame, move);
-  onGameUpdate(ui);
 }
 
 export function tryPlaceOrAddToPartialMove(
@@ -101,36 +97,45 @@ export function tryPlaceOrAddToPartialMove(
   }
 }
 
+function partialMoveToMove(
+  partialMove: GameUI['partialMove'],
+): { move: Move; complete: boolean } | null {
+  if (partialMove && partialMove.dir) {
+    const drops = partialMove.drops;
+    const floatingCount =
+      partialMove.take - drops.reduce((acc, drop) => acc + drop, 0);
+
+    return {
+      move: {
+        from: partialMove.pos,
+        type: 'move',
+        dir: partialMove.dir,
+        drops: drops.map((x, i) =>
+          i === drops.length - 1 ? x + floatingCount : x,
+        ),
+      },
+      complete: floatingCount === 0,
+    };
+  }
+  return null;
+}
+
 export function addToPartialMove(ui: GameUI, pos: Coord) {
   addToPartialMoveHelper(ui, pos);
-  ui.shownGame = JSON.parse(JSON.stringify(ui.actualGame));
+  const partialMove = partialMoveToMove(ui.partialMove);
 
-  if (ui.partialMove && ui.partialMove.dir) {
-    const drops = ui.partialMove.drops;
-    const floatingCount =
-      ui.partialMove.take - drops.reduce((acc, drop) => acc + drop, 0);
-
-    const move: Move = {
-      type: 'move',
-      dir: ui.partialMove.dir,
-      drops: drops.map((x, i) =>
-        i === drops.length - 1 ? x + floatingCount : x,
-      ),
-      from: ui.partialMove.pos,
-    };
-
-    if (floatingCount === 0) {
-      doMove(ui, move, true);
-    } else {
-      doPartialMove(ui, move);
-    }
-  } else {
-    onGameUpdate(ui);
+  if (partialMove && partialMove.complete) {
+    doMove(ui, partialMove.move, true);
+    return;
   }
+  onGameUpdate(ui);
 }
 
 function addToPartialMoveHelper(ui: GameUI, pos: Coord) {
-  if (ui.actualGame.gameState.type !== 'ongoing') {
+  if (
+    ui.actualGame.gameState.type !== 'ongoing' ||
+    ui.actualGame.history.length < 2
+  ) {
     ui.partialMove = null;
     return;
   }
@@ -206,6 +211,12 @@ function addToPartialMoveHelper(ui: GameUI, pos: Coord) {
 }
 
 function onGameUpdate(ui: GameUI) {
+  const shownGame = structuredClone(ui.actualGame);
+  const partialMove = partialMoveToMove(ui.partialMove);
+  if (partialMove) {
+    game.doMove(shownGame, partialMove.move);
+  }
+
   const floatingData = ui.partialMove && {
     pos: ui.partialMove.dir
       ? offsetCoord(
@@ -233,12 +244,11 @@ function onGameUpdate(ui: GameUI) {
     for (const dir of clickOptionDirs) {
       const newPos = offsetCoord(dropPos, dir, 1);
       if (!isValidCoord(size, newPos)) continue;
-      const stack = ui.shownGame.board.pieces[newPos.y][newPos.x];
+      const stack = shownGame.board.pieces[newPos.y][newPos.x];
       if (!stack || stack.variant === 'flat') {
         clickOptions.push(newPos);
       } else if (stack.variant === 'standing' && floatingCount === 1) {
-        const thisStack =
-          ui.shownGame.board.pieces[ui.partialMove.pos.y][ui.partialMove.pos.x];
+        const thisStack = shownGame.board.pieces[dropPos.y][dropPos.x];
         if (thisStack && thisStack.variant === 'capstone') {
           clickOptions.push(newPos);
         }
@@ -248,8 +258,10 @@ function onGameUpdate(ui: GameUI) {
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const stack = ui.shownGame.board.pieces[y][x];
+      const stack = shownGame.board.pieces[y][x];
       const pos = { x, y };
+      const selectable = clickOptions.some((coord) => coordEquals(coord, pos));
+      let hoverable = ui.partialMove === null;
       if (stack) {
         const floatingHeightThreshold =
           floatingData && coordEquals(pos, floatingData.pos)
@@ -267,12 +279,17 @@ function onGameUpdate(ui: GameUI) {
               height >= floatingHeightThreshold,
           });
         }
+        hoverable &&=
+          ui.actualGame.history.length >= 2 &&
+          stack.composition[stack.composition.length - 1].player ===
+            ui.actualGame.currentPlayer;
       }
 
       ui.tiles[y][x] = {
         owner: stack?.composition[0].player ?? null,
         highlighted: false,
-        selectable: clickOptions.some((coord) => coordEquals(coord, pos)),
+        selectable,
+        hoverable: hoverable || selectable,
         lastMove: false,
       };
     }

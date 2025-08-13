@@ -86,7 +86,8 @@ export function canMovePiece(
   for (let i = 0; i < drops.length; i++) {
     const pos = offsetCoord(from, dir, i + 1);
     const stack = board.pieces[pos.y][pos.x];
-    const canSmash = variant === 'capstone' && i === take - 1 && drops[i] === 1;
+    const canSmash =
+      variant === 'capstone' && i === drops.length - 1 && drops[i] === 1;
     if (stack && stack.variant === 'capstone')
       return 'Cannot move onto capstone';
     if (stack && stack.variant === 'standing' && !canSmash)

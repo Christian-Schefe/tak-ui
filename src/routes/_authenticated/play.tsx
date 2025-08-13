@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { ObservedGame } from '../../components/ObservedGame';
 import { useGameData } from '../../gameData';
 import type { GameSettings } from '../../packages/tak-core';
@@ -16,7 +16,11 @@ function RouteComponent() {
     (g) => g.white === username || g.black === username,
   );
   if (!gameEntry) {
-    return <Navigate to="/seeks" />;
+    return (
+      <div>
+        <Link to="/seeks">Find a Game</Link>
+      </div>
+    );
   }
   const settings: GameSettings = {
     boardSize: gameEntry.boardSize,

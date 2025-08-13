@@ -5,7 +5,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 export interface GameDataState {
   seeks: SeekEntry[];
-  games: GameEntry[];
+  games: GameListEntry[];
+  gameInfo: Record<string, GameInfoEntry>;
 }
 
 export type SeekEntry = {
@@ -29,7 +30,7 @@ export type SeekEntry = {
     | undefined;
 };
 
-export type GameEntry = {
+export type GameListEntry = {
   id: number;
   white: string;
   black: string;
@@ -49,6 +50,10 @@ export type GameEntry = {
     | undefined;
 };
 
+export type GameInfoEntry = {
+  messages: string[];
+};
+
 const GameDataContext = createContext<GameDataState | undefined>(undefined);
 
 export function GameDataProvider({ children }: { children: React.ReactNode }) {
@@ -57,7 +62,8 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   let { data: freshSeeks } = useSeeks();
 
   let [seeks, setSeeks] = useState<SeekEntry[]>([]);
-  let [games, setGames] = useState<GameEntry[]>([]);
+  let [games, setGames] = useState<GameListEntry[]>([]);
+  let [gameInfo, setGameInfo] = useState<Record<string, GameInfoEntry>>({});
 
   const seekAddRegex =
     /^Seek new (\d+) ([A-Za-z0-9_]+) (\d+) (\d+) (\d+) ([WBA]) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+) ([A-Za-z0-9_]*)/;
@@ -104,7 +110,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     return parseInt(matches[1]);
   }
 
-  function parseGameAddMessage(message: string): GameEntry | null {
+  function parseGameAddMessage(message: string): GameListEntry | null {
     let matches = message.match(gameAddRegex);
     if (!matches) return null;
 
@@ -135,6 +141,27 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     if (!matches) return null;
 
     return parseInt(matches[1]);
+  }
+
+  function parseGameUpdateMessage(
+    message: string,
+  ): { id: string; message: string } | null {
+    let matches = message.match(/^Game#(\d+) (.+)/);
+    if (!matches) return null;
+
+    return {
+      id: matches[1],
+      message,
+    };
+  }
+
+  function parseGameStartMessage(message: string): { id: string } | null {
+    let matches = message.match(/^Game Start (\d+)/);
+    if (!matches) return null;
+
+    return {
+      id: matches[1],
+    };
   }
 
   useEffect(() => {
@@ -173,6 +200,35 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
           } else {
             console.error('Failed to remove game:', text);
           }
+        } else if (text.startsWith('Game#')) {
+          const gameUpdate = parseGameUpdateMessage(text);
+          if (gameUpdate) {
+            setGameInfo((prev) => ({
+              ...prev,
+              [gameUpdate.id]: {
+                ...(prev[gameUpdate.id] ?? { messages: [] }),
+                messages: [
+                  ...(prev[gameUpdate.id]?.messages ?? []),
+                  gameUpdate.message,
+                ],
+              },
+            }));
+          } else {
+            console.error('Failed to update game:', text);
+          }
+        } else if (text.startsWith('Game Start')) {
+          const gameStart = parseGameStartMessage(text);
+          console.log('game start');
+          if (gameStart) {
+            setGameInfo((prev) => ({
+              ...prev,
+              [gameStart.id]: {
+                messages: [],
+              },
+            }));
+          } else {
+            console.error('Failed to start game:', text);
+          }
         }
       })();
     }
@@ -185,7 +241,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   }, [freshSeeks]);
 
   return (
-    <GameDataContext.Provider value={{ seeks, games }}>
+    <GameDataContext.Provider value={{ seeks, games, gameInfo }}>
       {children}
     </GameDataContext.Provider>
   );

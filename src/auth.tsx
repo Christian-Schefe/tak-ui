@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (lastMessage?.data as Blob)
       .text()
       .then((msg) => {
-        console.log('WebSocket message:', msg);
+        console.debug('Received message:', msg);
         const userMatch = msg.match(/Welcome (.+)!/);
         if (msg === 'NOK') {
           if (isAuthenticated) return;

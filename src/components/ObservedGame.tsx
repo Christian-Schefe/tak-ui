@@ -15,6 +15,7 @@ import {
   dirToString,
   offsetCoord,
 } from '../packages/tak-core/coord';
+import { useGameData } from '../gameData';
 
 export function ObservedGame({
   gameId,
@@ -25,23 +26,49 @@ export function ObservedGame({
   settings: GameSettings;
   interactive: boolean;
 }) {
-  const { sendMessage, lastMessage } = useWebSocket(WS_URL, wsOptions);
-
-  const [game, _setGame] = useState<ui.GameUI>(ui.newGameUI(newGame(settings)));
-
   const subscriptionState: RefObject<
     'unsubscribed' | 'pending' | 'subscribed'
   > = useRef('unsubscribed');
 
+  const { sendMessage } = useWebSocket(WS_URL, {
+    ...wsOptions,
+    onOpen: () => {
+      if (
+        !interactive &&
+        gameId &&
+        subscriptionState.current === 'unsubscribed'
+      ) {
+        subscriptionState.current = 'pending';
+        console.log('Subscribing to game:', gameId);
+        sendMessage(`Observe ${gameId}`);
+      }
+    },
+    onClose: () => {
+      subscriptionState.current = 'unsubscribed';
+    },
+  });
+
+  const gameData = useGameData();
+
+  const [game, _setGame] = useState<ui.GameUI>(ui.newGameUI(newGame(settings)));
+  const [readMessageIndex, setReadMessageIndex] = useState(0);
+  const [receivedPlyIndex, setReceivedPlyIndex] = useState(0);
+
   useEffect(() => {
-    if (!gameId) return;
-    if (subscriptionState.current !== 'unsubscribed') return;
-    subscriptionState.current = 'pending';
-    console.log('Subscribing to game:', gameId);
-    sendMessage(`Observe ${gameId}`);
+    console.log('mounted');
+    if (
+      !interactive &&
+      gameId &&
+      subscriptionState.current === 'unsubscribed'
+    ) {
+      subscriptionState.current = 'pending';
+      console.log('Subscribing to game:', gameId);
+      sendMessage(`Observe ${gameId}`);
+    }
 
     return () => {
-      if (subscriptionState.current !== 'subscribed') return;
+      console.log('Cleaning up: Unsubscribing');
+      if (!gameId || subscriptionState.current !== 'subscribed') return;
       console.log('Unsubscribing from game:', gameId);
       sendMessage(`Unobserve ${gameId}`);
       subscriptionState.current = 'unsubscribed';
@@ -49,10 +76,16 @@ export function ObservedGame({
   }, [gameId]);
 
   useEffect(() => {
-    async function handleMessage() {
-      if (!lastMessage) return;
-      const message = await msgToString(lastMessage);
-      if (!message) return;
+    if (!gameData.gameInfo[gameId]) return;
+    const toRead = gameData.gameInfo[gameId].messages.length - readMessageIndex;
+    let addedPlys = 0;
+    for (let i = 0; i < toRead; i++) {
+      const message = gameData.gameInfo[gameId].messages[readMessageIndex + i];
+      console.log(
+        gameData.gameInfo[gameId].messages.length,
+        readMessageIndex + i,
+      );
+      if (!message) continue;
 
       if (message.startsWith(`Game#${gameId}`)) {
         console.log('Game message received:', message);
@@ -69,8 +102,16 @@ export function ObservedGame({
         const [, col, row] = match;
         const variant = match[3] ? (match[3] === 'C' ? 'C' : 'S') : '';
         const move = moveFromString(`${variant}${col.toLowerCase()}${row}`);
-        console.log('Piece placed:', { move });
-        ui.doMove(game, move, false);
+
+        if (game.actualGame.history.length <= receivedPlyIndex + addedPlys) {
+          console.log('Piece placed:', { move });
+          try {
+            ui.doMove(game, move, false);
+            addedPlys++;
+          } catch (err) {
+            console.error('desync: ', err);
+          }
+        }
       }
 
       const moveRegex = /Game#\d+ M ([A-Z])([1-9]) ([A-Z])([1-9])((?: [1-9])*)/;
@@ -89,12 +130,21 @@ export function ObservedGame({
         const move = moveFromString(
           `${dropNums.reduce((acc, n) => acc + n, 0)}${fromCol.toLowerCase()}${fromRow}${dirToString(dir)}${dropNums.join('')}`,
         );
-        console.log('Piece moved:', { move });
-        ui.doMove(game, move, false);
+
+        if (game.actualGame.history.length <= receivedPlyIndex + addedPlys) {
+          console.log('Piece moved:', { move });
+          try {
+            ui.doMove(game, move, false);
+            addedPlys++;
+          } catch (err) {
+            console.error('desync: ', err);
+          }
+        }
       }
     }
-    handleMessage();
-  }, [lastMessage]);
+    setReadMessageIndex((prev) => prev + toRead);
+    setReceivedPlyIndex((prev) => prev + addedPlys);
+  }, [gameData.gameInfo[gameId]?.messages, readMessageIndex]);
 
   function sendMoveMessage(move: Move) {
     if (move.type === 'place') {
@@ -122,7 +172,9 @@ export function ObservedGame({
 
   function onMove(player: Player, move: Move) {
     if (interactive) {
+      console.log('Sending move:', move);
       sendMoveMessage(move);
+      setReceivedPlyIndex((prev) => prev + 1);
     }
   }
 
