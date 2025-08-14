@@ -123,13 +123,13 @@ export function ObservedGame({
   }, [gameData.gameInfo[gameId]?.messages, readMessageIndex]);
 
   const gameEntry = useMemo(
-    () => gameData.games.find((g) => g.id.toString() === gameId)!,
+    () => gameData.games.find((g) => g.id.toString() === gameId),
     [gameData.games, gameId],
   );
 
   const playerInfo = {
-    white: { username: gameEntry.white, rating: 1000 },
-    black: { username: gameEntry.black, rating: 1000 },
+    white: { username: gameEntry?.white ?? 'White', rating: 1000 },
+    black: { username: gameEntry?.black ?? 'Black', rating: 1000 },
   };
 
   return (

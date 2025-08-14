@@ -133,13 +133,14 @@ export function PlayedGame({
   }
 
   const gameEntry = useMemo(
-    () => gameData.games.find((g) => g.id.toString() === gameId)!,
+    () => gameData.games.find((g) => g.id.toString() === gameId),
     [gameData.games, gameId],
   );
 
+  //TODO: keep player info after game finishes. (in a ref, for example)
   const playerInfo = {
-    white: { username: gameEntry.white, rating: 1000 },
-    black: { username: gameEntry.black, rating: 1000 },
+    white: { username: gameEntry?.white ?? 'White', rating: 1000 },
+    black: { username: gameEntry?.black ?? 'Black', rating: 1000 },
   };
 
   return (

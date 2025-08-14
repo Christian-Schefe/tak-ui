@@ -63,9 +63,10 @@ export const Board: FC<{
 export const Tile: FC<{
   game: GameUI;
   pos: Coord;
+  interactive: boolean;
   onClick: () => void;
   cubeTextureRef: React.RefObject<CubeTexture | undefined>;
-}> = ({ game, pos, onClick, cubeTextureRef }) => {
+}> = ({ game, pos, onClick, cubeTextureRef, interactive }) => {
   const isEven = (num: number) => num % 2 === 0;
   const [isHover, setIsHover] = useState(false);
   const data = game.tiles[pos.y][pos.x];
@@ -75,7 +76,7 @@ export const Tile: FC<{
     () => setIsHover(false),
     boxRef,
   );
-  const isBeingHovered = isHover && data.hoverable;
+  const isBeingHovered = interactive && isHover && data.hoverable;
   const normalColor = isEven(pos.x + pos.y)
     ? isBeingHovered
       ? Color3.FromHexString('#CCCCCC')

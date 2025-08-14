@@ -256,6 +256,7 @@ function onGameUpdate(ui: GameUI) {
     }
   }
 
+  const isOngoing = ui.actualGame.gameState.type === 'ongoing';
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const stack = shownGame.board.pieces[y][x];
@@ -288,8 +289,8 @@ function onGameUpdate(ui: GameUI) {
       ui.tiles[y][x] = {
         owner: stack?.composition[0].player ?? null,
         highlighted: false,
-        selectable,
-        hoverable: hoverable || selectable,
+        selectable: isOngoing && selectable,
+        hoverable: isOngoing && (hoverable || selectable),
         lastMove: false,
       };
     }

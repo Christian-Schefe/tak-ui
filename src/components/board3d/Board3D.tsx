@@ -4,6 +4,7 @@ import { Engine, Scene } from 'react-babylonjs';
 import { ui, type PieceVariant } from '../../packages/tak-core';
 import { Table, Board, Tile, Piece } from './Objects';
 import type { BoardProps } from '../board';
+import { coordToString } from '../../packages/tak-core/coord';
 
 export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
   const [_updateTrigger, setUpdateTrigger] = useState<number>(0);
@@ -141,10 +142,11 @@ export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
               >
                 {tileCoords.map((pos) => (
                   <Tile
-                    key={`${pos.x}-${pos.y}`}
+                    key={coordToString(pos)}
                     game={game}
                     pos={pos}
                     cubeTextureRef={cubeTextureRef}
+                    interactive={interactive}
                     onClick={() => {
                       if (!interactive) return;
                       ui.tryPlaceOrAddToPartialMove(game, pos, variant);
