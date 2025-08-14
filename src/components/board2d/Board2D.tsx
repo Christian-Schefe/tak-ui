@@ -1,24 +1,11 @@
 import { useEffect, useState } from 'react';
-import {
-  ui,
-  type Move,
-  type PieceVariant,
-  type Player,
-} from '../../packages/tak-core/';
+import { ui, type PieceVariant } from '../../packages/tak-core/';
 import { coordToString } from '../../packages/tak-core/coord';
 import { Tile } from './Tile';
 import { Piece } from './Piece';
-import type { GameUI } from '../../packages/tak-core/ui';
+import type { BoardProps } from '../board';
 
-export function Board2D({
-  game,
-  interactive,
-  onMove,
-}: {
-  game: GameUI;
-  interactive: boolean;
-  onMove?: (player: Player, move: Move) => void;
-}) {
+export function Board2D({ game, playerInfo, interactive, onMove }: BoardProps) {
   const [_updateTrigger, setUpdateTrigger] = useState<number>(0);
   const [variant, setVariant] = useState<PieceVariant>('flat');
 
@@ -42,6 +29,24 @@ export function Board2D({
 
   return (
     <div className="w-full max-w-4xl mx-auto">
+      <div className="w-full flex p-2 gap-2 justify-between">
+        <div className="flex gap-2">
+          <p
+            className={`font-bold ${game.actualGame.currentPlayer === 'white' ? 'text-primary-500' : ''}`}
+          >
+            {playerInfo['white']?.username}
+          </p>{' '}
+          ({playerInfo['white']?.rating})
+        </div>
+        <div className="flex gap-2">
+          <p
+            className={`font-bold ${game.actualGame.currentPlayer === 'black' ? 'text-primary-500' : ''}`}
+          >
+            {playerInfo['black']?.username}
+          </p>{' '}
+          ({playerInfo['black']?.rating})
+        </div>
+      </div>
       <div
         className="grid relative select-none touch-none justify-start items-start w-full aspect-square"
         style={{

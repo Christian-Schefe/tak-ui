@@ -65,6 +65,7 @@ function LoginComponent() {
           </label>
           <input
             id="username"
+            autoComplete="username"
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -79,6 +80,7 @@ function LoginComponent() {
           </label>
           <input
             id="password"
+            autoComplete="current-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

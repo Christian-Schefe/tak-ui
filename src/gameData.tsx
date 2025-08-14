@@ -7,6 +7,7 @@ export interface GameDataState {
   seeks: SeekEntry[];
   games: GameListEntry[];
   gameInfo: Record<string, GameInfoEntry>;
+  removeGameInfo: (id: string) => void;
 }
 
 export type SeekEntry = {
@@ -57,13 +58,18 @@ export type GameInfoEntry = {
 const GameDataContext = createContext<GameDataState | undefined>(undefined);
 
 export function GameDataProvider({ children }: { children: React.ReactNode }) {
-  let { lastMessage } = useWebSocket(WS_URL, wsOptions);
+  let [gameInfo, setGameInfo] = useState<Record<string, GameInfoEntry>>({});
+  let { lastMessage } = useWebSocket(WS_URL, {
+    ...wsOptions,
+    onClose: () => {
+      setGameInfo({});
+    },
+  });
 
   let { data: freshSeeks } = useSeeks();
 
   let [seeks, setSeeks] = useState<SeekEntry[]>([]);
   let [games, setGames] = useState<GameListEntry[]>([]);
-  let [gameInfo, setGameInfo] = useState<Record<string, GameInfoEntry>>({});
 
   const seekAddRegex =
     /^Seek new (\d+) ([A-Za-z0-9_]+) (\d+) (\d+) (\d+) ([WBA]) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+) ([A-Za-z0-9_]*)/;
@@ -155,15 +161,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     };
   }
 
-  function parseGameStartMessage(message: string): { id: string } | null {
-    let matches = message.match(/^Game Start (\d+)/);
-    if (!matches) return null;
-
-    return {
-      id: matches[1],
-    };
-  }
-
   useEffect(() => {
     if (lastMessage) {
       (async () => {
@@ -206,7 +203,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
             setGameInfo((prev) => ({
               ...prev,
               [gameUpdate.id]: {
-                ...(prev[gameUpdate.id] ?? { messages: [] }),
                 messages: [
                   ...(prev[gameUpdate.id]?.messages ?? []),
                   gameUpdate.message,
@@ -215,19 +211,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
             }));
           } else {
             console.error('Failed to update game:', text);
-          }
-        } else if (text.startsWith('Game Start')) {
-          const gameStart = parseGameStartMessage(text);
-          console.log('game start');
-          if (gameStart) {
-            setGameInfo((prev) => ({
-              ...prev,
-              [gameStart.id]: {
-                messages: [],
-              },
-            }));
-          } else {
-            console.error('Failed to start game:', text);
           }
         }
       })();
@@ -240,8 +223,18 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [freshSeeks]);
 
+  const removeGameInfo = (id: string) => {
+    setGameInfo((prev) => {
+      const newGameInfo = { ...prev };
+      delete newGameInfo[id];
+      return newGameInfo;
+    });
+  };
+
   return (
-    <GameDataContext.Provider value={{ seeks, games, gameInfo }}>
+    <GameDataContext.Provider
+      value={{ seeks, games, gameInfo, removeGameInfo }}
+    >
       {children}
     </GameDataContext.Provider>
   );

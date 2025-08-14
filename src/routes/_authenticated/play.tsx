@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ObservedGame } from '../../components/ObservedGame';
-import { useGameData } from '../../gameData';
+import { type GameListEntry, useGameData } from '../../gameData';
 import type { GameSettings } from '../../packages/tak-core';
 import { useAuth } from '../../auth';
+import { PlayedGame } from '../../components/PlayedGame';
+import { useEffect, useRef } from 'react';
 
 export const Route = createFileRoute('/_authenticated/play')({
   component: RouteComponent,
@@ -15,7 +16,12 @@ function RouteComponent() {
   const gameEntry = gameData.games.find(
     (g) => g.white === username || g.black === username,
   );
-  if (!gameEntry) {
+  const gameEntryRef = useRef<GameListEntry | undefined>(gameEntry);
+  useEffect(() => {
+    if (!gameEntry) return;
+    gameEntryRef.current = gameEntry;
+  }, [gameEntry]);
+  if (!gameEntryRef.current) {
     return (
       <div>
         <Link to="/seeks">Find a Game</Link>
@@ -23,18 +29,17 @@ function RouteComponent() {
     );
   }
   const settings: GameSettings = {
-    boardSize: gameEntry.boardSize,
-    komi: gameEntry.komi,
+    boardSize: gameEntryRef.current.boardSize,
+    komi: gameEntryRef.current.komi,
     reserve: {
-      pieces: gameEntry.pieces,
-      capstones: gameEntry.capstones,
+      pieces: gameEntryRef.current.pieces,
+      capstones: gameEntryRef.current.capstones,
     },
   };
   return (
-    <ObservedGame
-      gameId={gameEntry.id.toString()}
+    <PlayedGame
+      gameId={gameEntryRef.current.id.toString()}
       settings={settings}
-      interactive={true}
     />
   );
 }

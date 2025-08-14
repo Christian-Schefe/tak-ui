@@ -1,30 +1,19 @@
 import useWebSocket from 'react-use-websocket';
-import { msgToString, WS_URL, wsOptions } from '../websocket';
-import { useEffect, useRef, useState, type RefObject } from 'react';
-import { Board2D } from './board2d/Board2D';
-import {
-  ui,
-  type GameSettings,
-  type Move,
-  type Player,
-} from '../packages/tak-core';
+import { WS_URL, wsOptions } from '../websocket';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { ui, type GameSettings } from '../packages/tak-core';
 import { newGame } from '../packages/tak-core/game';
 import { moveFromString } from '../packages/tak-core/move';
-import {
-  dirFromAligned,
-  dirToString,
-  offsetCoord,
-} from '../packages/tak-core/coord';
+import { dirFromAligned, dirToString } from '../packages/tak-core/coord';
 import { useGameData } from '../gameData';
+import { Board3D } from './board3d/Board3D';
 
 export function ObservedGame({
   gameId,
   settings,
-  interactive,
 }: {
   gameId: string;
   settings: GameSettings;
-  interactive: boolean;
 }) {
   const subscriptionState: RefObject<
     'unsubscribed' | 'pending' | 'subscribed'
@@ -32,17 +21,7 @@ export function ObservedGame({
 
   const { sendMessage } = useWebSocket(WS_URL, {
     ...wsOptions,
-    onOpen: () => {
-      if (
-        !interactive &&
-        gameId &&
-        subscriptionState.current === 'unsubscribed'
-      ) {
-        subscriptionState.current = 'pending';
-        console.log('Subscribing to game:', gameId);
-        sendMessage(`Observe ${gameId}`);
-      }
-    },
+    onOpen: () => {},
     onClose: () => {
       subscriptionState.current = 'unsubscribed';
     },
@@ -55,14 +34,10 @@ export function ObservedGame({
   const [receivedPlyIndex, setReceivedPlyIndex] = useState(0);
 
   useEffect(() => {
-    console.log('mounted');
-    if (
-      !interactive &&
-      gameId &&
-      subscriptionState.current === 'unsubscribed'
-    ) {
+    if (gameId && subscriptionState.current === 'unsubscribed') {
       subscriptionState.current = 'pending';
       console.log('Subscribing to game:', gameId);
+      gameData.removeGameInfo(gameId);
       sendMessage(`Observe ${gameId}`);
     }
 
@@ -71,6 +46,7 @@ export function ObservedGame({
       if (!gameId || subscriptionState.current !== 'subscribed') return;
       console.log('Unsubscribing from game:', gameId);
       sendMessage(`Unobserve ${gameId}`);
+      gameData.removeGameInfo(gameId);
       subscriptionState.current = 'unsubscribed';
     };
   }, [gameId]);
@@ -146,42 +122,20 @@ export function ObservedGame({
     setReceivedPlyIndex((prev) => prev + addedPlys);
   }, [gameData.gameInfo[gameId]?.messages, readMessageIndex]);
 
-  function sendMoveMessage(move: Move) {
-    if (move.type === 'place') {
-      const col = String.fromCharCode(move.pos.x + 'A'.charCodeAt(0));
-      const row = move.pos.y + 1;
-      const variant =
-        move.variant === 'capstone'
-          ? ' C'
-          : move.variant === 'standing'
-            ? ' W'
-            : '';
-      sendMessage(`Game#${gameId} P ${col}${row}${variant}`);
-    } else {
-      const fromCol = String.fromCharCode(move.from.x + 'A'.charCodeAt(0));
-      const fromRow = move.from.y + 1;
-      const to = offsetCoord(move.from, move.dir, move.drops.length);
-      const toCol = String.fromCharCode(to.x + 'A'.charCodeAt(0));
-      const toRow = to.y + 1;
-      const drops = move.drops.join(' ');
-      sendMessage(
-        `Game#${gameId} M ${fromCol}${fromRow} ${toCol}${toRow} ${drops}`,
-      );
-    }
-  }
+  const gameEntry = useMemo(
+    () => gameData.games.find((g) => g.id.toString() === gameId)!,
+    [gameData.games, gameId],
+  );
 
-  function onMove(player: Player, move: Move) {
-    if (interactive) {
-      console.log('Sending move:', move);
-      sendMoveMessage(move);
-      setReceivedPlyIndex((prev) => prev + 1);
-    }
-  }
+  const playerInfo = {
+    white: { username: gameEntry.white, rating: 1000 },
+    black: { username: gameEntry.black, rating: 1000 },
+  };
 
   return (
-    <div>
+    <div className="w-full grow flex flex-col">
       <h2>Observed Game</h2>
-      <Board2D game={game} interactive={interactive} onMove={onMove} />
+      <Board3D game={game} playerInfo={playerInfo} interactive={false} />
     </div>
   );
 }
