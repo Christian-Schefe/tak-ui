@@ -1,10 +1,24 @@
-import { CubeTexture, Texture, Vector3 } from '@babylonjs/core';
+import {
+  BaseTexture,
+  Color3,
+  CubeTexture,
+  Texture,
+  Vector3,
+} from '@babylonjs/core';
 import { useCallback, useEffect, useRef, useState, type FC } from 'react';
-import { Engine, Scene } from 'react-babylonjs';
+import { Engine, Scene, Skybox } from 'react-babylonjs';
 import { ui, type PieceVariant } from '../../packages/tak-core';
 import { Table, Board, Tile, Piece } from './Objects';
 import type { BoardProps } from '../board';
 import { coordToString } from '../../packages/tak-core/coord';
+import envTexture from '../../assets/766-hdri-skies-com.env';
+import skyboxTexture from '../../assets/Standard-Cube-Map/skies_nx.jpg';
+import { Clock } from './Clock';
+
+export type EnvConfig = {
+  cubeTextureRef: React.RefObject<BaseTexture | undefined>;
+  envColor: Color3;
+};
 
 export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
   const [_updateTrigger, setUpdateTrigger] = useState<number>(0);
@@ -51,17 +65,13 @@ export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
     }
   }
 
-  let environmentUrl =
-    'https://raw.githubusercontent.com/brianzinn/react-babylonjs/refs/heads/master/website/docs/public/assets/textures/environment.dds';
-
   const [_, setTexturesLoaded] = useState(false);
-  const cubeTextureRef = useRef<CubeTexture | undefined>(undefined);
-  const cubeTextureCloneRef = useRef<CubeTexture | undefined>(undefined);
+  const cubeTextureRef = useRef<BaseTexture | undefined>(undefined);
+  const cubeTextureCloneRef = useRef<BaseTexture | undefined>(undefined);
   const cubeTextureCallback = useCallback((node: CubeTexture | null) => {
     if (node) {
       cubeTextureRef.current = node;
       console.log('hdrTexture', node);
-      // hdrTexture = node;
 
       cubeTextureCloneRef.current = node.clone();
       cubeTextureCloneRef.current.name = 'cloned texture';
@@ -88,29 +98,24 @@ export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
             whenVisibleOnly: true,
           }}
         >
-          <Scene environmentTexture={cubeTextureRef.current}>
+          <Scene environmentIntensity={1}>
             <cubeTexture
               ref={cubeTextureCallback}
               name="cubeTexture"
-              rootUrl={environmentUrl}
+              rootUrl={envTexture}
               createPolynomials={true}
               format={undefined}
               prefiltered={true}
             />
 
-            <box name="hdrSkyBox" size={1000} infiniteDistance>
-              <pbrMaterial
-                name="skyBox"
-                backFaceCulling={false}
-                reflectionTexture={cubeTextureCloneRef.current}
-                microSurface={1}
-                disableLighting
-              />
-            </box>
+            <Skybox
+              rootUrl={skyboxTexture.replace('_nx.jpg', '')}
+              size={1000}
+            />
 
             <arcRotateCamera
               name="camera1"
-              alpha={Math.PI / 2}
+              alpha={-Math.PI / 2}
               beta={Math.PI / 4}
               radius={10}
               target={target}
@@ -122,15 +127,16 @@ export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
             />
             <hemisphericLight
               name="light1"
-              intensity={0.1}
+              intensity={1}
               direction={new Vector3(0, 1, 0)}
             />
             <directionalLight
               name="dl"
-              intensity={5}
+              intensity={0.0}
               direction={new Vector3(1, -1, 1).normalize()}
               shadowMinZ={0.1}
               shadowMaxZ={20}
+              diffuse={Color3.FromHexString('#ffaaaa')}
             >
               <shadowGenerator
                 mapSize={1024}
@@ -161,6 +167,16 @@ export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
                     cubeTextureRef={cubeTextureRef}
                   />
                 ))}
+                <Clock
+                  game={game}
+                  pos={new Vector3(size / 2 + size, 0, size / 2)}
+                  cubeTextureRef={cubeTextureRef}
+                />
+                <Clock
+                  game={game}
+                  pos={new Vector3(size / 2 - size, 0, size / 2)}
+                  cubeTextureRef={cubeTextureRef}
+                />
                 <Board size={size} cubeTextureRef={cubeTextureRef} />
               </shadowGenerator>
             </directionalLight>

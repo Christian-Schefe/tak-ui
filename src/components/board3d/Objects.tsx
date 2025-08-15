@@ -1,6 +1,6 @@
 import {
+  BaseTexture,
   Color3,
-  CubeTexture,
   Mesh,
   Quaternion,
   Vector3,
@@ -28,35 +28,56 @@ import marbleWhiteColor from '../../assets/textures/marble_white/marble_0008_col
 import marbleWhiteNormal from '../../assets/textures/marble_white/marble_0008_normal_opengl_1k.png';
 import marbleWhiteAO from '../../assets/textures/marble_white/marble_0008_ao_1k.jpg';
 import marbleWhiteRoughness from '../../assets/textures/marble_white/marble_0008_roughness_1k.jpg';
+import { PBRBox, PBRCylinder } from './Box';
+
+export function Lerp(start: number, end: number, amount: number): number {
+  return start + (end - start) * amount;
+}
+
+export const Table: FC<{
+  size: number;
+  cubeTextureRef: React.RefObject<BaseTexture | undefined>;
+}> = ({ size, cubeTextureRef }) => {
+  return (
+    <PBRBox
+      name="table"
+      width={size + 10}
+      height={2}
+      depth={size + 5}
+      position={new Vector3(size / 2, -1 - 0.2, size / 2)}
+      cubeTextureRef={cubeTextureRef}
+      normalTextureUrl={woodNormal}
+      colorTextureUrl={woodColor}
+      aoTextureUrl={woodAO}
+      roughnessTextureUrl={woodRoughness}
+      metallic={0.5}
+      roughness={0.2}
+      specularIntensity={0.05}
+    />
+  );
+};
 
 export const Board: FC<{
   size: number;
-  cubeTextureRef: React.RefObject<CubeTexture | undefined>;
+  cubeTextureRef: React.RefObject<BaseTexture | undefined>;
 }> = ({ size, cubeTextureRef }) => {
   return (
-    <box
+    <PBRBox
       name="board"
       width={size + 0.5}
-      depth={size + 0.5}
       height={0.2}
+      depth={size + 0.5}
       position={new Vector3(size / 2, -0.1, size / 2)}
-      receiveShadows
-    >
-      <pbrMaterial
-        name="material"
-        reflectionTexture={cubeTextureRef.current}
-        environmentIntensity={1}
-        specularIntensity={0.05}
-        albedoColor={Color3.FromHexString('#c0c0c0')}
-        metallic={1}
-        roughness={0}
-      >
-        <texture url={tileNormal} assignTo="bumpTexture" />
-        <texture url={tileColor} assignTo="albedoTexture" />
-        <texture url={tileAO} assignTo="ambientTexture" />
-        <texture url={tileRoughness} assignTo="baseDiffuseRoughnessTexture" />
-      </pbrMaterial>
-    </box>
+      cubeTextureRef={cubeTextureRef}
+      normalTextureUrl={tileNormal}
+      colorTextureUrl={tileColor}
+      aoTextureUrl={tileAO}
+      roughnessTextureUrl={tileRoughness}
+      metallic={1}
+      roughness={0}
+      specularIntensity={0.05}
+      albedoColor={Color3.FromHexString('#c0c0c0')}
+    />
   );
 };
 
@@ -65,7 +86,7 @@ export const Tile: FC<{
   pos: Coord;
   interactive: boolean;
   onClick: () => void;
-  cubeTextureRef: React.RefObject<CubeTexture | undefined>;
+  cubeTextureRef: React.RefObject<BaseTexture | undefined>;
 }> = ({ game, pos, onClick, cubeTextureRef, interactive }) => {
   const isEven = (num: number) => num % 2 === 0;
   const [isHover, setIsHover] = useState(false);
@@ -78,31 +99,28 @@ export const Tile: FC<{
   );
   const isBeingHovered = interactive && isHover && data.hoverable;
   const normalColor = isEven(pos.x + pos.y)
-    ? isBeingHovered
-      ? Color3.FromHexString('#CCCCCC')
-      : Color3.FromHexString('#888888')
-    : isBeingHovered
-      ? Color3.FromHexString('#AAAAAA')
-      : Color3.FromHexString('#666666');
+    ? Color3.FromHexString('#888888')
+    : Color3.FromHexString('#666666');
 
-  const selectableColor = isEven(pos.x + pos.y)
-    ? isBeingHovered
-      ? Color3.FromHexString('#AAAAFF')
-      : Color3.FromHexString('#9999DD')
-    : isBeingHovered
-      ? Color3.FromHexString('#88AAFF')
-      : Color3.FromHexString('#6699DD');
+  const currentAnimationState = {
+    emissive: (data.selectable ? 0.05 : 0) + (isBeingHovered ? 0.06 : 0),
+    height: isBeingHovered ? 0.015 : 0,
+  };
 
-  const color = data.selectable ? selectableColor : normalColor;
-  const targetColor = useRef(color);
+  const targetAnimationState = useRef(currentAnimationState);
   useEffect(() => {
-    targetColor.current = color;
-  }, [color]);
+    targetAnimationState.current = currentAnimationState;
+  }, [currentAnimationState]);
 
-  const [actualColor, setActualColor] = useState(color);
+  const [actualAnimationState, setActualAnimationState] = useState(
+    targetAnimationState.current,
+  );
 
   useBeforeRender(() => {
-    setActualColor((prev) => Color3.Lerp(prev, targetColor.current, 0.3));
+    setActualAnimationState((prev) => ({
+      emissive: Lerp(prev.emissive, targetAnimationState.current.emissive, 0.3),
+      height: Lerp(prev.height, targetAnimationState.current.height, 0.3),
+    }));
   });
 
   const curOnClick = useRef<() => void>(onClick);
@@ -115,70 +133,40 @@ export const Tile: FC<{
     curOnClick.current();
   }, boxRef);
 
-  const textureScale = 1 / game.actualGame.board.size;
-  const uOffset = pos.x * textureScale;
-  const vOffset = pos.y * textureScale;
-
   return (
-    <box
+    <PBRBox
       name="tile"
-      ref={boxRef}
       width={1}
-      depth={1}
       height={0.1}
-      position={new Vector3(pos.x + 0.5, 0.05, pos.y + 0.5)}
-      receiveShadows
-    >
-      <pbrMaterial
-        name="material"
-        reflectionTexture={cubeTextureRef.current}
-        environmentIntensity={1}
-        specularIntensity={0.05}
-        albedoColor={actualColor}
-        metallic={0.5}
-        roughness={0.2}
-      >
-        <texture
-          url={marbleWhiteNormal}
-          assignTo="bumpTexture"
-          uScale={textureScale}
-          vScale={textureScale}
-          uOffset={uOffset}
-          vOffset={vOffset}
-        />
-        <texture
-          url={marbleWhiteColor}
-          assignTo="albedoTexture"
-          uScale={textureScale}
-          vScale={textureScale}
-          uOffset={uOffset}
-          vOffset={vOffset}
-        />
-        <texture
-          url={marbleWhiteAO}
-          assignTo="ambientTexture"
-          uScale={textureScale}
-          vScale={textureScale}
-          uOffset={uOffset}
-          vOffset={vOffset}
-        />
-        <texture
-          url={marbleWhiteRoughness}
-          assignTo="baseDiffuseRoughnessTexture"
-          uScale={textureScale}
-          vScale={textureScale}
-          uOffset={uOffset}
-          vOffset={vOffset}
-        />
-      </pbrMaterial>
-    </box>
+      depth={1}
+      position={
+        new Vector3(
+          pos.x + 0.5,
+          0.05 + actualAnimationState.height,
+          pos.y + 0.5,
+        )
+      }
+      cubeTextureRef={cubeTextureRef}
+      normalTextureUrl={marbleWhiteNormal}
+      colorTextureUrl={marbleWhiteColor}
+      aoTextureUrl={marbleWhiteAO}
+      roughnessTextureUrl={marbleWhiteRoughness}
+      metallic={0.5}
+      roughness={0.5}
+      specularIntensity={0.05}
+      albedoColor={normalColor}
+      textureScale={1 / game.actualGame.board.size}
+      emissiveColor={Color3.White()}
+      emissiveIntensity={actualAnimationState.emissive}
+      ref={boxRef}
+    />
   );
 };
 
 export const Piece: FC<{
   game: GameUI;
   id: number;
-  cubeTextureRef: React.RefObject<CubeTexture | undefined>;
+  cubeTextureRef: React.RefObject<BaseTexture | undefined>;
 }> = ({ game, id, cubeTextureRef }) => {
   const data = game.pieces.get(id)!;
 
@@ -187,14 +175,17 @@ export const Piece: FC<{
     curData.current = data;
   }, [data]);
 
+  const pieceSize = 0.6;
+  const pieceHeight = pieceSize * 0.2;
+
   const computeTargetPos = (data: UIPiece) => {
-    let height = (data.height + 1 + (data.isFloating ? 2 : 0)) * 0.1;
+    let height = (data.height + 1 + (data.isFloating ? 2 : 0)) * pieceHeight;
     if (data.variant === 'flat') {
-      height += 0.05;
+      height += pieceHeight * 0.5;
     } else if (data.variant === 'standing') {
-      height += 0.25;
+      height += pieceSize * 0.5;
     } else {
-      height += 0.25;
+      height += pieceSize * 0.5;
     }
     return new Vector3(data.pos.x + 0.5, height, data.pos.y + 0.5);
   };
@@ -238,100 +229,46 @@ export const Piece: FC<{
   const roughnessTextureUrl =
     data.player === 'white' ? marbleWhiteRoughness : marbleBlackRoughness;
 
-  const material = (
-    <pbrMaterial
-      name="material"
-      reflectionTexture={cubeTextureRef.current}
-      environmentIntensity={1}
-      specularIntensity={0.05}
-      albedoColor={Color3.White()}
-      metallic={0.2}
-      roughness={0.5}
-    >
-      <texture
-        url={normalTextureUrl}
-        assignTo="bumpTexture"
-        uScale={0.2}
-        vScale={0.2}
-      />
-      <texture
-        url={colorTextureUrl}
-        assignTo="albedoTexture"
-        uScale={0.2}
-        vScale={0.2}
-      />
-      <texture
-        url={aoTextureUrl}
-        assignTo="ambientTexture"
-        uScale={0.2}
-        vScale={0.2}
-      />
-      <texture
-        url={roughnessTextureUrl}
-        assignTo="baseDiffuseRoughnessTexture"
-        uScale={0.2}
-        vScale={0.2}
-      />
-    </pbrMaterial>
-  );
-
   return data.variant === 'capstone' ? (
-    <cylinder
+    <PBRCylinder
       name="piece"
-      height={0.5}
-      diameter={0.4}
+      height={pieceSize}
+      diameter={pieceSize * 0.8}
       position={actualTransform.pos}
       rotationQuaternion={actualTransform.rot}
       scaling={actualTransform.scale}
-      receiveShadows
       isPickable={false}
-    >
-      {material}
-    </cylinder>
+      aoTextureUrl={aoTextureUrl}
+      colorTextureUrl={colorTextureUrl}
+      cubeTextureRef={cubeTextureRef}
+      normalTextureUrl={normalTextureUrl}
+      metallic={0.5}
+      roughness={0.5}
+      roughnessTextureUrl={roughnessTextureUrl}
+      albedoColor={Color3.White()}
+      specularIntensity={0.05}
+      textureScale={1 / 12}
+    />
   ) : (
-    <box
+    <PBRBox
       name="piece"
-      width={0.5}
-      depth={0.5}
-      height={0.1}
+      width={pieceSize}
+      height={pieceHeight}
+      depth={pieceSize}
       position={actualTransform.pos}
       rotationQuaternion={actualTransform.rot}
       scaling={actualTransform.scale}
-      receiveShadows
       isPickable={false}
-    >
-      {material}
-    </box>
-  );
-};
-
-export const Table: FC<{
-  size: number;
-  cubeTextureRef: React.RefObject<CubeTexture | undefined>;
-}> = ({ size, cubeTextureRef }) => {
-  return (
-    <box
-      name="table"
-      width={size + 10}
-      depth={size + 5}
-      height={2}
-      position={new Vector3(size / 2, -1 - 0.2, size / 2)}
-      receiveShadows
-    >
-      <pbrMaterial
-        name="material"
-        reflectionTexture={cubeTextureRef.current}
-        environmentIntensity={1}
-        specularIntensity={0.05}
-        albedoColor={Color3.White()}
-        metallic={0.5}
-        roughness={0.2}
-      >
-        <texture url={woodNormal} assignTo="bumpTexture" />
-        <texture url={woodColor} assignTo="albedoTexture" />
-        <texture url={woodAO} assignTo="ambientTexture" />
-        <texture url={woodRoughness} assignTo="baseDiffuseRoughnessTexture" />
-      </pbrMaterial>
-    </box>
+      cubeTextureRef={cubeTextureRef}
+      colorTextureUrl={colorTextureUrl}
+      normalTextureUrl={normalTextureUrl}
+      aoTextureUrl={aoTextureUrl}
+      roughnessTextureUrl={roughnessTextureUrl}
+      metallic={0.5}
+      roughness={0.5}
+      albedoColor={Color3.White()}
+      specularIntensity={0.05}
+      textureScale={1 / 12}
+    />
   );
 };
