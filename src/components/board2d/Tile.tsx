@@ -27,7 +27,10 @@ export function Tile({
   return (
     <div
       className={`relative flex items-center justify-center h-full w-full ${color} ${interactive && data.hoverable ? hoverColor : ''}`}
-      style={{ transition: 'background-color 150ms ease-in-out' }}
+      style={{
+        transition: 'background-color 150ms ease-in-out',
+        filter: data.lastMove ? 'brightness(110%) saturate(150%)' : '',
+      }}
       onClick={() => onClick()}
     ></div>
   );

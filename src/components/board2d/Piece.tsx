@@ -3,7 +3,7 @@ import type { GameUI } from '../../packages/tak-core/ui';
 
 export function Piece({ id, game }: { id: number; game: GameUI }) {
   const size = ui.boardSize(game);
-  const data = game.pieces.get(id)!;
+  const data = game.pieces[id];
   const height = data.isFloating ? data.height + 2 : data.height;
   const isWhite = data.player === 'white';
 
@@ -21,6 +21,8 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
         ? '100%'
         : '10%';
 
+  const zIndex = data.zPriority !== null ? data.zPriority + 100 : height;
+
   return (
     <div
       className="absolute pointer-events-none"
@@ -28,7 +30,7 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
         width: `${100 / size}%`,
         height: `${100 / size}%`,
         transform: `translate(${data.pos.x * 100}%, ${(size - 1 - data.pos.y) * 100 - height * 7}%)`,
-        zIndex: height,
+        zIndex: zIndex,
         transition: `transform ${animationSetting}`,
       }}
     >

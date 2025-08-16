@@ -35,11 +35,16 @@ function RouteComponent() {
       pieces: gameEntryRef.current.pieces,
       capstones: gameEntryRef.current.capstones,
     },
+    clock: {
+      contingent: gameEntryRef.current.timeContingent,
+      increment: gameEntryRef.current.timeIncrement,
+    },
   };
   return (
     <PlayedGame
       gameId={gameEntryRef.current.id.toString()}
       settings={settings}
+      observed={false}
     />
   );
 }

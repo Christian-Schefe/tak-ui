@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ObservedGame } from '../../components/ObservedGame';
 import { useGameData, type GameListEntry } from '../../gameData';
 import type { GameSettings } from '../../packages/tak-core';
 import { useEffect, useMemo, useRef } from 'react';
+import { PlayedGame } from '../../components/PlayedGame';
 
 export const Route = createFileRoute('/_authenticated/spectate/$gameId')({
   component: RouteComponent,
@@ -35,7 +35,11 @@ function RouteComponent() {
       pieces: gameEntryRef.current.pieces,
       capstones: gameEntryRef.current.capstones,
     },
+    clock: {
+      contingent: gameEntryRef.current.timeContingent,
+      increment: gameEntryRef.current.timeIncrement,
+    },
   };
 
-  return <ObservedGame gameId={gameId} settings={settings} />;
+  return <PlayedGame gameId={gameId} settings={settings} observed={true} />;
 }

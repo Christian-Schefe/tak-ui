@@ -1,20 +1,17 @@
-import { useEffect, useState } from 'react';
-import { ui, type PieceVariant } from '../../packages/tak-core/';
+import { useState } from 'react';
+import { ui, type Coord, type PieceVariant } from '../../packages/tak-core/';
 import { coordToString } from '../../packages/tak-core/coord';
 import { Tile } from './Tile';
 import { Piece } from './Piece';
 import type { BoardProps } from '../board';
 
-export function Board2D({ game, playerInfo, interactive, onMove }: BoardProps) {
-  const [_updateTrigger, setUpdateTrigger] = useState<number>(0);
+export function Board2D({
+  game,
+  setGame,
+  playerInfo,
+  interactive,
+}: BoardProps) {
   const [variant, setVariant] = useState<PieceVariant>('flat');
-
-  useEffect(() => {
-    game.onUpdate = () => {
-      setUpdateTrigger((prev) => prev + 1);
-    };
-    game.onMove = onMove;
-  }, [game]);
 
   const size = ui.boardSize(game);
   const tileCoords = [];
@@ -26,6 +23,11 @@ export function Board2D({ game, playerInfo, interactive, onMove }: BoardProps) {
       tileCoords.push({ x, y });
     }
   }
+
+  const onClickTile = (pos: Coord) => {
+    if (!interactive) return;
+    setGame((draft) => ui.tryPlaceOrAddToPartialMove(draft, pos, variant));
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -60,10 +62,7 @@ export function Board2D({ game, playerInfo, interactive, onMove }: BoardProps) {
             pos={pos}
             game={game}
             interactive={interactive}
-            onClick={() => {
-              if (!interactive) return;
-              ui.tryPlaceOrAddToPartialMove(game, pos, variant);
-            }}
+            onClick={() => onClickTile(pos)}
           />
         ))}
         {pieceIds.map((id) => (

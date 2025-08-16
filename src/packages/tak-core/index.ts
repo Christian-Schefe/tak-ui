@@ -8,7 +8,11 @@ export type Direction = 'up' | 'down' | 'left' | 'right';
 
 export type GameState =
   | { type: 'ongoing' }
-  | { type: 'win'; player: Player; reason: 'flats' | 'road' | 'resignation' }
+  | {
+      type: 'win';
+      player: Player;
+      reason: 'flats' | 'road' | 'resignation' | 'timeout';
+    }
   | { type: 'draw'; reason: 'flats' | 'mutual agreement' };
 
 export type Move =
@@ -51,6 +55,12 @@ export type Reserve = {
   capstones: number;
 };
 
+export type Clock = {
+  increment: number;
+  lastMove: Date | null;
+  remaining: Record<Player, number>;
+};
+
 export type Game = {
   board: Board;
   currentPlayer: Player;
@@ -58,12 +68,17 @@ export type Game = {
   komi: number;
   gameState: GameState;
   history: MoveRecord[];
+  clock?: Clock;
 };
 
 export type GameSettings = {
   boardSize: number;
   komi: number;
   reserve: Reserve;
+  clock?: {
+    contingent: number;
+    increment: number;
+  };
 };
 
 export function playerOpposite(player: Player): Player {

@@ -4,6 +4,7 @@ import {
   type GameSettings,
   type Move,
   type MoveRecord,
+  type Player,
 } from '.';
 import {
   canMovePiece,
@@ -28,6 +29,14 @@ export function newGame(settings: GameSettings): Game {
       black: structuredClone(settings.reserve),
     },
     gameState: { type: 'ongoing' },
+    clock: settings.clock && {
+      lastMove: null,
+      increment: settings.clock.increment,
+      remaining: {
+        white: settings.clock.contingent,
+        black: settings.clock.contingent,
+      },
+    },
   };
 }
 
@@ -66,7 +75,59 @@ function isReserveEmpty(game: Game) {
   );
 }
 
+export function getTimeRemaining(
+  game: Game,
+  player: Player,
+  now?: Date,
+): number | null {
+  if (game.clock) {
+    return Math.max(
+      0,
+      game.clock.remaining[player] -
+        (now &&
+        game.gameState.type === 'ongoing' &&
+        game.currentPlayer === player &&
+        game.clock.lastMove
+          ? now.getTime() - game.clock.lastMove.getTime()
+          : 0),
+    );
+  }
+  return null;
+}
+
+export function setTimeRemaining(
+  game: Game,
+  remaining: Record<Player, number>,
+  now: Date,
+) {
+  if (game.clock) {
+    game.clock.remaining = remaining;
+    game.clock.lastMove = now;
+    checkTimeout(game, now);
+  }
+}
+
+export function checkTimeout(game: Game, now?: Date) {
+  for (const player of [
+    game.currentPlayer,
+    playerOpposite(game.currentPlayer),
+  ]) {
+    const timeRemaining = getTimeRemaining(game, player, now);
+    if (timeRemaining !== null && timeRemaining <= 0) {
+      game.gameState = {
+        type: 'win',
+        player: playerOpposite(player),
+        reason: 'timeout',
+      };
+    }
+    return timeRemaining;
+  }
+}
+
 export function doMove(game: Game, move: Move) {
+  const now = new Date();
+  const timeRemaining = checkTimeout(game, now);
+
   const err = canDoMove(game, move);
   if (err) {
     throw new Error('Invalid move: ' + err);
@@ -98,6 +159,13 @@ export function doMove(game: Game, move: Move) {
   }
 
   game.history.push(record);
+
+  if (game.clock && timeRemaining) {
+    game.clock.remaining[game.currentPlayer] =
+      timeRemaining + game.clock.increment;
+    game.clock.lastMove = now;
+  }
+
   game.currentPlayer = playerOpposite(player);
 
   const road =

@@ -1,6 +1,7 @@
 import type { Coord, Direction, Game, Move, PieceVariant, Player } from '.';
 import { isValidCoord } from './board';
 import { coordEquals, dirFromAdjacent, offsetCoord } from './coord';
+import { current, isDraft } from 'immer';
 import * as game from './game';
 
 export type UIPiece = {
@@ -9,6 +10,7 @@ export type UIPiece = {
   pos: Coord;
   height: number;
   isFloating: boolean;
+  zPriority: number | null;
 };
 
 export type UITile = {
@@ -21,7 +23,8 @@ export type UITile = {
 
 export type GameUI = {
   actualGame: Game;
-  pieces: Map<number, UIPiece>;
+  pieces: UIPiece[];
+  priorityPieces: number[];
   tiles: UITile[][];
   partialMove: {
     take: number;
@@ -29,7 +32,6 @@ export type GameUI = {
     pos: Coord;
     dir: Direction | null;
   } | null;
-  onUpdate?: () => void;
   onMove?: (player: Player, move: Move) => void;
 };
 
@@ -38,25 +40,12 @@ export function boardSize(ui: GameUI): number {
 }
 
 export function newGameUI(game: Game): GameUI {
-  const size = game.board.size;
-  const tiles: UITile[][] = Array.from({ length: size }, () =>
-    Array.from({ length: size }, () => ({
-      owner: null,
-      highlighted: false,
-      selectable: false,
-      hoverable: false,
-      lastMove: false,
-    })),
-  );
-
-  const pieces = new Map<number, UIPiece>();
-
-  const gameUI = {
-    shownGame: game,
+  const gameUI: GameUI = {
     actualGame: game,
-    pieces,
-    tiles,
+    pieces: [],
+    tiles: [],
     partialMove: null,
+    priorityPieces: [],
   };
   onGameUpdate(gameUI);
   return gameUI;
@@ -74,6 +63,7 @@ export function doMove(ui: GameUI, move: Move, triggerMove: boolean) {
   const player = ui.actualGame.currentPlayer;
   game.doMove(ui.actualGame, move);
   ui.partialMove = null;
+  ui.priorityPieces = getLastMovePiecesInOrder(ui.actualGame);
   onGameUpdate(ui);
   if (triggerMove) {
     ui.onMove?.(player, move);
@@ -141,7 +131,7 @@ function addToPartialMoveHelper(ui: GameUI, pos: Coord) {
   }
 
   if (!ui.partialMove) {
-    let stack = ui.actualGame.board.pieces[pos.y][pos.x];
+    const stack = ui.actualGame.board.pieces[pos.y][pos.x];
     if (!stack) return;
 
     if (
@@ -159,7 +149,7 @@ function addToPartialMoveHelper(ui: GameUI, pos: Coord) {
     return;
   }
 
-  let stack =
+  const stack =
     ui.actualGame.board.pieces[ui.partialMove.pos.y][ui.partialMove.pos.x];
   if (!stack) {
     ui.partialMove = null;
@@ -210,11 +200,40 @@ function addToPartialMoveHelper(ui: GameUI, pos: Coord) {
   }
 }
 
+function getLastMovePiecesInOrder(game: Game): number[] {
+  if (game.history.length === 0) return [];
+  const lastMove = game.history[game.history.length - 1];
+  if (lastMove.type === 'place') {
+    return (
+      game.board.pieces[lastMove.pos.y][lastMove.pos.x]!.composition.map(
+        (piece) => piece.id,
+      ) || []
+    );
+  } else {
+    const pieces = [];
+    for (let i = 0; i < lastMove.drops.length; i++) {
+      const pos = offsetCoord(lastMove.from, lastMove.dir, i + 1);
+      const stack = game.board.pieces[pos.y][pos.x];
+      if (stack) {
+        pieces.push(
+          ...stack.composition
+            .slice(-lastMove.drops[i])
+            .map((piece) => piece.id),
+        );
+      }
+    }
+    return pieces;
+  }
+}
+
 function onGameUpdate(ui: GameUI) {
-  const shownGame = structuredClone(ui.actualGame);
+  const shownGame = structuredClone(
+    isDraft(ui) ? current(ui).actualGame : ui.actualGame,
+  );
   const partialMove = partialMoveToMove(ui.partialMove);
   if (partialMove) {
     game.doMove(shownGame, partialMove.move);
+    ui.priorityPieces = getLastMovePiecesInOrder(shownGame);
   }
 
   const floatingData = ui.partialMove && {
@@ -256,8 +275,12 @@ function onGameUpdate(ui: GameUI) {
     }
   }
 
+  ui.pieces = [];
+  ui.tiles = [];
+
   const isOngoing = ui.actualGame.gameState.type === 'ongoing';
   for (let y = 0; y < size; y++) {
+    ui.tiles[y] = [];
     for (let x = 0; x < size; x++) {
       const stack = shownGame.board.pieces[y][x];
       const pos = { x, y };
@@ -269,7 +292,11 @@ function onGameUpdate(ui: GameUI) {
             ? stack.composition.length - floatingData.floatingCount
             : null;
         for (let height = 0; height < stack.composition.length; height++) {
-          ui.pieces.set(stack.composition[height].id, {
+          const priority_index = ui.priorityPieces.findIndex(
+            (id) => id === stack.composition[height].id,
+          );
+          ui.pieces[stack.composition[height].id] = {
+            zPriority: priority_index >= 0 ? priority_index : null,
             player: stack.composition[height].player,
             variant:
               height === stack.composition.length - 1 ? stack.variant : 'flat',
@@ -278,7 +305,7 @@ function onGameUpdate(ui: GameUI) {
             isFloating:
               floatingHeightThreshold !== null &&
               height >= floatingHeightThreshold,
-          });
+          };
         }
         hoverable &&=
           ui.actualGame.history.length >= 2 &&
@@ -296,5 +323,15 @@ function onGameUpdate(ui: GameUI) {
     }
   }
 
-  ui.onUpdate?.();
+  if (ui.actualGame.history.length >= 1) {
+    const lastMove = ui.actualGame.history[ui.actualGame.history.length - 1];
+    if (lastMove.type === 'place') {
+      ui.tiles[lastMove.pos.y][lastMove.pos.x].lastMove = true;
+    } else if (lastMove.type === 'move') {
+      for (let i = 0; i <= lastMove.drops.length; i++) {
+        const pos = offsetCoord(lastMove.from, lastMove.dir, i);
+        ui.tiles[pos.y][pos.x].lastMove = true;
+      }
+    }
+  }
 }

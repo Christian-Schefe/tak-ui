@@ -1,13 +1,6 @@
-import useWebSocket from 'react-use-websocket';
-import { WS_URL, wsOptions } from '../websocket';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  ui,
-  type GameSettings,
-  type Move,
-  type Player,
-} from '../packages/tak-core';
-import { newGame } from '../packages/tak-core/game';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { ui, type GameSettings, type Move } from '../packages/tak-core';
+import { newGame, setTimeRemaining } from '../packages/tak-core/game';
 import { moveFromString } from '../packages/tak-core/move';
 import {
   dirFromAligned,
@@ -16,63 +9,95 @@ import {
 } from '../packages/tak-core/coord';
 import { useGameData } from '../gameData';
 import { Board3D } from './board3d/Board3D';
+import { useImmer } from 'use-immer';
+import { useWSListener } from '../auth';
+
+const placeRegex = /Game#\d+ P ([A-Z])([1-9])(?: ([CW]))?/;
+const moveRegex = /Game#\d+ M ([A-Z])([1-9]) ([A-Z])([1-9])((?: [1-9])*)/;
 
 export function PlayedGame({
   gameId,
   settings,
+  observed,
 }: {
   gameId: string;
   settings: GameSettings;
+  observed: boolean;
 }) {
-  const { sendMessage } = useWebSocket(WS_URL, {
-    ...wsOptions,
-    onOpen: () => {},
-    onClose: () => {},
-  });
+  const subscriptionState: RefObject<
+    'unsubscribed' | 'pending' | 'subscribed'
+  > = useRef('unsubscribed');
+
+  const { sendMessage } = useWSListener(
+    undefined,
+    () => {
+      subscriptionState.current = 'unsubscribed';
+    },
+    () => {
+      if (observed && gameId && subscriptionState.current === 'unsubscribed') {
+        subscriptionState.current = 'pending';
+        console.log('Subscribing to game:', gameId);
+        gameData.removeGameInfo(gameId);
+        sendMessage(`Observe ${gameId}`);
+      }
+    },
+  );
 
   const gameData = useGameData();
 
-  const [game, _setGame] = useState<ui.GameUI>(ui.newGameUI(newGame(settings)));
-  const [readMessageIndex, setReadMessageIndex] = useState(0);
-  const [receivedPlyIndex, setReceivedPlyIndex] = useState(0);
+  const [game, setGame] = useImmer<ui.GameUI>(() => {
+    const game = ui.newGameUI(newGame(settings));
+    if (!observed) {
+      game.onMove = (_player, move) => sendMoveMessage(move);
+    }
+    return game;
+  });
 
   useEffect(() => {
-    if (!gameData.gameInfo[gameId]) return;
-    const toRead = gameData.gameInfo[gameId].messages.length - readMessageIndex;
-    let addedPlys = 0;
+    if (observed && gameId && subscriptionState.current === 'unsubscribed') {
+      subscriptionState.current = 'pending';
+      console.log('Subscribing to game:', gameId);
+      gameData.removeGameInfo(gameId);
+      sendMessage(`Observe ${gameId}`);
+    }
+    return () => {
+      if (!gameId || !observed || subscriptionState.current !== 'subscribed')
+        return;
+      console.log('Unsubscribing from game:', gameId);
+      sendMessage(`Unobserve ${gameId}`);
+      gameData.removeGameInfo(gameId);
+      subscriptionState.current = 'unsubscribed';
+    };
+  }, [observed, gameData, sendMessage, gameId]);
+
+  const [readMessageIndex, setReadMessageIndex] = useState(0);
+
+  const moveMessages = gameData.gameInfo[gameId]?.moveMessages;
+
+  useEffect(() => {
+    if (!moveMessages) return;
+    const toRead = moveMessages.length - readMessageIndex;
+
+    console.log(moveMessages.length, readMessageIndex, toRead);
+
+    const moves: Move[] = [];
+
     for (let i = 0; i < toRead; i++) {
-      const message = gameData.gameInfo[gameId].messages[readMessageIndex + i];
-      console.log(
-        gameData.gameInfo[gameId].messages.length,
-        readMessageIndex + i,
-      );
-      if (!message) continue;
+      const message = moveMessages[readMessageIndex + i];
+      console.log(moveMessages.length, readMessageIndex + i, message);
 
-      if (message.startsWith(`Game#${gameId}`)) {
-        console.log('Game message received:', message);
-      }
-
-      const placeRegex = /Game#\d+ P ([A-Z])([1-9])(?: ([CW]))?/;
-      const match = message.match(placeRegex);
-      if (match) {
-        const [, col, row] = match;
-        const variant = match[3] ? (match[3] === 'C' ? 'C' : 'S') : '';
-        const move = moveFromString(`${variant}${col.toLowerCase()}${row}`);
-
-        if (game.actualGame.history.length <= receivedPlyIndex + addedPlys) {
-          console.log('Piece placed:', { move });
-          try {
-            ui.doMove(game, move, false);
-            addedPlys++;
-          } catch (err) {
-            console.error('desync: ', err);
-          }
-        }
-      }
-
-      const moveRegex = /Game#\d+ M ([A-Z])([1-9]) ([A-Z])([1-9])((?: [1-9])*)/;
+      const placeMatch = message.match(placeRegex);
       const moveMatch = message.match(moveRegex);
-      if (moveMatch) {
+
+      if (placeMatch) {
+        const [, col, row] = placeMatch;
+        const variant = placeMatch[3]
+          ? placeMatch[3] === 'C'
+            ? 'C'
+            : 'S'
+          : '';
+        moves.push(moveFromString(`${variant}${col.toLowerCase()}${row}`));
+      } else if (moveMatch) {
         const [, fromCol, fromRow, toCol, toRow, drops] = moveMatch;
         const dropNums = drops
           .split(' ')
@@ -83,24 +108,26 @@ export function PlayedGame({
         const toX = toCol.charCodeAt(0) - 'A'.charCodeAt(0);
         const toY = toRow.charCodeAt(0) - '1'.charCodeAt(0);
         const dir = dirFromAligned({ x: toX, y: toY }, { x: fromX, y: fromY })!;
-        const move = moveFromString(
-          `${dropNums.reduce((acc, n) => acc + n, 0)}${fromCol.toLowerCase()}${fromRow}${dirToString(dir)}${dropNums.join('')}`,
+        moves.push(
+          moveFromString(
+            `${dropNums.reduce((acc, n) => acc + n, 0)}${fromCol.toLowerCase()}${fromRow}${dirToString(dir)}${dropNums.join('')}`,
+          ),
         );
-
-        if (game.actualGame.history.length <= receivedPlyIndex + addedPlys) {
-          console.log('Piece moved:', { move });
-          try {
-            ui.doMove(game, move, false);
-            addedPlys++;
-          } catch (err) {
-            console.error('desync: ', err);
-          }
-        }
+      } else {
+        console.error('Failed to parse move message:', message);
       }
     }
     setReadMessageIndex((prev) => prev + toRead);
-    setReceivedPlyIndex((prev) => prev + addedPlys);
-  }, [gameData.gameInfo[gameId]?.messages, readMessageIndex]);
+    setGame((draft) => {
+      try {
+        for (const move of moves) {
+          ui.doMove(draft, move, false);
+        }
+      } catch (err) {
+        console.error('desync: ', err);
+      }
+    });
+  }, [setGame, moveMessages, readMessageIndex]);
 
   function sendMoveMessage(move: Move) {
     if (move.type === 'place') {
@@ -126,12 +153,6 @@ export function PlayedGame({
     }
   }
 
-  function onMove(_player: Player, move: Move) {
-    console.log('Sending move:', move);
-    sendMoveMessage(move);
-    setReceivedPlyIndex((prev) => prev + 1);
-  }
-
   const gameEntry = useMemo(
     () => gameData.games.find((g) => g.id.toString() === gameId),
     [gameData.games, gameId],
@@ -143,14 +164,29 @@ export function PlayedGame({
     black: { username: gameEntry?.black ?? 'Black', rating: 1000 },
   };
 
+  const timeMessages = gameData.gameInfo[gameId]?.timeMessages;
+  const lastTimeMessage = timeMessages
+    ? timeMessages[timeMessages.length - 1]
+    : null;
+  useEffect(() => {
+    setGame((draft) => {
+      if (!lastTimeMessage) return;
+      setTimeRemaining(
+        draft.actualGame,
+        lastTimeMessage,
+        lastTimeMessage.timestamp,
+      );
+    });
+  }, [setGame, lastTimeMessage]);
+
   return (
     <div className="w-full grow flex flex-col">
       <h2>Played Game</h2>
       <Board3D
         game={game}
+        setGame={setGame}
         playerInfo={playerInfo}
-        interactive={true}
-        onMove={onMove}
+        interactive={!observed}
       />
     </div>
   );

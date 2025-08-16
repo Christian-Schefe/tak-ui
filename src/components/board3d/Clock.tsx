@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FC } from 'react';
+import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { Color3, Vector3, type BaseTexture } from '@babylonjs/core';
 import { useBeforeRender } from 'react-babylonjs';
@@ -9,6 +9,8 @@ import marbleWhiteColor from '../../assets/textures/marble_white/marble_0008_col
 import marbleWhiteNormal from '../../assets/textures/marble_white/marble_0008_normal_opengl_1k.png';
 import marbleWhiteAO from '../../assets/textures/marble_white/marble_0008_ao_1k.jpg';
 import marbleWhiteRoughness from '../../assets/textures/marble_white/marble_0008_roughness_1k.jpg';
+import type { Player } from '../../packages/tak-core';
+import { getTimeRemaining } from '../../packages/tak-core/game';
 
 const segmentTransforms = [
   { pos: new Vector3(0, 0, 0), horizontal: true, bottom: false },
@@ -36,26 +38,28 @@ export const Clock: FC<{
   game: GameUI;
   pos: Vector3;
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
-}> = ({ game, pos, cubeTextureRef }) => {
-  const [refTime, setRefTime] = useState({
-    remaining: 300 * 1000,
-    timestamp: Date.now(),
-  });
-  const remaining = refTime.remaining - (Date.now() - refTime.timestamp);
+  player: Player;
+}> = ({ game, pos, cubeTextureRef, player }) => {
+  const remaining = getTimeRemaining(game.actualGame, player, new Date()) ?? 0;
+
   const secondDigit = Math.floor((remaining % 10_000) / 1_000);
   const tenSecondDigit = Math.floor((remaining % 60_000) / 10_000);
   const minuteDigit = Math.floor((remaining % 600_000) / 60_000);
   const tenMinuteDigit = Math.floor((remaining % 3_600_000) / 600_000);
-  const currentAnimationState = {
-    segmentExtensions: [
-      secondDigit,
-      tenSecondDigit,
-      minuteDigit,
-      tenMinuteDigit,
-    ].map((digit) =>
-      digitToSegments[digit].map((active) => (active ? 1 : 0) as number),
-    ),
-  };
+
+  const currentAnimationState = useMemo(
+    () => ({
+      segmentExtensions: [
+        secondDigit,
+        tenSecondDigit,
+        minuteDigit,
+        tenMinuteDigit,
+      ].map((digit) =>
+        digitToSegments[digit].map((active) => (active ? 1 : 0) as number),
+      ),
+    }),
+    [secondDigit, tenSecondDigit, minuteDigit, tenMinuteDigit],
+  );
 
   const targetAnimationState = useRef(currentAnimationState);
   useEffect(() => {

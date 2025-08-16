@@ -74,7 +74,7 @@ export function canMovePiece(
   if (!isValidCoord(board.size, to))
     return 'Invalid move end position: ' + coordToString(to);
   const take = drops.reduce((acc, drop) => acc + drop, 0);
-  if (drops.length == 0 || take == 0) return 'Invalid move';
+  if (drops.length === 0 || take === 0) return 'Invalid move';
 
   const stack = board.pieces[from.y][from.x];
   if (!stack || stack.composition.length < take)
@@ -276,7 +276,7 @@ export function toPositionString(board: Board) {
         }
         result.push(
           `${stack.composition
-            .map((piece) => (piece.player == 'white' ? '1' : '2'))
+            .map((piece) => (piece.player === 'white' ? '1' : '2'))
             .join('')}${variantToString(stack.variant)}`,
         );
       }

@@ -7,7 +7,7 @@ import {
 } from '@babylonjs/core';
 import { useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { Engine, Scene, Skybox } from 'react-babylonjs';
-import { ui, type PieceVariant } from '../../packages/tak-core';
+import { ui, type Coord, type PieceVariant } from '../../packages/tak-core';
 import { Table, Board, Tile, Piece } from './Objects';
 import type { BoardProps } from '../board';
 import { coordToString } from '../../packages/tak-core/coord';
@@ -20,18 +20,10 @@ export type EnvConfig = {
   envColor: Color3;
 };
 
-export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
-  const [_updateTrigger, setUpdateTrigger] = useState<number>(0);
+export const Board3D: FC<BoardProps> = ({ game, setGame, interactive }) => {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const canvasContainer = useRef<HTMLDivElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 1, height: 2 });
-
-  useEffect(() => {
-    game.onUpdate = () => {
-      setUpdateTrigger((prev) => prev + 1);
-    };
-    game.onMove = onMove;
-  }, [game]);
 
   const size = ui.boardSize(game);
   const target = new Vector3(size / 2, 1, size / 2);
@@ -39,7 +31,6 @@ export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
   function handleResize() {
     const boundingRect = canvasContainer.current?.getBoundingClientRect();
     const { width, height } = boundingRect || { width: 0, height: 0 };
-    console.log('resize', width, height);
     setDimensions({ width: Math.round(width), height: Math.round(height) });
   }
 
@@ -65,7 +56,7 @@ export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
     }
   }
 
-  const [_, setTexturesLoaded] = useState(false);
+  const [, setTexturesLoaded] = useState(false);
   const cubeTextureRef = useRef<BaseTexture | undefined>(undefined);
   const cubeTextureCloneRef = useRef<BaseTexture | undefined>(undefined);
   const cubeTextureCallback = useCallback((node: CubeTexture | null) => {
@@ -80,6 +71,11 @@ export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
       setTexturesLoaded(true); // trigger render and props assignment
     }
   }, []);
+
+  const onClickTile = (pos: Coord) => {
+    if (!interactive) return;
+    setGame((draft) => ui.tryPlaceOrAddToPartialMove(draft, pos, variant));
+  };
 
   return (
     <div className="flex flex-col grow w-full">
@@ -130,56 +126,38 @@ export const Board3D: FC<BoardProps> = ({ game, interactive, onMove }) => {
               intensity={1}
               direction={new Vector3(0, 1, 0)}
             />
-            <directionalLight
-              name="dl"
-              intensity={0.0}
-              direction={new Vector3(1, -1, 1).normalize()}
-              shadowMinZ={0.1}
-              shadowMaxZ={20}
-              diffuse={Color3.FromHexString('#ffaaaa')}
-            >
-              <shadowGenerator
-                mapSize={1024}
-                usePercentageCloserFiltering
-                blurKernel={64}
-                bias={0.001}
-                normalBias={0.01}
-                shadowCastChildren
-              >
-                {tileCoords.map((pos) => (
-                  <Tile
-                    key={coordToString(pos)}
-                    game={game}
-                    pos={pos}
-                    cubeTextureRef={cubeTextureRef}
-                    interactive={interactive}
-                    onClick={() => {
-                      if (!interactive) return;
-                      ui.tryPlaceOrAddToPartialMove(game, pos, variant);
-                    }}
-                  />
-                ))}
-                {pieceIds.map((id) => (
-                  <Piece
-                    key={id}
-                    game={game}
-                    id={id}
-                    cubeTextureRef={cubeTextureRef}
-                  />
-                ))}
-                <Clock
-                  game={game}
-                  pos={new Vector3(size / 2 + size, 0, size / 2)}
-                  cubeTextureRef={cubeTextureRef}
-                />
-                <Clock
-                  game={game}
-                  pos={new Vector3(size / 2 - size, 0, size / 2)}
-                  cubeTextureRef={cubeTextureRef}
-                />
-                <Board size={size} cubeTextureRef={cubeTextureRef} />
-              </shadowGenerator>
-            </directionalLight>
+
+            {tileCoords.map((pos) => (
+              <Tile
+                key={coordToString(pos)}
+                tile={game.tiles[pos.y][pos.x]}
+                pos={pos}
+                cubeTextureRef={cubeTextureRef}
+                interactive={interactive}
+                onClick={() => onClickTile(pos)}
+              />
+            ))}
+            {pieceIds.map((id) => (
+              <Piece
+                key={id}
+                game={game}
+                id={id}
+                cubeTextureRef={cubeTextureRef}
+              />
+            ))}
+            <Clock
+              game={game}
+              pos={new Vector3(size / 2 + size, 0, size / 2)}
+              cubeTextureRef={cubeTextureRef}
+              player="white"
+            />
+            <Clock
+              game={game}
+              pos={new Vector3(size / 2 - size, 0, size / 2)}
+              cubeTextureRef={cubeTextureRef}
+              player="black"
+            />
+            <Board size={size} cubeTextureRef={cubeTextureRef} />
             <Table size={size} cubeTextureRef={cubeTextureRef} />
           </Scene>
         </Engine>

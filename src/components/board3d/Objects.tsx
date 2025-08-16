@@ -5,9 +5,9 @@ import {
   Quaternion,
   Vector3,
 } from '@babylonjs/core';
-import { useEffect, useRef, useState, type FC } from 'react';
+import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import type { Coord } from '../../packages/tak-core';
-import type { GameUI, UIPiece } from '../../packages/tak-core/ui';
+import type { GameUI, UIPiece, UITile } from '../../packages/tak-core/ui';
 import { useBeforeRender, useClick, useHover } from 'react-babylonjs';
 import woodColor from '../../assets/textures/wood_0066/wood_0066_color_1k.jpg';
 import woodNormal from '../../assets/textures/wood_0066/wood_0066_normal_opengl_1k.png';
@@ -82,30 +82,36 @@ export const Board: FC<{
 };
 
 export const Tile: FC<{
-  game: GameUI;
+  tile: UITile;
   pos: Coord;
   interactive: boolean;
   onClick: () => void;
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
-}> = ({ game, pos, onClick, cubeTextureRef, interactive }) => {
-  const isEven = (num: number) => num % 2 === 0;
+}> = ({ tile, pos, onClick, cubeTextureRef, interactive }) => {
+  const isEven = (pos.x + pos.y) % 2 === 0;
   const [isHover, setIsHover] = useState(false);
-  const data = game.tiles[pos.y][pos.x];
   const boxRef = useRef<Mesh>(null);
   useHover(
     () => setIsHover(true),
     () => setIsHover(false),
     boxRef,
   );
-  const isBeingHovered = interactive && isHover && data.hoverable;
-  const normalColor = isEven(pos.x + pos.y)
+  const isBeingHovered = interactive && isHover && tile.hoverable;
+  const normalColor = isEven
     ? Color3.FromHexString('#888888')
     : Color3.FromHexString('#666666');
 
-  const currentAnimationState = {
-    emissive: (data.selectable ? 0.05 : 0) + (isBeingHovered ? 0.06 : 0),
-    height: isBeingHovered ? 0.015 : 0,
-  };
+  const currentAnimationState = useMemo(
+    () => ({
+      emissive:
+        (tile.selectable ? 0.05 : 0) +
+        (isBeingHovered ? 0.06 : 0) +
+        (tile.lastMove ? 0.2 : 0),
+      height: isBeingHovered ? 0.015 : 0,
+      emissiveColor: tile.lastMove ? Color3.Blue() : Color3.White(),
+    }),
+    [isBeingHovered, tile.selectable, tile.lastMove],
+  );
 
   const targetAnimationState = useRef(currentAnimationState);
   useEffect(() => {
@@ -120,6 +126,11 @@ export const Tile: FC<{
     setActualAnimationState((prev) => ({
       emissive: Lerp(prev.emissive, targetAnimationState.current.emissive, 0.3),
       height: Lerp(prev.height, targetAnimationState.current.height, 0.3),
+      emissiveColor: Color3.Lerp(
+        prev.emissiveColor,
+        targetAnimationState.current.emissiveColor,
+        0.3,
+      ),
     }));
   });
 
@@ -129,7 +140,6 @@ export const Tile: FC<{
   }, [onClick]);
 
   useClick(() => {
-    console.log('Tile clicked:', pos);
     curOnClick.current();
   }, boxRef);
 
@@ -155,8 +165,8 @@ export const Tile: FC<{
       roughness={0.5}
       specularIntensity={0.05}
       albedoColor={normalColor}
-      textureScale={1 / game.actualGame.board.size}
-      emissiveColor={Color3.White()}
+      textureScale={1 / 10}
+      emissiveColor={actualAnimationState.emissiveColor}
       emissiveIntensity={actualAnimationState.emissive}
       ref={boxRef}
     />
@@ -168,7 +178,7 @@ export const Piece: FC<{
   id: number;
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
 }> = ({ game, id, cubeTextureRef }) => {
-  const data = game.pieces.get(id)!;
+  const data = game.pieces[id];
 
   const curData = useRef(data);
   useEffect(() => {
