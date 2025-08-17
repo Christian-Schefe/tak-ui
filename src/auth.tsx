@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
   useRef,
+  useMemo,
 } from 'react';
 import { msgToString, WS_URL, wsOptions } from './websocket';
 import { router } from './router';
@@ -22,17 +23,24 @@ export interface AuthState {
   logout: () => void;
 }
 
-export interface WebSocketState {
+export interface WebSocketMessageState {
   lastMessage: MessageEvent | null;
+}
+
+export interface WebSocketAPIState {
   sendMessage: (message: string) => void;
   addOnCloseListener: (key: string, callback: () => void) => void;
   addOnOpenListener: (key: string, callback: () => void) => void;
   removeOnCloseListener: (key: string) => void;
   removeOnOpenListener: (key: string) => void;
 }
-
 const AuthContext = createContext<AuthState | undefined>(undefined);
-const WebSocketContext = createContext<WebSocketState | undefined>(undefined);
+const WebSocketMessageContext = createContext<
+  WebSocketMessageState | undefined
+>(undefined);
+const WebSocketAPIContext = createContext<WebSocketAPIState | undefined>(
+  undefined,
+);
 
 export type TextMessage = {
   text: string;
@@ -58,25 +66,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
-  const addOnCloseListener = (key: string, callback: () => void) => {
-    onCloseListeners.current.push({ key, callback });
-  };
+  const addOnCloseListener = useCallback(
+    (key: string, callback: () => void) => {
+      onCloseListeners.current.push({ key, callback });
+    },
+    [],
+  );
 
-  const removeOnCloseListener = (key: string) => {
+  const removeOnCloseListener = useCallback((key: string) => {
     onCloseListeners.current = onCloseListeners.current.filter(
       (listener) => listener.key !== key,
     );
-  };
+  }, []);
 
-  const addOnOpenListener = (key: string, callback: () => void) => {
+  const addOnOpenListener = useCallback((key: string, callback: () => void) => {
     onOpenListeners.current.push({ key, callback });
-  };
+  }, []);
 
-  const removeOnOpenListener = (key: string) => {
+  const removeOnOpenListener = useCallback((key: string) => {
     onOpenListeners.current = onOpenListeners.current.filter(
       (listener) => listener.key !== key,
     );
-  };
+  }, []);
+
+  const api = useMemo<WebSocketAPIState>(() => {
+    return {
+      sendMessage,
+      addOnCloseListener,
+      removeOnCloseListener,
+      addOnOpenListener,
+      removeOnOpenListener,
+    };
+  }, [
+    sendMessage,
+    addOnCloseListener,
+    removeOnCloseListener,
+    addOnOpenListener,
+    removeOnOpenListener,
+  ]);
 
   const sendToken = useCallback(() => {
     const token = localStorage.getItem('auth-token');
@@ -141,18 +168,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
-      <WebSocketContext.Provider
-        value={{
-          lastMessage,
-          sendMessage,
-          addOnCloseListener,
-          removeOnCloseListener,
-          addOnOpenListener,
-          removeOnOpenListener,
-        }}
-      >
-        {children}
-      </WebSocketContext.Provider>
+      <WebSocketMessageContext.Provider value={{ lastMessage }}>
+        <WebSocketAPIContext.Provider value={api}>
+          {children}
+        </WebSocketAPIContext.Provider>
+      </WebSocketMessageContext.Provider>
     </AuthContext.Provider>
   );
 }
@@ -167,50 +187,63 @@ export function useAuth() {
 }
 
 /* eslint-disable-next-line react-refresh/only-export-components */
-export function useWS() {
-  const context = useContext(WebSocketContext);
+export function useWSAPI() {
+  const context = useContext(WebSocketAPIContext);
   if (context === undefined) {
-    throw new Error('useWS must be used within a WebSocketProvider');
+    throw new Error('useWSAPI must be used within a WebSocketAPIProvider');
   }
   return context;
 }
 
 /* eslint-disable-next-line react-refresh/only-export-components */
-export function useWSListener(
-  onMessage?: (msg: TextMessage) => void,
-  onClose?: () => void,
-  onOpen?: () => void,
-) {
-  const context = useWS();
+export function useWSListener({
+  onMessage,
+  onClose,
+  onOpen,
+}: {
+  onMessage?: (msg: TextMessage) => void;
+  onClose?: () => void;
+  onOpen?: () => void;
+}) {
+  const api = useWSAPI();
+  const {
+    addOnOpenListener,
+    addOnCloseListener,
+    removeOnOpenListener,
+    removeOnCloseListener,
+  } = api;
+  const { lastMessage } = useContext(WebSocketMessageContext) || {
+    lastMessage: null,
+  };
   const callbackRef = useRef({ onMessage, onClose, onOpen });
   callbackRef.current = { onMessage, onClose, onOpen };
 
   useEffect(() => {
-    if (!context.lastMessage) return;
-    msgToString(context.lastMessage).then((text) => {
+    if (!lastMessage) return;
+    msgToString(lastMessage).then((text) => {
       if (!text || !callbackRef.current.onMessage) return;
       callbackRef.current.onMessage({ text, timestamp: new Date() });
     });
-  }, [context.lastMessage]);
+  }, [lastMessage]);
 
   useEffect(() => {
     if (!callbackRef.current.onClose) return;
     const id = uuidv4();
     console.log('Adding onClose listener:', id);
-    context.addOnCloseListener(id, callbackRef.current.onClose);
+    addOnCloseListener(id, callbackRef.current.onClose);
     return () => {
-      context.removeOnCloseListener(id);
+      removeOnCloseListener(id);
     };
-  }, [context]);
+  }, [addOnCloseListener, removeOnCloseListener]);
 
   useEffect(() => {
     if (!callbackRef.current.onOpen) return;
     const id = uuidv4();
-    context.addOnOpenListener(id, callbackRef.current.onOpen);
+    addOnOpenListener(id, callbackRef.current.onOpen);
     return () => {
-      context.removeOnOpenListener(id);
+      removeOnOpenListener(id);
     };
-  }, [context]);
+  }, [addOnOpenListener, removeOnOpenListener]);
 
-  return context;
+  return api;
 }

@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import type { GameUI } from '../../packages/tak-core/ui';
-import { Color3, Vector3, type BaseTexture } from '@babylonjs/core';
+import {
+  Color3,
+  Mesh,
+  Texture,
+  Vector3,
+  type BaseTexture,
+} from '@babylonjs/core';
 import { useBeforeRender } from 'react-babylonjs';
 import { PBRBox } from './Box';
 import { Lerp } from './Objects';
@@ -11,6 +17,7 @@ import marbleWhiteAO from '../../assets/textures/marble_white/marble_0008_ao_1k.
 import marbleWhiteRoughness from '../../assets/textures/marble_white/marble_0008_roughness_1k.jpg';
 import type { Player } from '../../packages/tak-core';
 import { getTimeRemaining } from '../../packages/tak-core/game';
+import { Control } from '@babylonjs/gui/2D/controls/control';
 
 const segmentTransforms = [
   { pos: new Vector3(0, 0, 0), horizontal: true, bottom: false },
@@ -144,5 +151,42 @@ export const Clock: FC<{
         }),
       )}
     </PBRBox>
+  );
+};
+
+export const PlayerInfoPanel: FC<{
+  position: Vector3;
+  username: string;
+  rating: number;
+}> = ({ position, username, rating }) => {
+  const aspectRatio = 3 / 1;
+  return (
+    <plane
+      name="player-info-panel"
+      width={3}
+      height={3 / aspectRatio}
+      position={position}
+      billboardMode={Mesh.BILLBOARDMODE_X | Mesh.BILLBOARDMODE_Z}
+    >
+      <advancedDynamicTexture
+        name="player-info-texture"
+        height={1024 / aspectRatio}
+        width={1024}
+        createForParentMesh
+        generateMipMaps={true}
+        samplingMode={Texture.TRILINEAR_SAMPLINGMODE}
+      >
+        <textBlock
+          name="player-username"
+          text={`${username} (${rating})`}
+          color="black"
+          fontSize={100}
+          fontStyle="bold"
+          paddingLeft="20px"
+          textHorizontalAlignment={Control.HORIZONTAL_ALIGNMENT_CENTER}
+          textVerticalAlignment={Control.VERTICAL_ALIGNMENT_CENTER}
+        />
+      </advancedDynamicTexture>
+    </plane>
   );
 };

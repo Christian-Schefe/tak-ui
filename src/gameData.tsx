@@ -232,9 +232,12 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const { sendMessage } = useWSListener(onMsg, () => {
-    console.warn('Removing game info');
-    setGameInfo({});
+  const { sendMessage } = useWSListener({
+    onMessage: onMsg,
+    onClose: () => {
+      console.warn('Removing game info');
+      setGameInfo({});
+    },
   });
 
   useEffect(() => {

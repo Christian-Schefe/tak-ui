@@ -1,0 +1,17 @@
+services:
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile_dev:/etc/caddy/Caddyfile
+      - ./dist:/srv/www/dist
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - SITE_ADDRESS=localhost
+
+volumes:
+  caddy_data:
+  caddy_config:

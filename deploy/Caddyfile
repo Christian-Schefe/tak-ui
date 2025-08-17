@@ -1,0 +1,5 @@
+{$SITE_ADDRESS} {
+  root * /srv/www/dist
+  file_server
+  tls /certs/certificate.pem /certs/key.pem
+}

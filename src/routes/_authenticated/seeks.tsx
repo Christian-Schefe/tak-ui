@@ -6,7 +6,7 @@ import {
 } from '../../gameData';
 import { useRatings } from '../../api/ratings';
 import { useMemo } from 'react';
-import { useWS } from '../../auth';
+import { useWSAPI } from '../../auth';
 
 export const Route = createFileRoute('/_authenticated/seeks')({
   component: RouteComponent,
@@ -24,7 +24,7 @@ function getDefaultPieces(
 function RouteComponent() {
   const { seeks, games } = useGameData();
   const nav = useNavigate();
-  const { sendMessage } = useWS();
+  const { sendMessage } = useWSAPI();
 
   const tagClass = 'rounded-full bg-surface-600 px-2';
 

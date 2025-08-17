@@ -1,0 +1,18 @@
+services:
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./dist:/srv/www/dist
+      - ./certs:/certs
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - SITE_ADDRESS=tak.meeshroom.xyz
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -50,8 +50,8 @@ export const Table: FC<{
       colorTextureUrl={woodColor}
       aoTextureUrl={woodAO}
       roughnessTextureUrl={woodRoughness}
-      metallic={0.5}
-      roughness={0.2}
+      metallic={0.4}
+      roughness={0.4}
       specularIntensity={0.05}
     />
   );
@@ -124,12 +124,12 @@ export const Tile: FC<{
 
   useBeforeRender(() => {
     setActualAnimationState((prev) => ({
-      emissive: Lerp(prev.emissive, targetAnimationState.current.emissive, 0.3),
-      height: Lerp(prev.height, targetAnimationState.current.height, 0.3),
+      emissive: Lerp(prev.emissive, targetAnimationState.current.emissive, 0.2),
+      height: Lerp(prev.height, targetAnimationState.current.height, 0.15),
       emissiveColor: Color3.Lerp(
         prev.emissiveColor,
         targetAnimationState.current.emissiveColor,
-        0.3,
+        0.1,
       ),
     }));
   });

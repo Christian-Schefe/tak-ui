@@ -28,12 +28,11 @@ export function PlayedGame({
     'unsubscribed' | 'pending' | 'subscribed'
   > = useRef('unsubscribed');
 
-  const { sendMessage } = useWSListener(
-    undefined,
-    () => {
+  const { sendMessage } = useWSListener({
+    onClose: () => {
       subscriptionState.current = 'unsubscribed';
     },
-    () => {
+    onOpen: () => {
       if (observed && gameId && subscriptionState.current === 'unsubscribed') {
         subscriptionState.current = 'pending';
         console.log('Subscribing to game:', gameId);
@@ -41,7 +40,7 @@ export function PlayedGame({
         sendMessage(`Observe ${gameId}`);
       }
     },
-  );
+  });
 
   const gameData = useGameData();
 
@@ -181,7 +180,6 @@ export function PlayedGame({
 
   return (
     <div className="w-full grow flex flex-col">
-      <h2>Played Game</h2>
       <Board3D
         game={game}
         setGame={setGame}

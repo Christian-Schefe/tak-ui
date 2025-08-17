@@ -12,15 +12,19 @@ import { Table, Board, Tile, Piece } from './Objects';
 import type { BoardProps } from '../board';
 import { coordToString } from '../../packages/tak-core/coord';
 import envTexture from '../../assets/766-hdri-skies-com.env';
-import skyboxTexture from '../../assets/Standard-Cube-Map/skies_nx.jpg';
-import { Clock } from './Clock';
+import { Clock, PlayerInfoPanel } from './Clock';
 
 export type EnvConfig = {
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
   envColor: Color3;
 };
 
-export const Board3D: FC<BoardProps> = ({ game, setGame, interactive }) => {
+export const Board3D: FC<BoardProps> = ({
+  game,
+  setGame,
+  interactive,
+  playerInfo,
+}) => {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const canvasContainer = useRef<HTMLDivElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 1, height: 2 });
@@ -105,7 +109,7 @@ export const Board3D: FC<BoardProps> = ({ game, setGame, interactive }) => {
             />
 
             <Skybox
-              rootUrl={skyboxTexture.replace('_nx.jpg', '')}
+              rootUrl={"/Standard-Cube-Map/skies"}
               size={1000}
             />
 
@@ -147,41 +151,53 @@ export const Board3D: FC<BoardProps> = ({ game, setGame, interactive }) => {
             ))}
             <Clock
               game={game}
-              pos={new Vector3(size / 2 + size, 0, size / 2)}
+              pos={new Vector3(size / 2 - size, 0, size / 2)}
               cubeTextureRef={cubeTextureRef}
               player="white"
             />
+            <PlayerInfoPanel
+              position={new Vector3(size / 2 - size, 0.3, size / 2 + 0.5)}
+              username={playerInfo.white.username}
+              rating={playerInfo.white.rating}
+            />
             <Clock
               game={game}
-              pos={new Vector3(size / 2 - size, 0, size / 2)}
+              pos={new Vector3(size / 2 + size, 0, size / 2)}
               cubeTextureRef={cubeTextureRef}
               player="black"
+            />
+            <PlayerInfoPanel
+              position={new Vector3(size / 2 + size, 0.3, size / 2 + 0.5)}
+              username={playerInfo.black.username}
+              rating={playerInfo.black.rating}
             />
             <Board size={size} cubeTextureRef={cubeTextureRef} />
             <Table size={size} cubeTextureRef={cubeTextureRef} />
           </Scene>
         </Engine>
       </div>
-      <div className="w-full flex p-2 gap-2">
-        <button
-          className={`grow w-0 bg-surface-500 hover:bg-surface-550 active:bg-surface-600 p-2 rounded-md outline-primary-500 ${variant === 'flat' ? 'outline-2' : ''}`}
-          onClick={() => setVariant('flat')}
-        >
-          Flat
-        </button>
-        <button
-          className={`grow w-0 bg-surface-500 hover:bg-surface-550 active:bg-surface-600 p-2 rounded-md outline-primary-500 ${variant === 'standing' ? 'outline-2' : ''}`}
-          onClick={() => setVariant('standing')}
-        >
-          Wall
-        </button>
-        <button
-          className={`grow w-0 bg-surface-500 hover:bg-surface-550 active:bg-surface-600 p-2 rounded-md outline-primary-500 ${variant === 'capstone' ? 'outline-2' : ''}`}
-          onClick={() => setVariant('capstone')}
-        >
-          Capstone
-        </button>
-      </div>
+      {interactive && (
+        <div className="w-full flex p-2 gap-2">
+          <button
+            className={`grow w-0 bg-surface-500 hover:bg-surface-550 active:bg-surface-600 p-2 rounded-md outline-primary-500 ${variant === 'flat' ? 'outline-2' : ''}`}
+            onClick={() => setVariant('flat')}
+          >
+            Flat
+          </button>
+          <button
+            className={`grow w-0 bg-surface-500 hover:bg-surface-550 active:bg-surface-600 p-2 rounded-md outline-primary-500 ${variant === 'standing' ? 'outline-2' : ''}`}
+            onClick={() => setVariant('standing')}
+          >
+            Wall
+          </button>
+          <button
+            className={`grow w-0 bg-surface-500 hover:bg-surface-550 active:bg-surface-600 p-2 rounded-md outline-primary-500 ${variant === 'capstone' ? 'outline-2' : ''}`}
+            onClick={() => setVariant('capstone')}
+          >
+            Capstone
+          </button>
+        </div>
+      )}
     </div>
   );
 };
