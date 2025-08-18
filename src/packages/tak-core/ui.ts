@@ -51,6 +51,11 @@ export function newGameUI(game: Game): GameUI {
   return gameUI;
 }
 
+export function checkTimeout(ui: GameUI) {
+  game.checkTimeout(ui.actualGame, new Date());
+  onGameUpdate(ui);
+}
+
 export function canDoMove(ui: GameUI, move: Move): boolean {
   const err = game.canDoMove(ui.actualGame, move);
   if (err) {

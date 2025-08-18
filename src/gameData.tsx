@@ -1,7 +1,14 @@
 import { useSeeks } from './api/seeks';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { useWSListener, type TextMessage } from './auth';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+import { type TextMessage } from './auth';
 import type { Player } from './packages/tak-core';
+import { useWSListener } from './authHooks';
 
 export interface GameDataState {
   seeks: SeekEntry[];
@@ -232,8 +239,13 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const { sendMessage } = useWSListener({
+  useWSListener({
     onMessage: onMsg,
+    onOpen: () => {
+      setGameInfo({});
+      setSeeks([]);
+      setGames([]);
+    },
     onClose: () => {
       console.warn('Removing game info');
       setGameInfo({});
@@ -241,23 +253,18 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    sendMessage('Protocol 2');
-    console.log('Sent Protocol 2');
-  }, [sendMessage]);
-
-  useEffect(() => {
     if (freshSeeks) {
       setSeeks(freshSeeks);
     }
   }, [freshSeeks]);
 
-  const removeGameInfo = (id: string) => {
+  const removeGameInfo = useCallback((id: string) => {
     setGameInfo((prev) => {
       const newGameInfo = { ...prev };
       delete newGameInfo[id];
       return newGameInfo;
     });
-  };
+  }, []);
 
   return (
     <GameDataContext.Provider

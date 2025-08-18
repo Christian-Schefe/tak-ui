@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
 import { ui, type GameSettings, type Move } from '../packages/tak-core';
 import { newGame, setTimeRemaining } from '../packages/tak-core/game';
 import { moveFromString } from '../packages/tak-core/move';
@@ -7,10 +13,12 @@ import {
   dirToString,
   offsetCoord,
 } from '../packages/tak-core/coord';
-import { useGameData } from '../gameData';
+import { type GameListEntry, useGameData } from '../gameData';
 import { Board3D } from './board3d/Board3D';
 import { useImmer } from 'use-immer';
-import { useWSListener } from '../auth';
+import { useWSListener } from '../authHooks';
+import { useSettings } from '../settings';
+import { Board2D } from './board2d/Board2D';
 
 const placeRegex = /Game#\d+ P ([A-Z])([1-9])(?: ([CW]))?/;
 const moveRegex = /Game#\d+ M ([A-Z])([1-9]) ([A-Z])([1-9])((?: [1-9])*)/;
@@ -37,6 +45,7 @@ export function PlayedGame({
         subscriptionState.current = 'pending';
         console.log('Subscribing to game:', gameId);
         gameData.removeGameInfo(gameId);
+        resetGame();
         sendMessage(`Observe ${gameId}`);
       }
     },
@@ -52,11 +61,17 @@ export function PlayedGame({
     return game;
   });
 
+  const resetGame = useCallback(() => {
+    console.log('resetting game');
+    setGame(() => ui.newGameUI(newGame(settings)));
+  }, [setGame, settings]);
+
   useEffect(() => {
     if (observed && gameId && subscriptionState.current === 'unsubscribed') {
       subscriptionState.current = 'pending';
       console.log('Subscribing to game:', gameId);
       gameData.removeGameInfo(gameId);
+      resetGame();
       sendMessage(`Observe ${gameId}`);
     }
     return () => {
@@ -67,7 +82,7 @@ export function PlayedGame({
       gameData.removeGameInfo(gameId);
       subscriptionState.current = 'unsubscribed';
     };
-  }, [observed, gameData, sendMessage, gameId]);
+  }, [observed, gameData, sendMessage, gameId, resetGame]);
 
   const [readMessageIndex, setReadMessageIndex] = useState(0);
 
@@ -75,6 +90,9 @@ export function PlayedGame({
 
   useEffect(() => {
     if (!moveMessages) return;
+    if (readMessageIndex === 0) {
+      resetGame();
+    }
     const toRead = moveMessages.length - readMessageIndex;
 
     console.log(moveMessages.length, readMessageIndex, toRead);
@@ -126,7 +144,7 @@ export function PlayedGame({
         console.error('desync: ', err);
       }
     });
-  }, [setGame, moveMessages, readMessageIndex]);
+  }, [setGame, resetGame, moveMessages, readMessageIndex]);
 
   function sendMoveMessage(move: Move) {
     if (move.type === 'place') {
@@ -152,15 +170,18 @@ export function PlayedGame({
     }
   }
 
-  const gameEntry = useMemo(
-    () => gameData.games.find((g) => g.id.toString() === gameId),
-    [gameData.games, gameId],
+  const gameEntry = useRef<GameListEntry | null>(
+    gameData.games.find((g) => g.id.toString() === gameId) ?? null,
   );
 
-  //TODO: keep player info after game finishes. (in a ref, for example)
+  useEffect(() => {
+    gameEntry.current =
+      gameData.games.find((g) => g.id.toString() === gameId) ?? null;
+  }, [gameData.games, gameId]);
+
   const playerInfo = {
-    white: { username: gameEntry?.white ?? 'White', rating: 1000 },
-    black: { username: gameEntry?.black ?? 'Black', rating: 1000 },
+    white: { username: gameEntry.current?.white ?? 'White', rating: 1000 },
+    black: { username: gameEntry.current?.black ?? 'Black', rating: 1000 },
   };
 
   const timeMessages = gameData.gameInfo[gameId]?.timeMessages;
@@ -178,14 +199,26 @@ export function PlayedGame({
     });
   }, [setGame, lastTimeMessage]);
 
+  const { boardType } = useSettings();
+
   return (
     <div className="w-full grow flex flex-col">
-      <Board3D
-        game={game}
-        setGame={setGame}
-        playerInfo={playerInfo}
-        interactive={!observed}
-      />
+      {boardType === '2d' && (
+        <Board2D
+          game={game}
+          setGame={setGame}
+          playerInfo={playerInfo}
+          interactive={!observed}
+        />
+      )}
+      {boardType === '3d' && (
+        <Board3D
+          game={game}
+          setGame={setGame}
+          playerInfo={playerInfo}
+          interactive={!observed}
+        />
+      )}
     </div>
   );
 }

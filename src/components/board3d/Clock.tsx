@@ -18,6 +18,7 @@ import marbleWhiteRoughness from '../../assets/textures/marble_white/marble_0008
 import type { Player } from '../../packages/tak-core';
 import { getTimeRemaining } from '../../packages/tak-core/game';
 import { Control } from '@babylonjs/gui/2D/controls/control';
+import { useRafLoop } from 'react-use';
 
 const segmentTransforms = [
   { pos: new Vector3(0, 0, 0), horizontal: true, bottom: false },
@@ -43,16 +44,28 @@ const digitToSegments = [
 
 export const Clock: FC<{
   game: GameUI;
+  onTimeout: () => void;
   pos: Vector3;
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
   player: Player;
-}> = ({ game, pos, cubeTextureRef, player }) => {
-  const remaining = getTimeRemaining(game.actualGame, player, new Date()) ?? 0;
+}> = ({ game, pos, cubeTextureRef, player, onTimeout }) => {
+  const [timeRemaining, setTimeRemaining] = useState(
+    getTimeRemaining(game.actualGame, player, new Date()) ?? 0,
+  );
 
-  const secondDigit = Math.floor((remaining % 10_000) / 1_000);
-  const tenSecondDigit = Math.floor((remaining % 60_000) / 10_000);
-  const minuteDigit = Math.floor((remaining % 600_000) / 60_000);
-  const tenMinuteDigit = Math.floor((remaining % 3_600_000) / 600_000);
+  const remaining = getTimeRemaining(game.actualGame, player, new Date()) ?? 0;
+  if (game.actualGame.gameState.type === 'ongoing' && remaining === 0) {
+    onTimeout();
+  }
+  const { secondDigit, tenSecondDigit, minuteDigit, tenMinuteDigit } = useMemo(
+    () => ({
+      secondDigit: Math.floor((timeRemaining % 10_000) / 1_000),
+      tenSecondDigit: Math.floor((timeRemaining % 60_000) / 10_000),
+      minuteDigit: Math.floor((timeRemaining % 600_000) / 60_000),
+      tenMinuteDigit: Math.floor((timeRemaining % 3_600_000) / 600_000),
+    }),
+    [timeRemaining],
+  );
 
   const currentAnimationState = useMemo(
     () => ({
@@ -76,6 +89,18 @@ export const Clock: FC<{
   const [actualAnimationState, setActualAnimationState] = useState(
     targetAnimationState.current,
   );
+
+  useRafLoop(() => {
+    const remaining = getTimeRemaining(game.actualGame, player, new Date());
+    if (
+      game.actualGame.gameState.type === 'ongoing' &&
+      remaining !== null &&
+      remaining === 0
+    ) {
+      onTimeout();
+    }
+    setTimeRemaining(remaining ?? 0);
+  }, true);
 
   useBeforeRender(() => {
     setActualAnimationState((prev) => {

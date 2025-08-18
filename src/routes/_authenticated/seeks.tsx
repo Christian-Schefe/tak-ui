@@ -6,7 +6,7 @@ import {
 } from '../../gameData';
 import { useRatings } from '../../api/ratings';
 import { useMemo } from 'react';
-import { useWSAPI } from '../../auth';
+import { useWSAPI } from '../../authHooks';
 
 export const Route = createFileRoute('/_authenticated/seeks')({
   component: RouteComponent,

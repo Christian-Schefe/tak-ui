@@ -8,7 +8,7 @@ import {
 import { useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { Engine, Scene, Skybox } from 'react-babylonjs';
 import { ui, type Coord, type PieceVariant } from '../../packages/tak-core';
-import { Table, Board, Tile, Piece } from './Objects';
+import { Table, Board, Tile, Piece, VariantButton } from './Objects';
 import type { BoardProps } from '../board';
 import { coordToString } from '../../packages/tak-core/coord';
 import envTexture from '../../assets/766-hdri-skies-com.env';
@@ -81,6 +81,10 @@ export const Board3D: FC<BoardProps> = ({
     setGame((draft) => ui.tryPlaceOrAddToPartialMove(draft, pos, variant));
   };
 
+  const onTimeout = () => {
+    setGame((draft) => ui.checkTimeout(draft));
+  };
+
   return (
     <div className="flex flex-col grow w-full">
       <div className="w-dvw grow" ref={canvasContainer}>
@@ -93,7 +97,7 @@ export const Board3D: FC<BoardProps> = ({
             width: dimensions.width,
             height: dimensions.height,
           }}
-          adaptToDeviceRatio={false}
+          adaptToDeviceRatio
           renderOptions={{
             whenVisibleOnly: true,
           }}
@@ -108,10 +112,7 @@ export const Board3D: FC<BoardProps> = ({
               prefiltered={true}
             />
 
-            <Skybox
-              rootUrl={"/Standard-Cube-Map/skies"}
-              size={1000}
-            />
+            <Skybox rootUrl={'/Standard-Cube-Map/skies'} size={1000} />
 
             <arcRotateCamera
               name="camera1"
@@ -153,6 +154,7 @@ export const Board3D: FC<BoardProps> = ({
               game={game}
               pos={new Vector3(size / 2 - size, 0, size / 2)}
               cubeTextureRef={cubeTextureRef}
+              onTimeout={onTimeout}
               player="white"
             />
             <PlayerInfoPanel
@@ -164,6 +166,7 @@ export const Board3D: FC<BoardProps> = ({
               game={game}
               pos={new Vector3(size / 2 + size, 0, size / 2)}
               cubeTextureRef={cubeTextureRef}
+              onTimeout={onTimeout}
               player="black"
             />
             <PlayerInfoPanel
@@ -173,31 +176,35 @@ export const Board3D: FC<BoardProps> = ({
             />
             <Board size={size} cubeTextureRef={cubeTextureRef} />
             <Table size={size} cubeTextureRef={cubeTextureRef} />
+
+            {interactive && (
+              <>
+                <VariantButton
+                  variant="flat"
+                  currentVariant={variant}
+                  position={new Vector3(-1 + size / 2, -0.2, -1)}
+                  cubeTextureRef={cubeTextureRef}
+                  onClick={() => setVariant('flat')}
+                />
+                <VariantButton
+                  variant="standing"
+                  currentVariant={variant}
+                  position={new Vector3(0 + size / 2, -0.2, -1)}
+                  cubeTextureRef={cubeTextureRef}
+                  onClick={() => setVariant('standing')}
+                />
+                <VariantButton
+                  variant="capstone"
+                  currentVariant={variant}
+                  cubeTextureRef={cubeTextureRef}
+                  position={new Vector3(1 + size / 2, -0.2, -1)}
+                  onClick={() => setVariant('capstone')}
+                />
+              </>
+            )}
           </Scene>
         </Engine>
       </div>
-      {interactive && (
-        <div className="w-full flex p-2 gap-2">
-          <button
-            className={`grow w-0 bg-surface-500 hover:bg-surface-550 active:bg-surface-600 p-2 rounded-md outline-primary-500 ${variant === 'flat' ? 'outline-2' : ''}`}
-            onClick={() => setVariant('flat')}
-          >
-            Flat
-          </button>
-          <button
-            className={`grow w-0 bg-surface-500 hover:bg-surface-550 active:bg-surface-600 p-2 rounded-md outline-primary-500 ${variant === 'standing' ? 'outline-2' : ''}`}
-            onClick={() => setVariant('standing')}
-          >
-            Wall
-          </button>
-          <button
-            className={`grow w-0 bg-surface-500 hover:bg-surface-550 active:bg-surface-600 p-2 rounded-md outline-primary-500 ${variant === 'capstone' ? 'outline-2' : ''}`}
-            onClick={() => setVariant('capstone')}
-          >
-            Capstone
-          </button>
-        </div>
-      )}
     </div>
   );
 };

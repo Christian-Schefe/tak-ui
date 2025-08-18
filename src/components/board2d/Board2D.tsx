@@ -4,6 +4,7 @@ import { coordToString } from '../../packages/tak-core/coord';
 import { Tile } from './Tile';
 import { Piece } from './Piece';
 import type { BoardProps } from '../board';
+import { Clock } from './Clock';
 
 export function Board2D({
   game,
@@ -29,10 +30,15 @@ export function Board2D({
     setGame((draft) => ui.tryPlaceOrAddToPartialMove(draft, pos, variant));
   };
 
+  const onTimeout = () => {
+    setGame((draft) => ui.checkTimeout(draft));
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="w-full flex p-2 gap-2 justify-between">
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <Clock player="white" game={game} onTimeout={onTimeout} />
           <p
             className={`font-bold ${game.actualGame.currentPlayer === 'white' ? 'text-primary-500' : ''}`}
           >
@@ -40,13 +46,14 @@ export function Board2D({
           </p>{' '}
           ({playerInfo['white']?.rating})
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <p
             className={`font-bold ${game.actualGame.currentPlayer === 'black' ? 'text-primary-500' : ''}`}
           >
             {playerInfo['black']?.username}
           </p>{' '}
           ({playerInfo['black']?.rating})
+          <Clock player="black" game={game} onTimeout={onTimeout} />
         </div>
       </div>
       <div

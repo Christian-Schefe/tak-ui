@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { type GameListEntry, useGameData } from '../../gameData';
 import type { GameSettings } from '../../packages/tak-core';
-import { useAuth } from '../../auth';
+import { useAuth } from '../../authHooks';
 import { PlayedGame } from '../../components/PlayedGame';
 import { useEffect, useRef } from 'react';
 

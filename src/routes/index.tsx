@@ -5,6 +5,7 @@ import { defaultReserve } from '../packages/tak-core/piece';
 import { Board3D } from '../components/board3d/Board3D';
 import { useImmer } from 'use-immer';
 import { Board2D } from '../components/board2d/Board2D';
+import { useSettings } from '../settings';
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -21,26 +22,27 @@ function RouteComponent() {
       }),
     ),
   );
-  const use3d = true;
+  const { boardType } = useSettings();
   const playerInfo = {
     white: { username: 'Player1', rating: 1500 },
     black: { username: 'Player2', rating: 1600 },
   };
   return (
     <div className="w-full grow flex flex-col">
-      {use3d ? (
-        <Board3D
-          game={game}
-          setGame={setGame}
-          interactive={true}
-          playerInfo={playerInfo}
-        />
-      ) : (
+      {boardType === '2d' && (
         <Board2D
           game={game}
           setGame={setGame}
-          interactive={true}
           playerInfo={playerInfo}
+          interactive={true}
+        />
+      )}
+      {boardType === '3d' && (
+        <Board3D
+          game={game}
+          setGame={setGame}
+          playerInfo={playerInfo}
+          interactive={true}
         />
       )}
     </div>

@@ -6,7 +6,7 @@ import {
   Vector3,
 } from '@babylonjs/core';
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
-import type { Coord } from '../../packages/tak-core';
+import type { Coord, PieceVariant } from '../../packages/tak-core';
 import type { GameUI, UIPiece, UITile } from '../../packages/tak-core/ui';
 import { useBeforeRender, useClick, useHover } from 'react-babylonjs';
 import woodColor from '../../assets/textures/wood_0066/wood_0066_color_1k.jpg';
@@ -279,6 +279,70 @@ export const Piece: FC<{
       albedoColor={Color3.White()}
       specularIntensity={0.05}
       textureScale={1 / 12}
+    />
+  );
+};
+
+export const VariantButton: FC<{
+  variant: PieceVariant;
+  currentVariant: PieceVariant;
+  position: Vector3;
+  cubeTextureRef: React.RefObject<BaseTexture | undefined>;
+  onClick: () => void;
+}> = ({ variant, position, currentVariant, cubeTextureRef, onClick }) => {
+  const boxRef = useRef<Mesh | null>(null);
+
+  const currentAnimationState = useMemo(
+    () => ({
+      emissive: variant === currentVariant ? 0.2 : 0,
+    }),
+    [variant, currentVariant],
+  );
+
+  const targetAnimationState = useRef(currentAnimationState);
+  useEffect(() => {
+    targetAnimationState.current = currentAnimationState;
+  }, [currentAnimationState]);
+
+  const [actualAnimationState, setActualAnimationState] = useState(
+    targetAnimationState.current,
+  );
+
+  useBeforeRender(() => {
+    setActualAnimationState((prev) => ({
+      emissive: Lerp(prev.emissive, targetAnimationState.current.emissive, 0.2),
+    }));
+  });
+
+  const curOnClick = useRef<() => void>(onClick);
+  useEffect(() => {
+    curOnClick.current = onClick;
+  }, [onClick]);
+
+  useClick(() => {
+    curOnClick.current();
+  }, boxRef);
+
+  return (
+    <PBRBox
+      name="tile"
+      width={0.8}
+      height={0.1}
+      depth={0.8}
+      position={position}
+      cubeTextureRef={cubeTextureRef}
+      normalTextureUrl={marbleWhiteNormal}
+      colorTextureUrl={marbleWhiteColor}
+      aoTextureUrl={marbleWhiteAO}
+      roughnessTextureUrl={marbleWhiteRoughness}
+      metallic={0.5}
+      roughness={0.5}
+      specularIntensity={0.05}
+      albedoColor={Color3.White()}
+      textureScale={1 / 10}
+      emissiveColor={Color3.Blue()}
+      emissiveIntensity={actualAnimationState.emissive}
+      ref={boxRef}
     />
   );
 };

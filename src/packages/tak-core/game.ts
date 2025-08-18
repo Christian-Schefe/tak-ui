@@ -40,8 +40,12 @@ export function newGame(settings: GameSettings): Game {
   };
 }
 
-export function canDoMove(game: Game, move: Move): string | null {
-  if (game.gameState.type !== 'ongoing') return 'Game is not ongoing';
+export function canDoMove(game: Game, move: Move, now?: Date): string | null {
+  now ??= new Date();
+  checkTimeout(game, now);
+
+  if (game.gameState.type !== 'ongoing')
+    return 'Game is not ongoing: ' + game.gameState.type;
 
   if (move.type === 'place') {
     if (game.history.length < 2 && move.variant !== 'flat') {
@@ -101,34 +105,42 @@ export function setTimeRemaining(
   now: Date,
 ) {
   if (game.clock) {
-    game.clock.remaining = remaining;
+    game.clock.remaining.white = remaining.white;
+    game.clock.remaining.black = remaining.black;
     game.clock.lastMove = now;
     checkTimeout(game, now);
   }
 }
 
-export function checkTimeout(game: Game, now?: Date) {
-  for (const player of [
-    game.currentPlayer,
-    playerOpposite(game.currentPlayer),
-  ]) {
-    const timeRemaining = getTimeRemaining(game, player, now);
-    if (timeRemaining !== null && timeRemaining <= 0) {
-      game.gameState = {
-        type: 'win',
-        player: playerOpposite(player),
-        reason: 'timeout',
-      };
-    }
-    return timeRemaining;
+function applyTimeToClock(game: Game, now: Date) {
+  const remaining = getTimeRemaining(game, game.currentPlayer, now);
+  if (game.clock && remaining !== null) {
+    game.clock.remaining[game.currentPlayer] = remaining;
+    game.clock.lastMove = now;
   }
 }
 
-export function doMove(game: Game, move: Move) {
-  const now = new Date();
-  const timeRemaining = checkTimeout(game, now);
+export function checkTimeout(game: Game, now: Date): number | null {
+  if (game.gameState.type !== 'ongoing') return null;
 
-  const err = canDoMove(game, move);
+  applyTimeToClock(game, now);
+
+  const player = game.currentPlayer;
+  const timeRemaining = getTimeRemaining(game, player, now);
+  if (timeRemaining !== null && timeRemaining <= 0) {
+    game.gameState = {
+      type: 'win',
+      player: playerOpposite(player),
+      reason: 'timeout',
+    };
+  }
+  return timeRemaining ?? null;
+}
+
+export function doMove(game: Game, move: Move, now?: Date) {
+  now ??= new Date();
+  const timeRemaining = checkTimeout(game, now);
+  const err = canDoMove(game, move, now);
   if (err) {
     throw new Error('Invalid move: ' + err);
   }
