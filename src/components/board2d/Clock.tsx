@@ -3,6 +3,7 @@ import { type Player } from '../../packages/tak-core';
 import { getTimeRemaining } from '../../packages/tak-core/game';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useMemo, useState } from 'react';
+import { useSettings } from '../../settings';
 
 export function Clock({
   game,
@@ -13,6 +14,8 @@ export function Clock({
   onTimeout: () => void;
   player: Player;
 }) {
+  const { themeParams } = useSettings();
+
   const [timeRemaining, setTimeRemaining] = useState(
     getTimeRemaining(game.actualGame, player, new Date()) ?? 0,
   );
@@ -35,8 +38,20 @@ export function Clock({
   }, true);
 
   return (
-    <div className="py-1 px-4 bg-surface-500 rounded-md">
-      <p>{`${minutes}:${seconds.toString().padStart(2, '0')}`}</p>
+    <div
+      className="py-1 px-4 rounded-md"
+      style={{
+        backgroundColor:
+          player === 'white'
+            ? themeParams.piece1.background
+            : themeParams.piece2.background,
+        color:
+          player === 'white'
+            ? themeParams.piece1.text ?? themeParams.piece1.border
+            : themeParams.piece2.text ?? themeParams.piece2.border,
+      }}
+    >
+      <p className='font-bold font-mono'>{`${minutes}:${seconds.toString().padStart(2, '0')}`}</p>
     </div>
   );
 }

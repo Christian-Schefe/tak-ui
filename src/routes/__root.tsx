@@ -26,7 +26,7 @@ export function SettingsButton() {
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
-      <div className="p-2 flex gap-4 bg-surface-500 sticky top-0 z-50 shadow-sm shadow-surface-200">
+      <div className="p-2 flex gap-4 bg-surface-500 sticky top-0 z-50">
         <Link to="/" className="[&.active]:font-bold">
           Home
         </Link>

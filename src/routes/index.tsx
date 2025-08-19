@@ -15,10 +15,10 @@ function RouteComponent() {
   const [game, setGame] = useImmer<ui.GameUI>(
     ui.newGameUI(
       newGame({
-        boardSize: 5,
+        boardSize: 6,
         komi: 2,
-        reserve: defaultReserve(5),
-        clock: { contingent: 30000, increment: 5000 },
+        reserve: defaultReserve(7),
+        clock: { contingent: 300000, increment: 5000 },
       }),
     ),
   );

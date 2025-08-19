@@ -1,0 +1,19 @@
+{
+  "background": "#330721",
+  "board1": "#981930",
+  "board2": "#ff6c40",
+  "highlight": "#fde57777",
+  "hover": "#fde57755",
+  "piece1": { "background": "#690d42", "border": "#330721", "text": "#fde577" },
+  "piece2": { "background": "#fde577", "border": "#330721" },
+  "board": {
+    "spacing": "2px",
+    "rounded": "4px",
+    "tiling": "rings"
+  },
+  "pieces": {
+    "rounded": 5,
+    "border": "3px",
+    "size": 50
+  }
+}

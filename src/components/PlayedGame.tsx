@@ -45,7 +45,6 @@ export function PlayedGame({
         subscriptionState.current = 'pending';
         console.log('Subscribing to game:', gameId);
         gameData.removeGameInfo(gameId);
-        resetGame();
         sendMessage(`Observe ${gameId}`);
       }
     },
@@ -71,7 +70,6 @@ export function PlayedGame({
       subscriptionState.current = 'pending';
       console.log('Subscribing to game:', gameId);
       gameData.removeGameInfo(gameId);
-      resetGame();
       sendMessage(`Observe ${gameId}`);
     }
     return () => {
@@ -82,7 +80,7 @@ export function PlayedGame({
       gameData.removeGameInfo(gameId);
       subscriptionState.current = 'unsubscribed';
     };
-  }, [observed, gameData, sendMessage, gameId, resetGame]);
+  }, [observed, gameData, sendMessage, gameId]);
 
   const [readMessageIndex, setReadMessageIndex] = useState(0);
 
@@ -170,18 +168,16 @@ export function PlayedGame({
     }
   }
 
-  const gameEntry = useRef<GameListEntry | null>(
-    gameData.games.find((g) => g.id.toString() === gameId) ?? null,
+  const gameEntry = useRef<GameListEntry>(
+    gameData.games.find((g) => g.id.toString() === gameId) ??
+      (() => {
+        throw new Error('Game not found');
+      })(),
   );
 
-  useEffect(() => {
-    gameEntry.current =
-      gameData.games.find((g) => g.id.toString() === gameId) ?? null;
-  }, [gameData.games, gameId]);
-
   const playerInfo = {
-    white: { username: gameEntry.current?.white ?? 'White', rating: 1000 },
-    black: { username: gameEntry.current?.black ?? 'Black', rating: 1000 },
+    white: { username: gameEntry.current.white, rating: 1000 },
+    black: { username: gameEntry.current.black, rating: 1000 },
   };
 
   const timeMessages = gameData.gameInfo[gameId]?.timeMessages;

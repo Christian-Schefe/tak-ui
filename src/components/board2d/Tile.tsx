@@ -1,5 +1,8 @@
+import { useMemo } from 'react';
 import type { Coord } from '../../packages/tak-core';
 import type { GameUI } from '../../packages/tak-core/ui';
+import { useSettings } from '../../settings';
+import Color from 'colorjs.io';
 
 export function Tile({
   pos,
@@ -12,26 +15,73 @@ export function Tile({
   interactive: boolean;
   onClick: () => void;
 }) {
-  const isEven = (pos.x + pos.y) % 2 === 0;
+  const { themeParams } = useSettings();
+
+  const boardSize = game.actualGame.board.size;
+
+  const colorIndex = useMemo(() => {
+    const isEven = (pos.x + pos.y) % 2 === 0;
+    const ringCount = Math.ceil(boardSize / 2);
+    const ringIndex =
+      Math.min(pos.x, pos.y, boardSize - 1 - pos.x, boardSize - 1 - pos.y) /
+      (ringCount - 1);
+
+    switch (themeParams.board.tiling) {
+      case 'checkerboard':
+        return isEven ? 0 : 1;
+      case 'rings':
+        return ringIndex;
+      case 'linear':
+        return (pos.x + pos.y) / (2 * (boardSize - 1));
+      default:
+        return 0;
+    }
+  }, [pos, boardSize, themeParams.board.tiling]);
+
   const data = game.tiles[pos.y][pos.x];
-  const color = data.selectable
-    ? isEven
-      ? 'bg-primary-500'
-      : 'bg-primary-550'
-    : isEven
-      ? 'bg-gray-200'
-      : 'bg-gray-300';
-  const hoverColor = data.selectable
-    ? 'hover:bg-primary-600'
-    : 'hover:bg-gray-400';
+  const isHover = interactive && data.hoverable;
+
+  const backgroundColorEven = new Color(themeParams.board1);
+  const backgroundColorOdd = new Color(themeParams.board2);
+
+  const backgroundColor = backgroundColorEven.mix(
+    backgroundColorOdd,
+    colorIndex,
+  );
+
   return (
     <div
-      className={`relative flex items-center justify-center h-full w-full ${color} ${interactive && data.hoverable ? hoverColor : ''}`}
-      style={{
-        transition: 'background-color 150ms ease-in-out',
-        filter: data.lastMove ? 'brightness(110%) saturate(150%)' : '',
-      }}
+      className={'relative flex items-center justify-center h-full w-full'}
       onClick={() => onClick()}
-    ></div>
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          transition: 'background-color 150ms ease-in-out',
+          backgroundColor: backgroundColor.toString(),
+          margin: themeParams.board.spacing,
+          borderRadius: themeParams.board.rounded,
+        }}
+      ></div>
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: themeParams.highlight,
+          opacity: data.selectable ? 1 : data.lastMove ? 0.7 : 0,
+          transition: 'opacity 150ms ease-in-out',
+          margin: themeParams.board.spacing,
+          borderRadius: themeParams.board.rounded,
+        }}
+      ></div>
+      <div
+        className={`absolute inset-0 opacity-0 ${isHover ? 'hover:opacity-100' : ''}`}
+        style={{
+          backgroundColor: themeParams.hover,
+          transition: 'opacity 150ms ease-in-out',
+          margin: themeParams.board.spacing,
+          borderRadius: themeParams.board.rounded,
+        }}
+      ></div>
+    </div>
   );
 }

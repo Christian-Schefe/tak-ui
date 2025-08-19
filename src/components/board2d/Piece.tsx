@@ -1,7 +1,10 @@
 import { ui } from '../../packages/tak-core';
 import type { GameUI } from '../../packages/tak-core/ui';
+import { useSettings } from '../../settings';
 
 export function Piece({ id, game }: { id: number; game: GameUI }) {
+  const { themeParams } = useSettings();
+
   const size = ui.boardSize(game);
   const data = game.pieces[id];
   const height = data.isFloating ? data.height + 2 : data.height;
@@ -9,17 +12,18 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
 
   const animationSetting = '150ms ease-in-out';
 
-  const whiteColor = 'bg-gray-100';
-  const blackColor = 'bg-gray-600';
-  const whiteOutline = 'outline-gray-600';
-  const blackOutline = 'outline-gray-100';
+  const colors = isWhite ? themeParams.piece1 : themeParams.piece2;
+
+  const pieceSize = themeParams.pieces.size;
+  const wallWidthRatio = 2 / 5;
+  const roundedPercent = themeParams.pieces.rounded;
 
   const radiusStr =
     data.variant === 'standing'
-      ? '10% 25%'
+      ? `${roundedPercent}% ${roundedPercent / wallWidthRatio}%`
       : data.variant === 'capstone'
         ? '100%'
-        : '10%';
+        : `${roundedPercent}%`;
 
   const zIndex = data.zPriority !== null ? data.zPriority + 100 : height;
 
@@ -41,10 +45,22 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
         }}
       >
         <div
-          className={`${isWhite ? whiteColor : blackColor} outline ${isWhite ? whiteOutline : blackOutline}`}
+          className="outline"
           style={{
-            width: '50%',
-            height: data.variant === 'standing' ? '20%' : '50%',
+            width: `${pieceSize}%`,
+            outlineWidth: themeParams.pieces.border,
+            outlineColor:
+              data.variant === 'capstone' && colors.capstoneOverride
+                ? colors.capstoneOverride.border
+                : colors.border,
+            backgroundColor:
+              data.variant === 'capstone' && colors.capstoneOverride
+                ? colors.capstoneOverride.background
+                : colors.background,
+            height:
+              data.variant === 'standing'
+                ? `${pieceSize * wallWidthRatio}%`
+                : `${pieceSize}%`,
             borderBottomLeftRadius: radiusStr,
             borderBottomRightRadius: radiusStr,
             borderTopLeftRadius: radiusStr,

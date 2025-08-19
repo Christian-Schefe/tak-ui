@@ -17,6 +17,7 @@
     "@tanstack/react-query-devtools": "^5.84.2",
     "@tanstack/react-router": "^1.131.3",
     "@tanstack/react-router-devtools": "^1.131.3",
+    "colorjs.io": "^0.5.2",
     "immer": "^10.1.1",
     "react": "^19.1.1",
     "react-babylonjs": "^3.2.2",

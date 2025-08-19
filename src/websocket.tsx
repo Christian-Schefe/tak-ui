@@ -1,13 +1,10 @@
 import { type Options } from 'react-use-websocket';
 
 export const wsOptions: Options = {
-  //Will attempt to reconnect on all close events, such as server shutting down
   shouldReconnect: () => true,
-  share: true,
   heartbeat: {
     interval: 10000,
     message: 'PING',
-    returnMessage: 'OK',
   },
   protocols: ['binary'],
 };

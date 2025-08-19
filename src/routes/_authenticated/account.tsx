@@ -19,7 +19,7 @@ function DashboardComponent() {
         </button>
       </div>
 
-      <div className="bg-surface-500 p-6 rounded-lg shadow">
+      <div className="bg-surface-500 p-6 rounded-lg">
         <p>
           Hello, <strong>{auth.user?.username}</strong>! You are successfully
           authenticated.

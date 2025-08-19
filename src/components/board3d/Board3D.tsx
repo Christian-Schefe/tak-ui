@@ -86,125 +86,123 @@ export const Board3D: FC<BoardProps> = ({
   };
 
   return (
-    <div className="flex flex-col grow w-full">
-      <div className="w-dvw grow" ref={canvasContainer}>
-        <Engine
-          antialias
-          canvasId="babylon-js"
-          width={dimensions.width}
-          height={dimensions.height}
-          style={{
-            width: dimensions.width,
-            height: dimensions.height,
-          }}
-          adaptToDeviceRatio
-          renderOptions={{
-            whenVisibleOnly: true,
-          }}
-        >
-          <Scene environmentIntensity={1}>
-            <cubeTexture
-              ref={cubeTextureCallback}
-              name="cubeTexture"
-              rootUrl={envTexture}
-              createPolynomials={true}
-              format={undefined}
-              prefiltered={true}
-            />
+    <div className="fixed top-0 bottom-0 left-0 right-0" ref={canvasContainer}>
+      <Engine
+        antialias
+        canvasId="babylon-js"
+        width={dimensions.width}
+        height={dimensions.height}
+        style={{
+          width: dimensions.width,
+          height: dimensions.height,
+        }}
+        adaptToDeviceRatio
+        renderOptions={{
+          whenVisibleOnly: true,
+        }}
+      >
+        <Scene environmentIntensity={1}>
+          <cubeTexture
+            ref={cubeTextureCallback}
+            name="cubeTexture"
+            rootUrl={envTexture}
+            createPolynomials={true}
+            format={undefined}
+            prefiltered={true}
+          />
 
-            <Skybox rootUrl={'/Standard-Cube-Map/skies'} size={1000} />
+          <Skybox rootUrl={'/Standard-Cube-Map/skies'} size={1000} />
 
-            <arcRotateCamera
-              name="camera1"
-              alpha={-Math.PI / 2}
-              beta={Math.PI / 4}
-              radius={10}
-              target={target}
-              lockedTarget={target}
-              allowUpsideDown={false}
-              upperBetaLimit={Math.PI / 2 - 0.01}
-              lowerRadiusLimit={5}
-              upperRadiusLimit={100}
-            />
-            <hemisphericLight
-              name="light1"
-              intensity={1}
-              direction={new Vector3(0, 1, 0)}
-            />
+          <arcRotateCamera
+            name="camera1"
+            alpha={-Math.PI / 2}
+            beta={Math.PI / 4}
+            radius={10}
+            target={target}
+            lockedTarget={target}
+            allowUpsideDown={false}
+            upperBetaLimit={Math.PI / 2 - 0.01}
+            lowerRadiusLimit={5}
+            upperRadiusLimit={100}
+          />
+          <hemisphericLight
+            name="light1"
+            intensity={1}
+            direction={new Vector3(0, 1, 0)}
+          />
 
-            {tileCoords.map((pos) => (
-              <Tile
-                key={coordToString(pos)}
-                tile={game.tiles[pos.y][pos.x]}
-                pos={pos}
-                cubeTextureRef={cubeTextureRef}
-                interactive={interactive}
-                onClick={() => onClickTile(pos)}
-              />
-            ))}
-            {pieceIds.map((id) => (
-              <Piece
-                key={id}
-                game={game}
-                id={id}
-                cubeTextureRef={cubeTextureRef}
-              />
-            ))}
-            <Clock
-              game={game}
-              pos={new Vector3(size / 2 - size, 0, size / 2)}
+          {tileCoords.map((pos) => (
+            <Tile
+              key={coordToString(pos)}
+              tile={game.tiles[pos.y][pos.x]}
+              pos={pos}
               cubeTextureRef={cubeTextureRef}
-              onTimeout={onTimeout}
-              player="white"
+              interactive={interactive}
+              onClick={() => onClickTile(pos)}
             />
-            <PlayerInfoPanel
-              position={new Vector3(size / 2 - size, 0.3, size / 2 + 0.5)}
-              username={playerInfo.white.username}
-              rating={playerInfo.white.rating}
-            />
-            <Clock
+          ))}
+          {pieceIds.map((id) => (
+            <Piece
+              key={id}
               game={game}
-              pos={new Vector3(size / 2 + size, 0, size / 2)}
+              id={id}
               cubeTextureRef={cubeTextureRef}
-              onTimeout={onTimeout}
-              player="black"
             />
-            <PlayerInfoPanel
-              position={new Vector3(size / 2 + size, 0.3, size / 2 + 0.5)}
-              username={playerInfo.black.username}
-              rating={playerInfo.black.rating}
-            />
-            <Board size={size} cubeTextureRef={cubeTextureRef} />
-            <Table size={size} cubeTextureRef={cubeTextureRef} />
+          ))}
+          <Clock
+            game={game}
+            pos={new Vector3(size / 2 - size, 0, size / 2)}
+            cubeTextureRef={cubeTextureRef}
+            onTimeout={onTimeout}
+            player="white"
+          />
+          <PlayerInfoPanel
+            position={new Vector3(size / 2 - size, 0.3, size / 2 + 0.5)}
+            username={playerInfo.white.username}
+            rating={playerInfo.white.rating}
+          />
+          <Clock
+            game={game}
+            pos={new Vector3(size / 2 + size, 0, size / 2)}
+            cubeTextureRef={cubeTextureRef}
+            onTimeout={onTimeout}
+            player="black"
+          />
+          <PlayerInfoPanel
+            position={new Vector3(size / 2 + size, 0.3, size / 2 + 0.5)}
+            username={playerInfo.black.username}
+            rating={playerInfo.black.rating}
+          />
+          <Board size={size} cubeTextureRef={cubeTextureRef} />
+          <Table size={size} cubeTextureRef={cubeTextureRef} />
 
-            {interactive && (
-              <>
-                <VariantButton
-                  variant="flat"
-                  currentVariant={variant}
-                  position={new Vector3(-1 + size / 2, -0.2, -1)}
-                  cubeTextureRef={cubeTextureRef}
-                  onClick={() => setVariant('flat')}
-                />
-                <VariantButton
-                  variant="standing"
-                  currentVariant={variant}
-                  position={new Vector3(0 + size / 2, -0.2, -1)}
-                  cubeTextureRef={cubeTextureRef}
-                  onClick={() => setVariant('standing')}
-                />
-                <VariantButton
-                  variant="capstone"
-                  currentVariant={variant}
-                  cubeTextureRef={cubeTextureRef}
-                  position={new Vector3(1 + size / 2, -0.2, -1)}
-                  onClick={() => setVariant('capstone')}
-                />
-              </>
-            )}
-          </Scene>
-        </Engine>
-      </div>
+          {interactive && (
+            <>
+              <VariantButton
+                variant="flat"
+                currentVariant={variant}
+                position={new Vector3(-1 + size / 2, -0.2, -1)}
+                cubeTextureRef={cubeTextureRef}
+                onClick={() => setVariant('flat')}
+              />
+              <VariantButton
+                variant="standing"
+                currentVariant={variant}
+                position={new Vector3(0 + size / 2, -0.2, -1)}
+                cubeTextureRef={cubeTextureRef}
+                onClick={() => setVariant('standing')}
+              />
+              <VariantButton
+                variant="capstone"
+                currentVariant={variant}
+                cubeTextureRef={cubeTextureRef}
+                position={new Vector3(1 + size / 2, -0.2, -1)}
+                onClick={() => setVariant('capstone')}
+              />
+            </>
+          )}
+        </Scene>
+      </Engine>
     </div>
   );
 };

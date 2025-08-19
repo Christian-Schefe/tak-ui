@@ -1,8 +1,9 @@
-import { useSettings } from '../settings';
+import { themes } from '../assets/2d-themes';
+import { useSettings, type ColorTheme } from '../settings';
 import { Modal, type ModalInheritedProps } from './Modal';
 
 export function SettingsDialog({ isOpen, onClose }: ModalInheritedProps) {
-  const { boardType, setBoardType } = useSettings();
+  const { boardType, setBoardType, colorTheme, setColorTheme } = useSettings();
 
   if (!isOpen) return null;
 
@@ -27,6 +28,18 @@ export function SettingsDialog({ isOpen, onClose }: ModalInheritedProps) {
         >
           3D
         </button>
+      </div>
+      <div className="flex items-center">
+        <p className="px-4">Color Theme:</p>
+        {Object.keys(themes).map((theme) => (
+          <button
+            key={theme}
+            onClick={() => setColorTheme(theme as ColorTheme)}
+            className={`py-2 px-4 m-1 bg-surface-500 hover:bg-surface-550 outline-primary-500 rounded-md ${colorTheme === theme ? 'outline-2' : ''}`}
+          >
+            {theme.charAt(0).toUpperCase() + theme.slice(1)}
+          </button>
+        ))}
       </div>
     </Modal>
   );
