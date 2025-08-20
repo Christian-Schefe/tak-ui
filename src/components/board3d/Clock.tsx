@@ -130,10 +130,10 @@ export const Clock: FC<{
       depth={3 * size}
       position={pos}
       cubeTextureRef={cubeTextureRef}
-      normalTextureUrl={marbleWhiteNormal}
-      colorTextureUrl={marbleWhiteColor}
-      aoTextureUrl={marbleWhiteAO}
-      roughnessTextureUrl={marbleWhiteRoughness}
+      normalTextureUrl={marbleWhiteNormal as string}
+      colorTextureUrl={marbleWhiteColor as string}
+      aoTextureUrl={marbleWhiteAO as string}
+      roughnessTextureUrl={marbleWhiteRoughness as string}
       metallic={0.5}
       roughness={0.5}
       specularIntensity={0.05}
@@ -156,17 +156,17 @@ export const Clock: FC<{
 
           return (
             <PBRBox
-              key={`clock-segment-${j}`}
+              key={`clock-segment-${j.toString()}`}
               name="tile"
               width={horizontal ? size - thickness : thickness}
               depth={horizontal ? thickness : size + thickness * 0.5}
               height={segmentHeight}
               position={actualPos}
               cubeTextureRef={cubeTextureRef}
-              normalTextureUrl={marbleWhiteNormal}
-              colorTextureUrl={marbleWhiteColor}
-              aoTextureUrl={marbleWhiteAO}
-              roughnessTextureUrl={marbleWhiteRoughness}
+              normalTextureUrl={marbleWhiteNormal as string}
+              colorTextureUrl={marbleWhiteColor as string}
+              aoTextureUrl={marbleWhiteAO as string}
+              roughnessTextureUrl={marbleWhiteRoughness as string}
               metallic={0.5}
               roughness={0.5}
               specularIntensity={0.05}
@@ -203,7 +203,7 @@ export const PlayerInfoPanel: FC<{
       >
         <textBlock
           name="player-username"
-          text={`${username} (${rating})`}
+          text={`${username} (${rating.toString()})`}
           color="black"
           fontSize={100}
           fontStyle="bold"

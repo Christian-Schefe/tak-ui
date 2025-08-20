@@ -7,6 +7,7 @@ export const router = createRouter({
   defaultStaleTime: 5000,
   scrollRestoration: true,
   context: {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     auth: undefined!,
   },
 });

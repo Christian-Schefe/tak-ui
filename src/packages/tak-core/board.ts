@@ -16,14 +16,17 @@ export function isValidCoord(size: number, pos: Coord): boolean {
 export function newBoard(size: number): Board {
   return {
     size,
-    pieces: Array.from({ length: size }, () => Array(size).fill(null)),
+    pieces: Array.from<(Stack | null)[], (Stack | null)[]>(
+      { length: size },
+      () => Array(size).fill(null) as (Stack | null)[],
+    ),
     _idCounter: 0,
   };
 }
 
 export function canPlacePiece(board: Board, pos: Coord): string | null {
   if (!isValidCoord(board.size, pos))
-    return 'Invalid place position: ' + coordToString(pos);
+    return `Invalid place position: ${coordToString(pos)}`;
 
   const stack = board.pieces[pos.y][pos.x];
   return !stack ? null : 'Position is already occupied';
@@ -37,7 +40,7 @@ export function placePiece(
 ): MoveRecord {
   const err = canPlacePiece(board, pos);
   if (err) {
-    throw new Error('Cannot place: ' + err);
+    throw new Error(`Cannot place: ${err}`);
   }
 
   const trackedPiece = {
@@ -69,10 +72,10 @@ export function canMovePiece(
   player: Player,
 ): string | null {
   if (!isValidCoord(board.size, from))
-    return 'Invalid move start position: ' + coordToString(from);
+    return `Invalid move start position: ${coordToString(from)}`;
   const to = offsetCoord(from, dir, drops.length);
   if (!isValidCoord(board.size, to))
-    return 'Invalid move end position: ' + coordToString(to);
+    return `Invalid move end position: ${coordToString(to)}`;
   const take = drops.reduce((acc, drop) => acc + drop, 0);
   if (drops.length === 0 || take === 0) return 'Invalid move';
 
@@ -105,11 +108,14 @@ export function movePiece(
 ): MoveRecord {
   const err = canMovePiece(board, from, dir, drops, player);
   if (err) {
-    throw new Error('Cannot move: ' + err);
+    throw new Error(`Cannot move: ${err}`);
   }
   const take = drops.reduce((acc, drop) => acc + drop, 0);
 
-  const stack = board.pieces[from.y][from.x]!;
+  const stack = board.pieces[from.y][from.x];
+  if (!stack)
+    throw new Error('No stack found at move origin. This should never happen');
+
   const takenPieces = stack.composition.splice(-take);
   const variant = stack.variant;
   stack.variant = 'flat';
@@ -177,7 +183,9 @@ export function findRoads(board: Board, player: Player): Coord[] | null {
     }
 
     while (queue.length > 0) {
-      const current = queue.shift()!;
+      const current = queue.shift();
+      if (!current) throw new Error('Queue empty. This should never happen');
+
       if (ends.some((e) => coordEquals(e, current))) {
         const path: Coord[] = [];
         let node: Coord | null = current;
@@ -271,7 +279,7 @@ export function toPositionString(board: Board) {
         emptyCount++;
       } else {
         if (emptyCount > 0) {
-          result.push(`x${emptyCount === 1 ? '' : emptyCount}`);
+          result.push(`x${emptyCount === 1 ? '' : emptyCount.toString()}`);
           emptyCount = 0;
         }
         result.push(
@@ -283,7 +291,7 @@ export function toPositionString(board: Board) {
     }
 
     if (emptyCount > 0) {
-      result.push(`x${emptyCount === 1 ? '' : emptyCount}`);
+      result.push(`x${emptyCount === 1 ? '' : emptyCount.toString()}`);
     }
 
     return result.join(',');

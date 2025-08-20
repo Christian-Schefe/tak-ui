@@ -46,10 +46,10 @@ export const Table: FC<{
       depth={size + 5}
       position={new Vector3(size / 2, -1 - 0.2, size / 2)}
       cubeTextureRef={cubeTextureRef}
-      normalTextureUrl={woodNormal}
-      colorTextureUrl={woodColor}
-      aoTextureUrl={woodAO}
-      roughnessTextureUrl={woodRoughness}
+      normalTextureUrl={woodNormal as string}
+      colorTextureUrl={woodColor as string}
+      aoTextureUrl={woodAO as string}
+      roughnessTextureUrl={woodRoughness as string}
       metallic={0.4}
       roughness={0.4}
       specularIntensity={0.05}
@@ -69,10 +69,10 @@ export const Board: FC<{
       depth={size + 0.5}
       position={new Vector3(size / 2, -0.1, size / 2)}
       cubeTextureRef={cubeTextureRef}
-      normalTextureUrl={tileNormal}
-      colorTextureUrl={tileColor}
-      aoTextureUrl={tileAO}
-      roughnessTextureUrl={tileRoughness}
+      normalTextureUrl={tileNormal as string}
+      colorTextureUrl={tileColor as string}
+      aoTextureUrl={tileAO as string}
+      roughnessTextureUrl={tileRoughness as string}
       metallic={1}
       roughness={0}
       specularIntensity={0.05}
@@ -92,8 +92,12 @@ export const Tile: FC<{
   const [isHover, setIsHover] = useState(false);
   const boxRef = useRef<Mesh>(null);
   useHover(
-    () => setIsHover(true),
-    () => setIsHover(false),
+    () => {
+      setIsHover(true);
+    },
+    () => {
+      setIsHover(false);
+    },
     boxRef,
   );
   const isBeingHovered = interactive && isHover && tile.hoverable;
@@ -157,10 +161,10 @@ export const Tile: FC<{
         )
       }
       cubeTextureRef={cubeTextureRef}
-      normalTextureUrl={marbleWhiteNormal}
-      colorTextureUrl={marbleWhiteColor}
-      aoTextureUrl={marbleWhiteAO}
-      roughnessTextureUrl={marbleWhiteRoughness}
+      normalTextureUrl={marbleWhiteNormal as string}
+      colorTextureUrl={marbleWhiteColor as string}
+      aoTextureUrl={marbleWhiteAO as string}
+      roughnessTextureUrl={marbleWhiteRoughness as string}
       metallic={0.5}
       roughness={0.5}
       specularIntensity={0.05}
@@ -232,12 +236,21 @@ export const Piece: FC<{
   });
 
   const colorTextureUrl =
-    data.player === 'white' ? marbleWhiteColor : marbleBlackColor;
+    data.player === 'white'
+      ? (marbleWhiteColor as string)
+      : (marbleBlackColor as string);
   const normalTextureUrl =
-    data.player === 'white' ? marbleWhiteNormal : marbleBlackNormal;
-  const aoTextureUrl = data.player === 'white' ? marbleWhiteAO : marbleBlackAO;
+    data.player === 'white'
+      ? (marbleWhiteNormal as string)
+      : (marbleBlackNormal as string);
+  const aoTextureUrl =
+    data.player === 'white'
+      ? (marbleWhiteAO as string)
+      : (marbleBlackAO as string);
   const roughnessTextureUrl =
-    data.player === 'white' ? marbleWhiteRoughness : marbleBlackRoughness;
+    data.player === 'white'
+      ? (marbleWhiteRoughness as string)
+      : (marbleBlackRoughness as string);
 
   return data.variant === 'capstone' ? (
     <PBRCylinder
@@ -331,10 +344,10 @@ export const VariantButton: FC<{
       depth={0.8}
       position={position}
       cubeTextureRef={cubeTextureRef}
-      normalTextureUrl={marbleWhiteNormal}
-      colorTextureUrl={marbleWhiteColor}
-      aoTextureUrl={marbleWhiteAO}
-      roughnessTextureUrl={marbleWhiteRoughness}
+      normalTextureUrl={marbleWhiteNormal as string}
+      colorTextureUrl={marbleWhiteColor as string}
+      aoTextureUrl={marbleWhiteAO as string}
+      roughnessTextureUrl={marbleWhiteRoughness as string}
       metallic={0.5}
       roughness={0.5}
       specularIntensity={0.05}

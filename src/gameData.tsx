@@ -13,7 +13,7 @@ import { useWSListener } from './authHooks';
 export interface GameDataState {
   seeks: SeekEntry[];
   games: GameListEntry[];
-  gameInfo: Record<string, GameInfoEntry>;
+  gameInfo: Record<string, GameInfoEntry | undefined>;
   removeGameInfo: (id: string) => void;
 }
 
@@ -166,7 +166,9 @@ function parseGameTimeMessage(message: string): TimeMessage | null {
   };
 }
 export function GameDataProvider({ children }: { children: React.ReactNode }) {
-  const [gameInfo, setGameInfo] = useState<Record<string, GameInfoEntry>>({});
+  const [gameInfo, setGameInfo] = useState<
+    Record<string, GameInfoEntry | undefined>
+  >({});
 
   const { data: freshSeeks } = useSeeks();
 
@@ -261,8 +263,8 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   const removeGameInfo = useCallback((id: string) => {
     setGameInfo((prev) => {
       const newGameInfo = { ...prev };
-      delete newGameInfo[id];
-      return newGameInfo;
+      const { [id]: _, ...rest } = newGameInfo;
+      return rest;
     });
   }, []);
 

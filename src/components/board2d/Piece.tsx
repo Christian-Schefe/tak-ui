@@ -20,10 +20,10 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
 
   const radiusStr =
     data.variant === 'standing'
-      ? `${roundedPercent}% ${roundedPercent / wallWidthRatio}%`
+      ? `${roundedPercent.toString()}% ${(roundedPercent / wallWidthRatio).toString()}%`
       : data.variant === 'capstone'
         ? '100%'
-        : `${roundedPercent}%`;
+        : `${roundedPercent.toString()}%`;
 
   const zIndex = data.zPriority !== null ? data.zPriority + 100 : height;
 
@@ -31,9 +31,9 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
     <div
       className="absolute pointer-events-none"
       style={{
-        width: `${100 / size}%`,
-        height: `${100 / size}%`,
-        transform: `translate(${data.pos.x * 100}%, ${(size - 1 - data.pos.y) * 100 - height * 7}%)`,
+        width: `${(100 / size).toString()}%`,
+        height: `${(100 / size).toString()}%`,
+        transform: `translate(${(data.pos.x * 100).toString()}%, ${((size - 1 - data.pos.y) * 100 - height * 7).toString()}%)`,
         zIndex: zIndex,
         transition: `transform ${animationSetting}`,
       }}
@@ -47,7 +47,7 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
         <div
           className="outline"
           style={{
-            width: `${pieceSize}%`,
+            width: `${pieceSize.toString()}%`,
             outlineWidth: themeParams.pieces.border,
             outlineColor:
               data.variant === 'capstone' && colors.capstoneOverride
@@ -59,8 +59,8 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
                 : colors.background,
             height:
               data.variant === 'standing'
-                ? `${pieceSize * wallWidthRatio}%`
-                : `${pieceSize}%`,
+                ? `${(pieceSize * wallWidthRatio).toString()}%`
+                : `${pieceSize.toString()}%`,
             borderBottomLeftRadius: radiusStr,
             borderBottomRightRadius: radiusStr,
             borderTopLeftRadius: radiusStr,

@@ -23,8 +23,11 @@ export function VariantSelector({
     <div className="w-full flex p-2 gap-2">
       {pieceVariants.map((v) => (
         <button
+          key={v}
           className={`relative grow w-0 h-12 rounded-md`}
-          onClick={() => setVariant(v as PieceVariant)}
+          onClick={() => {
+            setVariant(v);
+          }}
           style={{ backgroundColor: themeParams.board1 }}
         >
           <div
@@ -43,10 +46,10 @@ export function VariantSelector({
             }}
           ></div>
           <p className="absolute flex items-center justify-center inset-0 pointer-events-none">
-            {v.charAt(0).toUpperCase() +
-              v.slice(1) +
-              ' ' +
-              (v === 'capstone' ? remaining.capstones : remaining.pieces)}
+            {`${v.charAt(0).toUpperCase() + v.slice(1)} ${(v === 'capstone'
+              ? remaining.capstones
+              : remaining.pieces
+            ).toString()}`}
           </p>
         </button>
       ))}

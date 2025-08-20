@@ -52,7 +52,9 @@ export function Tile({
   return (
     <div
       className={'relative flex items-center justify-center h-full w-full'}
-      onClick={() => onClick()}
+      onClick={() => {
+        onClick();
+      }}
     >
       <div
         className="absolute inset-0"

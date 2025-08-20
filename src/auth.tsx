@@ -55,11 +55,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('WebSocket opened');
       sendMessage('Protocol 2');
       sendToken();
-      onOpenListeners.current.forEach((listener) => listener.callback());
+      onOpenListeners.current.forEach((listener) => {
+        listener.callback();
+      });
     },
     onClose: () => {
       console.warn('WebSocket closed');
-      onCloseListeners.current.forEach((listener) => listener.callback());
+      onCloseListeners.current.forEach((listener) => {
+        listener.callback();
+      });
     },
   });
 
@@ -160,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('auth-token');
-    router.navigate({ to: '/' });
+    void router.navigate({ to: '/' });
   };
 
   return (

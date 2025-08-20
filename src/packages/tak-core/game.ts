@@ -45,7 +45,7 @@ export function canDoMove(game: Game, move: Move, now?: Date): string | null {
   checkTimeout(game, now);
 
   if (game.gameState.type !== 'ongoing')
-    return 'Game is not ongoing: ' + game.gameState.type;
+    return `Game is not ongoing: ${game.gameState.type}`;
 
   if (move.type === 'place') {
     if (game.history.length < 2 && move.variant !== 'flat') {
@@ -142,7 +142,7 @@ export function doMove(game: Game, move: Move, now?: Date) {
   const timeRemaining = checkTimeout(game, now);
   const err = canDoMove(game, move, now);
   if (err) {
-    throw new Error('Invalid move: ' + err);
+    throw new Error(`Invalid move: ${err}`);
   }
 
   const player = game.currentPlayer;

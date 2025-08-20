@@ -55,7 +55,9 @@ export function PlayedGame({
   const [game, setGame] = useImmer<ui.GameUI>(() => {
     const game = ui.newGameUI(newGame(settings));
     if (!observed) {
-      game.onMove = (_player, move) => sendMoveMessage(move);
+      game.onMove = (_player, move) => {
+        sendMoveMessage(move);
+      };
     }
     return game;
   });
@@ -122,12 +124,19 @@ export function PlayedGame({
         const fromY = fromRow.charCodeAt(0) - '1'.charCodeAt(0);
         const toX = toCol.charCodeAt(0) - 'A'.charCodeAt(0);
         const toY = toRow.charCodeAt(0) - '1'.charCodeAt(0);
-        const dir = dirFromAligned({ x: toX, y: toY }, { x: fromX, y: fromY })!;
-        moves.push(
-          moveFromString(
-            `${dropNums.reduce((acc, n) => acc + n, 0)}${fromCol.toLowerCase()}${fromRow}${dirToString(dir)}${dropNums.join('')}`,
-          ),
-        );
+        const dir = dirFromAligned({ x: toX, y: toY }, { x: fromX, y: fromY });
+        if (!dir) {
+          console.error('invalid move received: from', { fromX, fromY }, 'to', {
+            toX,
+            toY,
+          });
+        } else {
+          moves.push(
+            moveFromString(
+              `${dropNums.reduce((acc, n) => acc + n, 0).toString()}${fromCol.toLowerCase()}${fromRow}${dirToString(dir)}${dropNums.join('')}`,
+            ),
+          );
+        }
       } else {
         console.error('Failed to parse move message:', message);
       }
@@ -154,7 +163,7 @@ export function PlayedGame({
           : move.variant === 'standing'
             ? ' W'
             : '';
-      sendMessage(`Game#${gameId} P ${col}${row}${variant}`);
+      sendMessage(`Game#${gameId} P ${col}${row.toString()}${variant}`);
     } else {
       const fromCol = String.fromCharCode(move.from.x + 'A'.charCodeAt(0));
       const fromRow = move.from.y + 1;
@@ -163,21 +172,18 @@ export function PlayedGame({
       const toRow = to.y + 1;
       const drops = move.drops.join(' ');
       sendMessage(
-        `Game#${gameId} M ${fromCol}${fromRow} ${toCol}${toRow} ${drops}`,
+        `Game#${gameId} M ${fromCol}${fromRow.toString()} ${toCol}${toRow.toString()} ${drops}`,
       );
     }
   }
 
-  const gameEntry = useRef<GameListEntry>(
-    gameData.games.find((g) => g.id.toString() === gameId) ??
-      (() => {
-        throw new Error('Game not found');
-      })(),
+  const gameEntry = useRef<GameListEntry | undefined>(
+    gameData.games.find((g) => g.id.toString() === gameId),
   );
 
   const playerInfo = {
-    white: { username: gameEntry.current.white, rating: 1000 },
-    black: { username: gameEntry.current.black, rating: 1000 },
+    white: { username: gameEntry.current?.white ?? 'White', rating: 1000 },
+    black: { username: gameEntry.current?.black ?? 'Black', rating: 1000 },
   };
 
   const timeMessages = gameData.gameInfo[gameId]?.timeMessages;

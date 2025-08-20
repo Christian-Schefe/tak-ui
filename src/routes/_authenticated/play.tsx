@@ -12,10 +12,10 @@ export const Route = createFileRoute('/_authenticated/play')({
 function RouteComponent() {
   const gameData = useGameData();
   const auth = useAuth();
-  const username = auth.user!.username;
-  const gameEntry = gameData.games.find(
-    (g) => g.white === username || g.black === username,
-  );
+  const username = auth.user?.username;
+  const gameEntry = username
+    ? gameData.games.find((g) => g.white === username || g.black === username)
+    : undefined;
   const gameEntryRef = useRef<GameListEntry | undefined>(gameEntry);
   useEffect(() => {
     if (!gameEntry) return;

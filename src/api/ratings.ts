@@ -27,7 +27,7 @@ export function useRatings(playerNames: string[]) {
     queries: playerNames.map((playerName) => ({
       queryKey: ['ratings', playerName],
       staleTime: 1000 * 60 * 5,
-      queryFn: async () => {
+      queryFn: () => {
         //const res = await fetch(`${API_BASE_URL}/v1/ratings/${playerName}`);
         //if (!res.ok)
         return {

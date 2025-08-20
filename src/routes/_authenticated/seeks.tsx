@@ -49,15 +49,15 @@ function RouteComponent() {
   );
 
   const onClickSpectate = (gameId: number) => {
-    nav({
+    void nav({
       to: '/spectate/$gameId',
       params: { gameId: gameId.toString() },
     });
   };
 
   const onClickJoin = (seekId: number) => {
-    sendMessage(`Accept ${seekId}`);
-    nav({ to: '/play' });
+    sendMessage(`Accept ${seekId.toString()}`);
+    void nav({ to: '/play' });
   };
 
   return (
@@ -93,7 +93,9 @@ function RouteComponent() {
             </div>
             <button
               className="bg-primary-500 text-primary-text px-4 p-2 rounded-md h-10 min-w-16 hover:bg-primary-550 active:bg-primary-600"
-              onClick={() => onClickJoin(seek.id)}
+              onClick={() => {
+                onClickJoin(seek.id);
+              }}
             >
               Join
             </button>
@@ -133,7 +135,9 @@ function RouteComponent() {
             </div>
             <button
               className="bg-primary-500 text-primary-text px-4 p-2 rounded-md h-10 min-w-16 hover:bg-primary-550 active:bg-primary-600"
-              onClick={() => onClickSpectate(game.id)}
+              onClick={() => {
+                onClickSpectate(game.id);
+              }}
             >
               Spectate
             </button>

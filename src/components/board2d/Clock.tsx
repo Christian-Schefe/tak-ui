@@ -47,11 +47,11 @@ export function Clock({
             : themeParams.piece2.background,
         color:
           player === 'white'
-            ? themeParams.piece1.text ?? themeParams.piece1.border
-            : themeParams.piece2.text ?? themeParams.piece2.border,
+            ? (themeParams.piece1.text ?? themeParams.piece1.border)
+            : (themeParams.piece2.text ?? themeParams.piece2.border),
       }}
     >
-      <p className='font-bold font-mono'>{`${minutes}:${seconds.toString().padStart(2, '0')}`}</p>
+      <p className="font-bold font-mono">{`${minutes.toString()}:${seconds.toString().padStart(2, '0')}`}</p>
     </div>
   );
 }

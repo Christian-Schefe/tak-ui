@@ -20,6 +20,7 @@ const pieceColorSchema = z.object({
 
 export const themeSchema = z.object({
   background: z.string(),
+  text: z.string(),
   board1: z.string(),
   board2: z.string(),
   highlight: z.string(),

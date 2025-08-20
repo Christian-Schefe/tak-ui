@@ -18,7 +18,7 @@ export function newCoord(x: number, y: number): Coord {
 }
 
 export function coordToString(coord: Coord): string {
-  return `${coord.x},${coord.y}`;
+  return `${coord.x.toString()},${coord.y.toString()}`;
 }
 
 export function coordEquals(a: Coord, b: Coord): boolean {

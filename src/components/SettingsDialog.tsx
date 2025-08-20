@@ -17,13 +17,17 @@ export function SettingsDialog({ isOpen, onClose }: ModalInheritedProps) {
       <div className="flex items-center">
         <p className="px-4">Board Type:</p>
         <button
-          onClick={() => setBoardType('2d')}
+          onClick={() => {
+            setBoardType('2d');
+          }}
           className={`py-2 px-4 m-1 bg-surface-500 hover:bg-surface-550 outline-primary-500 rounded-md ${boardType === '2d' ? 'outline-2' : ''}`}
         >
           2D
         </button>
         <button
-          onClick={() => setBoardType('3d')}
+          onClick={() => {
+            setBoardType('3d');
+          }}
           className={`py-2 px-4 m-1 bg-surface-500 hover:bg-surface-550 outline-primary-500 rounded-md ${boardType === '3d' ? 'outline-2' : ''}`}
         >
           3D
@@ -34,7 +38,9 @@ export function SettingsDialog({ isOpen, onClose }: ModalInheritedProps) {
         {Object.keys(themes).map((theme) => (
           <button
             key={theme}
-            onClick={() => setColorTheme(theme as ColorTheme)}
+            onClick={() => {
+              setColorTheme(theme as ColorTheme);
+            }}
             className={`py-2 px-4 m-1 bg-surface-500 hover:bg-surface-550 outline-primary-500 rounded-md ${colorTheme === theme ? 'outline-2' : ''}`}
           >
             {theme.charAt(0).toUpperCase() + theme.slice(1)}

@@ -78,11 +78,15 @@ export const Board3D: FC<BoardProps> = ({
 
   const onClickTile = (pos: Coord) => {
     if (!interactive) return;
-    setGame((draft) => ui.tryPlaceOrAddToPartialMove(draft, pos, variant));
+    setGame((draft) => {
+      ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
+    });
   };
 
   const onTimeout = () => {
-    setGame((draft) => ui.checkTimeout(draft));
+    setGame((draft) => {
+      ui.checkTimeout(draft);
+    });
   };
 
   return (
@@ -105,7 +109,7 @@ export const Board3D: FC<BoardProps> = ({
           <cubeTexture
             ref={cubeTextureCallback}
             name="cubeTexture"
-            rootUrl={envTexture}
+            rootUrl={envTexture as string}
             createPolynomials={true}
             format={undefined}
             prefiltered={true}
@@ -138,7 +142,9 @@ export const Board3D: FC<BoardProps> = ({
               pos={pos}
               cubeTextureRef={cubeTextureRef}
               interactive={interactive}
-              onClick={() => onClickTile(pos)}
+              onClick={() => {
+                onClickTile(pos);
+              }}
             />
           ))}
           {pieceIds.map((id) => (
@@ -183,21 +189,27 @@ export const Board3D: FC<BoardProps> = ({
                 currentVariant={variant}
                 position={new Vector3(-1 + size / 2, -0.2, -1)}
                 cubeTextureRef={cubeTextureRef}
-                onClick={() => setVariant('flat')}
+                onClick={() => {
+                  setVariant('flat');
+                }}
               />
               <VariantButton
                 variant="standing"
                 currentVariant={variant}
                 position={new Vector3(0 + size / 2, -0.2, -1)}
                 cubeTextureRef={cubeTextureRef}
-                onClick={() => setVariant('standing')}
+                onClick={() => {
+                  setVariant('standing');
+                }}
               />
               <VariantButton
                 variant="capstone"
                 currentVariant={variant}
                 cubeTextureRef={cubeTextureRef}
                 position={new Vector3(1 + size / 2, -0.2, -1)}
-                onClick={() => setVariant('capstone')}
+                onClick={() => {
+                  setVariant('capstone');
+                }}
               />
             </>
           )}

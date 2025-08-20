@@ -7,5 +7,5 @@ export function defaultReserve(size: number): Reserve {
   if (size === 6) return { pieces: 30, capstones: 1 };
   if (size === 7) return { pieces: 40, capstones: 2 };
   if (size === 8) return { pieces: 50, capstones: 2 };
-  throw new Error(`Invalid board size: ${size}`);
+  throw new Error(`Invalid board size: ${size.toString()}`);
 }

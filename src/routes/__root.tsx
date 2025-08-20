@@ -17,8 +17,19 @@ export function SettingsButton() {
   const [isOpen, setOpen] = useState(false);
   return (
     <>
-      <button onClick={() => setOpen(true)}>Settings</button>
-      <SettingsDialog isOpen={isOpen} onClose={() => setOpen(false)} />
+      <button
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
+        Settings
+      </button>
+      <SettingsDialog
+        isOpen={isOpen}
+        onClose={() => {
+          setOpen(false);
+        }}
+      />
     </>
   );
 }

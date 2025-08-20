@@ -56,10 +56,14 @@ export function useWSListener({
 
   useEffect(() => {
     if (!lastMessage) return;
-    msgToString(lastMessage).then((text) => {
-      if (!text || !callbackRef.current.onMessage) return;
-      callbackRef.current.onMessage({ text, timestamp: new Date() });
-    });
+    msgToString(lastMessage)
+      .then((text) => {
+        if (!text || !callbackRef.current.onMessage) return;
+        callbackRef.current.onMessage({ text, timestamp: new Date() });
+      })
+      .catch((err: unknown) => {
+        console.error('Error parsing WebSocket message:', err);
+      });
   }, [lastMessage]);
 
   useEffect(() => {

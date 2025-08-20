@@ -30,8 +30,10 @@ export function Modal({
       onClick={disableAutoClose ? undefined : onClose}
     >
       <div
-        className={`modal-content bg-surface-500 relative max-w-4xl w-full md:w-1/2 max-h-4/5 ${className}`}
-        onClick={(e) => e.stopPropagation()}
+        className={`modal-content bg-surface-500 relative max-w-4xl w-full md:w-1/2 max-h-4/5 ${className ?? ''}`}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
       >
         {!hideCloseButton && (
           <button

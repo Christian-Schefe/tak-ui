@@ -10,6 +10,7 @@ export const Route = createFileRoute('/login')({
   beforeLoad: ({ context, search }) => {
     // Redirect if already authenticated
     if (context.auth.isAuthenticated) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw redirect({ to: search.redirect });
     }
   },
@@ -27,11 +28,11 @@ function LoginComponent() {
   useEffect(() => {
     console.log('Checking authentication status...', isAuthenticated);
     if (isAuthenticated) {
-      router.navigate({ to: redirect });
+      void router.navigate({ to: redirect });
     }
   }, [isAuthenticated, redirect]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -68,7 +69,9 @@ function LoginComponent() {
             autoComplete="username"
             type="text"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => {
+              setUsername(e.target.value);
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
@@ -83,7 +86,9 @@ function LoginComponent() {
             autoComplete="current-password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />

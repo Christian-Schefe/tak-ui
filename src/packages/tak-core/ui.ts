@@ -210,9 +210,9 @@ function getLastMovePiecesInOrder(game: Game): number[] {
   const lastMove = game.history[game.history.length - 1];
   if (lastMove.type === 'place') {
     return (
-      game.board.pieces[lastMove.pos.y][lastMove.pos.x]!.composition.map(
+      game.board.pieces[lastMove.pos.y][lastMove.pos.x]?.composition.map(
         (piece) => piece.id,
-      ) || []
+      ) ?? []
     );
   } else {
     const pieces = [];
@@ -258,12 +258,12 @@ function onGameUpdate(ui: GameUI) {
 
   const clickOptions = [];
 
-  if (ui.partialMove) {
+  if (ui.partialMove && floatingData) {
     const clickOptionDirs: Direction[] = ui.partialMove.dir
       ? [ui.partialMove.dir]
       : ['left', 'up', 'down', 'right'];
-    const dropPos = floatingData!.pos;
-    const floatingCount = floatingData!.floatingCount;
+    const dropPos = floatingData.pos;
+    const floatingCount = floatingData.floatingCount;
     clickOptions.push(dropPos);
     for (const dir of clickOptionDirs) {
       const newPos = offsetCoord(dropPos, dir, 1);
@@ -332,7 +332,7 @@ function onGameUpdate(ui: GameUI) {
     const lastMove = ui.actualGame.history[ui.actualGame.history.length - 1];
     if (lastMove.type === 'place') {
       ui.tiles[lastMove.pos.y][lastMove.pos.x].lastMove = true;
-    } else if (lastMove.type === 'move') {
+    } else {
       for (let i = 0; i <= lastMove.drops.length; i++) {
         const pos = offsetCoord(lastMove.from, lastMove.dir, i);
         ui.tiles[pos.y][pos.x].lastMove = true;
