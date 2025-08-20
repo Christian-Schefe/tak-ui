@@ -92,7 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const api = useMemo<WebSocketAPIState>(() => {
     return {
-      sendMessage,
+      sendMessage: (msg) => {
+        console.log('sent:', msg);
+        sendMessage(msg);
+      },
       addOnCloseListener,
       removeOnCloseListener,
       addOnOpenListener,
@@ -144,6 +147,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
   }, [lastMessage, sendToken, isAuthenticated]);
 
+  const login = useCallback(
+    (username: string, password: string) => {
+      console.log('Logging in as:', username);
+      localStorage.setItem('auth-token', `${username} ${password}`);
+      sendMessage(`Login ${username} ${password}`);
+    },
+    [sendMessage],
+  );
+
+  const logout = useCallback(() => {
+    console.log('Logging out');
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('auth-token');
+    void router.navigate({ to: '/' });
+  }, []);
+
+  const authContextMemo = useMemo<AuthState>(() => {
+    return { isAuthenticated, user, login, logout };
+  }, [isAuthenticated, user, login, logout]);
+
+  const messageContextMemo = useMemo<WebSocketMessageState>(() => {
+    return { lastMessage };
+  }, [lastMessage]);
+
   // Show loading state while checking auth
   if (isLoading) {
     return (
@@ -153,27 +181,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const login = (username: string, password: string) => {
-    console.log('Logging in as:', username);
-    localStorage.setItem('auth-token', `${username} ${password}`);
-    sendMessage(`Login ${username} ${password}`);
-  };
-
-  const logout = () => {
-    console.log('Logging out');
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('auth-token');
-    void router.navigate({ to: '/' });
-  };
-
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
-      <WebSocketMessageContext.Provider value={{ lastMessage }}>
-        <WebSocketAPIContext.Provider value={api}>
-          {children}
-        </WebSocketAPIContext.Provider>
-      </WebSocketMessageContext.Provider>
-    </AuthContext.Provider>
+    <AuthContext value={authContextMemo}>
+      <WebSocketMessageContext value={messageContextMemo}>
+        <WebSocketAPIContext value={api}>{children}</WebSocketAPIContext>
+      </WebSocketMessageContext>
+    </AuthContext>
   );
 }

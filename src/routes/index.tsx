@@ -6,6 +6,7 @@ import { Board3D } from '../components/board3d/Board3D';
 import { useImmer } from 'use-immer';
 import { Board2D } from '../components/board2d/Board2D';
 import { useSettings } from '../settings';
+import { GameOverDialog } from '../components/GameOverDialog';
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -45,6 +46,7 @@ function RouteComponent() {
           interactive={true}
         />
       )}
+      <GameOverDialog game={game} playerInfo={playerInfo} />
     </div>
   );
 }

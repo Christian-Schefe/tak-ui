@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef } from 'react';
+import { createContext, use, useEffect, useRef } from 'react';
 import type {
   AuthState,
   TextMessage,
@@ -17,7 +17,7 @@ export const WebSocketAPIContext = createContext<WebSocketAPIState | undefined>(
 );
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = use(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
@@ -25,7 +25,7 @@ export function useAuth() {
 }
 
 export function useWSAPI() {
-  const context = useContext(WebSocketAPIContext);
+  const context = use(WebSocketAPIContext);
   if (context === undefined) {
     throw new Error('useWSAPI must be used within a WebSocketAPIProvider');
   }
@@ -48,7 +48,7 @@ export function useWSListener({
     removeOnOpenListener,
     removeOnCloseListener,
   } = api;
-  const { lastMessage } = useContext(WebSocketMessageContext) ?? {
+  const { lastMessage } = use(WebSocketMessageContext) ?? {
     lastMessage: null,
   };
   const callbackRef = useRef({ onMessage, onClose, onOpen });

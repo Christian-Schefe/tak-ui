@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, use, useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
 import { themes, type ColorTheme, type ThemeParams } from './assets/2d-themes';
 
@@ -28,24 +28,22 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     return themes[colorTheme ?? 'classic'];
   }, [colorTheme]);
 
-  return (
-    <SettingsContext.Provider
-      value={{
-        boardType: boardType ?? '3d',
-        setBoardType,
-        themeParams,
-        colorTheme: colorTheme ?? 'classic',
-        setColorTheme,
-      }}
-    >
-      {children}
-    </SettingsContext.Provider>
-  );
+  const settingsMemo = useMemo<SettingsState>(() => {
+    return {
+      boardType: boardType ?? '2d',
+      colorTheme: colorTheme ?? 'classic',
+      themeParams,
+      setBoardType,
+      setColorTheme,
+    };
+  }, [boardType, colorTheme, themeParams, setBoardType, setColorTheme]);
+
+  return <SettingsContext value={settingsMemo}>{children}</SettingsContext>;
 }
 
 /* eslint-disable-next-line react-refresh/only-export-components */
 export function useSettings() {
-  const context = useContext(SettingsContext);
+  const context = use(SettingsContext);
   if (context === undefined) {
     throw new Error('useSettings must be used within a SettingsProvider');
   }

@@ -18,6 +18,7 @@ export function SettingsButton() {
   return (
     <>
       <button
+        className="py-2 px-3 hover:bg-surface-600"
         onClick={() => {
           setOpen(true);
         }}
@@ -37,17 +38,26 @@ export function SettingsButton() {
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
-      <div className="p-2 flex gap-4 bg-surface-500 sticky top-0 z-50">
-        <Link to="/" className="[&.active]:font-bold">
+      <div className="flex bg-surface-500 sticky top-0 z-50">
+        <Link to="/" className="py-2 px-3 [&.active]:font-bold hover:bg-surface-600">
           Home
         </Link>
-        <Link to="/play" className="[&.active]:font-bold">
+        <Link
+          to="/play"
+          className="py-2 px-3 [&.active]:font-bold hover:bg-surface-600"
+        >
           Play
         </Link>
-        <Link to="/seeks" className="[&.active]:font-bold">
+        <Link
+          to="/seeks"
+          className="py-2 px-3 [&.active]:font-bold hover:bg-surface-600"
+        >
           Seeks
         </Link>
-        <Link to="/account" className="[&.active]:font-bold">
+        <Link
+          to="/account"
+          className="py-2 px-3 [&.active]:font-bold hover:bg-surface-600"
+        >
           Account
         </Link>
         <SettingsButton />

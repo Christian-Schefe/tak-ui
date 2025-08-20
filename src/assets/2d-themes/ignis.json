@@ -1,10 +1,10 @@
 {
   "background": "#330721",
-  "text": "oklch(0.9233 0.0292 254.84)",
+  "text": "#FFEEEE",
   "board1": "#981930",
   "board2": "#ff6c40",
-  "highlight": "#fde57777",
-  "hover": "#fde57755",
+  "highlight": "#fde57799",
+  "hover": "#f4e5a577",
   "piece1": { "background": "#fde577", "border": "#330721" },
   "piece2": { "background": "#690d42", "border": "#330721", "text": "#fde577" },
   "board": {

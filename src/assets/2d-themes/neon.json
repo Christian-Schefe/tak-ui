@@ -1,6 +1,6 @@
 {
   "background": "#282033",
-  "text": "oklch(0.9233 0.0292 254.84)",
+  "text": "#EEEEFF",
   "board1": "#222851",
   "board2": "#4c357d",
   "highlight": "#1c48f555",
@@ -22,7 +22,7 @@
     }
   },
   "board": {
-    "spacing": "0px",
+    "spacing": "1px",
     "rounded": "100px",
     "tiling": "rings"
   },

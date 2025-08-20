@@ -1,9 +1,10 @@
 import { useSeeks } from './api/seeks';
 import {
   createContext,
+  use,
   useCallback,
-  useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import { type TextMessage } from './auth';
@@ -268,18 +269,16 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  return (
-    <GameDataContext.Provider
-      value={{ seeks, games, gameInfo, removeGameInfo }}
-    >
-      {children}
-    </GameDataContext.Provider>
-  );
+  const gameDataMemo = useMemo<GameDataState>(() => {
+    return { seeks, games, gameInfo, removeGameInfo };
+  }, [seeks, games, gameInfo, removeGameInfo]);
+
+  return <GameDataContext value={gameDataMemo}>{children}</GameDataContext>;
 }
 
 /* eslint-disable-next-line react-refresh/only-export-components */
 export function useGameData() {
-  const context = useContext(GameDataContext);
+  const context = use(GameDataContext);
   if (context === undefined) {
     throw new Error('useGameData must be used within a GameDataProvider');
   }

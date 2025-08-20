@@ -19,6 +19,7 @@ import { useImmer } from 'use-immer';
 import { useWSListener } from '../authHooks';
 import { useSettings } from '../settings';
 import { Board2D } from './board2d/Board2D';
+import { GameOverDialog } from './GameOverDialog';
 
 const placeRegex = /Game#\d+ P ([A-Z])([1-9])(?: ([CW]))?/;
 const moveRegex = /Game#\d+ M ([A-Z])([1-9]) ([A-Z])([1-9])((?: [1-9])*)/;
@@ -221,6 +222,7 @@ export function PlayedGame({
           interactive={!observed}
         />
       )}
+      <GameOverDialog game={game} playerInfo={playerInfo} />
     </div>
   );
 }

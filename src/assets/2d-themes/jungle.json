@@ -1,15 +1,15 @@
 {
   "background": "#263238",
-  "text": "oklch(0.9233 0.0292 254.84)",
+  "text": "#EEEEFF",
   "board1": "#6a7f89",
   "board2": "#95aab5",
-  "highlight": "#8bc34a55",
-  "hover": "#FFFFFF55",
+  "highlight": "#8bc34a99",
+  "hover": "#FFFFFF33",
   "piece1": { "background": "#546e7a", "border": "#cfd8dc" },
   "piece2": { "background": "#cfd8dc", "border": "#546e7a" },
   "board": {
     "spacing": "2px",
-    "rounded": "4px",
+    "rounded": "2px",
     "tiling": "linear"
   },
   "pieces": {
