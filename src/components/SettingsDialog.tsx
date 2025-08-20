@@ -9,7 +9,8 @@ interface ThemeOption {
 }
 
 export function SettingsDialog({ isOpen, onClose }: ModalInheritedProps) {
-  const { boardType, setBoardType, colorTheme, setColorTheme } = useSettings();
+  const { boardType, setBoardType, board2dSettings, setBoard2dSettings } =
+    useSettings();
 
   if (!isOpen) return null;
 
@@ -48,10 +49,16 @@ export function SettingsDialog({ isOpen, onClose }: ModalInheritedProps) {
         <p>Color Theme:</p>
         <Select
           value={
-            themeOptions.find((option) => option.value === colorTheme) ?? null
+            themeOptions.find(
+              (option) => option.value === board2dSettings.colorTheme,
+            ) ?? null
           }
           onChange={(e) => {
-            setColorTheme(e?.value ?? 'classic');
+            setBoard2dSettings((prev) => ({
+              ...board2dSettings,
+              ...prev,
+              colorTheme: e?.value ?? 'classic',
+            }));
           }}
           options={themeOptions}
           styles={{

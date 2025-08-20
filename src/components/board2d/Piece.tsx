@@ -36,6 +36,7 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
         transform: `translate(${(data.pos.x * 100).toString()}%, ${((size - 1 - data.pos.y) * 100 - height * 7).toString()}%)`,
         zIndex: zIndex,
         transition: `transform ${animationSetting}`,
+        filter: 'drop-shadow(0 5px 5px rgb(0, 0, 0, 0.1))',
       }}
     >
       <div

@@ -15,7 +15,7 @@ export function Tile({
   interactive: boolean;
   onClick: () => void;
 }) {
-  const { themeParams } = useSettings();
+  const { themeParams, board2dSettings } = useSettings();
 
   const boardSize = game.actualGame.board.size;
 
@@ -94,6 +94,26 @@ export function Tile({
           borderRadius: themeParams.board.rounded,
         }}
       ></div>
+      {pos.y === 0 && board2dSettings.axisLabels ? (
+        <div
+          className={
+            'flex absolute right-1 bottom-0 justify-end items-end font-mono font-bold opacity-70'
+          }
+          style={{ color: themeParams.text }}
+        >
+          {pos.x + 1}
+        </div>
+      ) : null}
+      {pos.x === 0 && board2dSettings.axisLabels ? (
+        <div
+          className={
+            'flex absolute left-1 top-0 justify-end items-end font-mono font-bold opacity-70'
+          }
+          style={{ color: themeParams.text }}
+        >
+          {String.fromCharCode('A'.charCodeAt(0) + pos.y).toUpperCase()}
+        </div>
+      ) : null}
     </div>
   );
 }

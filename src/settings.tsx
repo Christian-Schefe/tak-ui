@@ -4,12 +4,19 @@ import { themes, type ColorTheme, type ThemeParams } from './assets/2d-themes';
 
 export type BoardType = '2d' | '3d';
 
+export interface Board2DSettings {
+  colorTheme: ColorTheme;
+  axisLabels: boolean;
+}
+
+export type Setter<T> = React.Dispatch<React.SetStateAction<T | undefined>>;
+
 export interface SettingsState {
   boardType: BoardType;
-  colorTheme: ColorTheme;
+  board2dSettings: Board2DSettings;
   themeParams: ThemeParams;
-  setBoardType: (type: BoardType) => void;
-  setColorTheme: (theme: ColorTheme) => void;
+  setBoardType: Setter<BoardType>;
+  setBoard2dSettings: Setter<Board2DSettings>;
 }
 
 const SettingsContext = createContext<SettingsState | undefined>(undefined);
@@ -19,24 +26,34 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     'boardType',
     '2d',
   );
-  const [colorTheme, setColorTheme] = useLocalStorage<ColorTheme>(
-    'colorTheme',
-    'classic',
-  );
+  const [board2dSettings, setBoard2dSettings] =
+    useLocalStorage<Board2DSettings>('board2dSettings', {
+      colorTheme: 'classic',
+      axisLabels: true,
+    });
 
   const themeParams = useMemo(() => {
-    return themes[colorTheme ?? 'classic'];
-  }, [colorTheme]);
+    return themes[board2dSettings?.colorTheme ?? 'classic'];
+  }, [board2dSettings?.colorTheme]);
 
   const settingsMemo = useMemo<SettingsState>(() => {
     return {
       boardType: boardType ?? '2d',
-      colorTheme: colorTheme ?? 'classic',
+      board2dSettings: board2dSettings ?? {
+        colorTheme: 'classic',
+        axisLabels: true,
+      },
       themeParams,
       setBoardType,
-      setColorTheme,
+      setBoard2dSettings,
     };
-  }, [boardType, colorTheme, themeParams, setBoardType, setColorTheme]);
+  }, [
+    boardType,
+    board2dSettings,
+    themeParams,
+    setBoardType,
+    setBoard2dSettings,
+  ]);
 
   return <SettingsContext value={settingsMemo}>{children}</SettingsContext>;
 }
