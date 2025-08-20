@@ -103,8 +103,8 @@ export function PlayedGame({
       const message = moveMessages[readMessageIndex + i];
       console.log(moveMessages.length, readMessageIndex + i, message);
 
-      const placeMatch = message.match(placeRegex);
-      const moveMatch = message.match(moveRegex);
+      const placeMatch = placeRegex.exec(message);
+      const moveMatch = moveRegex.exec(message);
 
       if (placeMatch) {
         const [, col, row] = placeMatch;

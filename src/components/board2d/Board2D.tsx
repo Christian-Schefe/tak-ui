@@ -49,8 +49,8 @@ export function Board2D({
       <div className="w-full max-w-4xl mx-auto">
         <PlayerInfoBar
           player="white"
-          username={playerInfo['white'].username}
-          rating={playerInfo['white'].rating}
+          username={playerInfo.white.username}
+          rating={playerInfo.white.rating}
           game={game}
           onTimeout={onTimeout}
         />
@@ -76,21 +76,16 @@ export function Board2D({
             <Piece key={id} id={id} game={game} />
           ))}
         </div>
+        {interactive && (
+          <VariantSelector variant={variant} setVariant={setVariant} />
+        )}
         <PlayerInfoBar
           player="black"
-          username={playerInfo['black'].username}
-          rating={playerInfo['black'].rating}
+          username={playerInfo.black.username}
+          rating={playerInfo.black.rating}
           game={game}
           onTimeout={onTimeout}
         />
-        {interactive && (
-          <VariantSelector
-            game={game}
-            player={game.actualGame.currentPlayer}
-            variant={variant}
-            setVariant={setVariant}
-          />
-        )}
       </div>
     </div>
   );

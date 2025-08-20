@@ -29,7 +29,7 @@ export function moveFromString(str: string): Move {
   }
 
   const moveRegex = /^([1-9]?)([a-z])([1-9])([<>+-])([1-9]*)/;
-  const moveMatch = str.match(moveRegex);
+  const moveMatch = moveRegex.exec(str);
   if (moveMatch) {
     const take = moveMatch[1]
       ? moveMatch[1].charCodeAt(0) - '0'.charCodeAt(0)
@@ -44,7 +44,7 @@ export function moveFromString(str: string): Move {
   }
 
   const placeRegex = /^([FSC]?)([a-z])([1-9])/;
-  const placeMatch = str.match(placeRegex);
+  const placeMatch = placeRegex.exec(str);
   if (placeMatch) {
     const variant = stringToVariant(placeMatch[1] || 'F');
     const x = placeMatch[2].charCodeAt(0) - 'a'.charCodeAt(0);

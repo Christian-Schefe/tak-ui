@@ -48,7 +48,7 @@ export function useWSListener({
     removeOnOpenListener,
     removeOnCloseListener,
   } = api;
-  const { lastMessage } = useContext(WebSocketMessageContext) || {
+  const { lastMessage } = useContext(WebSocketMessageContext) ?? {
     lastMessage: null,
   };
   const callbackRef = useRef({ onMessage, onClose, onOpen });

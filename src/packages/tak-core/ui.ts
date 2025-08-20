@@ -4,24 +4,24 @@ import { coordEquals, dirFromAdjacent, offsetCoord } from './coord';
 import { current, isDraft } from 'immer';
 import * as game from './game';
 
-export type UIPiece = {
+export interface UIPiece {
   player: Player;
   variant: PieceVariant;
   pos: Coord;
   height: number;
   isFloating: boolean;
   zPriority: number | null;
-};
+}
 
-export type UITile = {
+export interface UITile {
   owner: Player | null;
   highlighted: boolean;
   selectable: boolean;
   hoverable: boolean;
   lastMove: boolean;
-};
+}
 
-export type GameUI = {
+export interface GameUI {
   actualGame: Game;
   pieces: UIPiece[];
   priorityPieces: number[];
@@ -33,7 +33,7 @@ export type GameUI = {
     dir: Direction | null;
   } | null;
   onMove?: (player: Player, move: Move) => void;
-};
+}
 
 export function boardSize(ui: GameUI): number {
   return ui.actualGame.board.size;
@@ -95,7 +95,7 @@ export function tryPlaceOrAddToPartialMove(
 function partialMoveToMove(
   partialMove: GameUI['partialMove'],
 ): { move: Move; complete: boolean } | null {
-  if (partialMove && partialMove.dir) {
+  if (partialMove?.dir) {
     const drops = partialMove.drops;
     const floatingCount =
       partialMove.take - drops.reduce((acc, drop) => acc + drop, 0);
@@ -119,7 +119,7 @@ export function addToPartialMove(ui: GameUI, pos: Coord) {
   addToPartialMoveHelper(ui, pos);
   const partialMove = partialMoveToMove(ui.partialMove);
 
-  if (partialMove && partialMove.complete) {
+  if (partialMove?.complete) {
     doMove(ui, partialMove.move, true);
     return;
   }

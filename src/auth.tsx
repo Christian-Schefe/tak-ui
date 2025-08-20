@@ -37,10 +37,10 @@ export interface WebSocketAPIState {
   removeOnOpenListener: (key: string) => void;
 }
 
-export type TextMessage = {
+export interface TextMessage {
   text: string;
   timestamp: Date;
-};
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then((msg) => {
         if (!msg) return;
         console.log('Received WebSocket message:', msg);
-        const userMatch = msg.match(/Welcome (.+)!/);
+        const userMatch = /Welcome (.+)!/.exec(msg);
         if (msg === 'NOK') {
           if (isAuthenticated) return;
           localStorage.removeItem('auth-token');

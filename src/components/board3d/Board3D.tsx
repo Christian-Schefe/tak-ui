@@ -14,10 +14,10 @@ import { coordToString } from '../../packages/tak-core/coord';
 import envTexture from '../../assets/766-hdri-skies-com.env';
 import { Clock, PlayerInfoPanel } from './Clock';
 
-export type EnvConfig = {
+export interface EnvConfig {
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
   envColor: Color3;
-};
+}
 
 export const Board3D: FC<BoardProps> = ({
   game,
@@ -34,7 +34,7 @@ export const Board3D: FC<BoardProps> = ({
 
   function handleResize() {
     const boundingRect = canvasContainer.current?.getBoundingClientRect();
-    const { width, height } = boundingRect || { width: 0, height: 0 };
+    const { width, height } = boundingRect ?? { width: 0, height: 0 };
     setDimensions({ width: Math.round(width), height: Math.round(height) });
   }
 

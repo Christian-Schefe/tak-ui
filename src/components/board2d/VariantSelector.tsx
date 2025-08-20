@@ -1,15 +1,10 @@
-import type { PieceVariant, Player } from '../../packages/tak-core';
-import type { GameUI } from '../../packages/tak-core/ui';
+import type { PieceVariant } from '../../packages/tak-core';
 import { useSettings } from '../../settings';
 
 export function VariantSelector({
-  game,
-  player,
   variant,
   setVariant,
 }: {
-  game: GameUI;
-  player: Player;
   variant: PieceVariant;
   setVariant: (variant: PieceVariant) => void;
 }) {
@@ -17,14 +12,12 @@ export function VariantSelector({
 
   const pieceVariants: PieceVariant[] = ['flat', 'standing', 'capstone'];
 
-  const remaining = game.actualGame.reserves[player];
-
   return (
     <div className="w-full flex p-2 gap-2">
       {pieceVariants.map((v) => (
         <button
           key={v}
-          className={`relative grow w-0 h-12 rounded-md`}
+          className="relative grow w-0 h-12 rounded-md"
           onClick={() => {
             setVariant(v);
           }}
@@ -46,10 +39,7 @@ export function VariantSelector({
             }}
           ></div>
           <p className="absolute flex items-center justify-center inset-0 pointer-events-none">
-            {`${v.charAt(0).toUpperCase() + v.slice(1)} ${(v === 'capstone'
-              ? remaining.capstones
-              : remaining.pieces
-            ).toString()}`}
+            {v.charAt(0).toUpperCase() + v.slice(1)}
           </p>
         </button>
       ))}

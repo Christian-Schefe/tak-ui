@@ -2,7 +2,10 @@ export type Player = 'white' | 'black';
 
 export type PieceVariant = 'flat' | 'standing' | 'capstone';
 
-export type Coord = { x: number; y: number };
+export interface Coord {
+  x: number;
+  y: number;
+}
 
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
@@ -34,34 +37,34 @@ export type MoveRecord =
       smash: boolean;
     };
 
-export type TrackedPiece = {
+export interface TrackedPiece {
   id: number;
   player: Player;
-};
+}
 
-export type Stack = {
+export interface Stack {
   variant: PieceVariant;
   composition: TrackedPiece[];
-};
+}
 
-export type Board = {
+export interface Board {
   size: number;
   pieces: (Stack | null)[][];
   _idCounter: number;
-};
+}
 
-export type Reserve = {
+export interface Reserve {
   pieces: number;
   capstones: number;
-};
+}
 
-export type Clock = {
+export interface Clock {
   increment: number;
   lastMove: Date | null;
   remaining: Record<Player, number>;
-};
+}
 
-export type Game = {
+export interface Game {
   board: Board;
   currentPlayer: Player;
   reserves: Record<Player, Reserve>;
@@ -69,9 +72,9 @@ export type Game = {
   gameState: GameState;
   history: MoveRecord[];
   clock?: Clock;
-};
+}
 
-export type GameSettings = {
+export interface GameSettings {
   boardSize: number;
   komi: number;
   reserve: Reserve;
@@ -79,7 +82,7 @@ export type GameSettings = {
     contingent: number;
     increment: number;
   };
-};
+}
 
 export function playerOpposite(player: Player): Player {
   return player === 'white' ? 'black' : 'white';

@@ -69,7 +69,17 @@ export function Tile({
         className="absolute inset-0"
         style={{
           backgroundColor: themeParams.highlight,
-          opacity: data.selectable ? 1 : data.lastMove ? 0.7 : 0,
+          opacity: data.lastMove ? 1 : 0,
+          transition: 'opacity 150ms ease-in-out',
+          margin: themeParams.board.spacing,
+          borderRadius: themeParams.board.rounded,
+        }}
+      ></div>
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: themeParams.hover,
+          opacity: data.selectable ? 0.8 : 0,
           transition: 'opacity 150ms ease-in-out',
           margin: themeParams.board.spacing,
           borderRadius: themeParams.board.rounded,

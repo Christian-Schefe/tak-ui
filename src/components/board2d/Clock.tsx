@@ -4,6 +4,7 @@ import { getTimeRemaining } from '../../packages/tak-core/game';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useMemo, useState } from 'react';
 import { useSettings } from '../../settings';
+import { FaClock } from 'react-icons/fa';
 
 export function Clock({
   game,
@@ -37,9 +38,13 @@ export function Clock({
     setTimeRemaining(remaining ?? 0);
   }, true);
 
+  const isActive =
+    player === game.actualGame.currentPlayer &&
+    game.actualGame.gameState.type === 'ongoing';
+
   return (
     <div
-      className="py-1 px-4 rounded-md"
+      className="py-1 px-4 rounded-md flex items-center gap-2 justify-between"
       style={{
         backgroundColor:
           player === 'white'
@@ -49,8 +54,17 @@ export function Clock({
           player === 'white'
             ? (themeParams.piece1.text ?? themeParams.piece1.border)
             : (themeParams.piece2.text ?? themeParams.piece2.border),
+        opacity: isActive ? 1 : 0.5,
+        transition: 'opacity 150ms ease-in-out',
       }}
     >
+      <FaClock
+        className="w-4 h-4"
+        style={{
+          opacity: isActive ? 1 : 0,
+          transition: 'opacity 150ms ease-in-out',
+        }}
+      />
       <p className="font-bold font-mono">{`${minutes.toString()}:${seconds.toString().padStart(2, '0')}`}</p>
     </div>
   );

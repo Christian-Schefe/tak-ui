@@ -8,10 +8,10 @@ export type ModalProps = {
   disableAutoClose?: boolean;
 } & ModalInheritedProps;
 
-export type ModalInheritedProps = {
+export interface ModalInheritedProps {
   isOpen: boolean;
   onClose: () => void;
-};
+}
 
 export function Modal({
   isOpen,

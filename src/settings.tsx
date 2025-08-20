@@ -1,17 +1,16 @@
 import { createContext, useContext, useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
-import { themes, type ThemeParams } from './assets/2d-themes';
+import { themes, type ColorTheme, type ThemeParams } from './assets/2d-themes';
 
 export type BoardType = '2d' | '3d';
-export type ColorTheme = 'classic';
 
-export type SettingsState = {
+export interface SettingsState {
   boardType: BoardType;
   colorTheme: ColorTheme;
   themeParams: ThemeParams;
   setBoardType: (type: BoardType) => void;
   setColorTheme: (theme: ColorTheme) => void;
-};
+}
 
 const SettingsContext = createContext<SettingsState | undefined>(undefined);
 
@@ -32,10 +31,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   return (
     <SettingsContext.Provider
       value={{
-        boardType: boardType || '3d',
+        boardType: boardType ?? '3d',
         setBoardType,
         themeParams,
-        colorTheme: colorTheme || 'classic',
+        colorTheme: colorTheme ?? 'classic',
         setColorTheme,
       }}
     >

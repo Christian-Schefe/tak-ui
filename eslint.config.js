@@ -14,6 +14,7 @@ export default tseslint.config([
     extends: [
       js.configs.recommended,
       ...tseslint.configs.strictTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
       reactHooks.configs['recommended-latest'],
       reactRefresh.configs.vite,
     ],
@@ -43,6 +44,7 @@ export default tseslint.config([
           ignoreRestSiblings: true,
         },
       ],
+      quotes: ['error', 'single'],
       ...tanstackQuery.configs.recommended.rules,
     },
   },

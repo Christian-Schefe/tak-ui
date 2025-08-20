@@ -17,7 +17,7 @@ export interface GameDataState {
   removeGameInfo: (id: string) => void;
 }
 
-export type SeekEntry = {
+export interface SeekEntry {
   id: number;
   creator: string;
   timeContingent: number;
@@ -36,9 +36,9 @@ export type SeekEntry = {
         amount: number;
       }
     | undefined;
-};
+}
 
-export type GameListEntry = {
+export interface GameListEntry {
   id: number;
   white: string;
   black: string;
@@ -56,17 +56,17 @@ export type GameListEntry = {
         amount: number;
       }
     | undefined;
-};
+}
 
 export type TimeMessage = {
   timestamp: Date;
 } & Record<Player, number>;
 
-export type GameInfoEntry = {
+export interface GameInfoEntry {
   messages: string[];
   moveMessages: string[];
   timeMessages: TimeMessage[];
-};
+}
 
 const GameDataContext = createContext<GameDataState | undefined>(undefined);
 
@@ -79,7 +79,7 @@ const gameAddRegex =
 const gameRemoveRegex = /^GameList Remove (\d+)/;
 
 function parseAddSeekMessage(message: string): SeekEntry | null {
-  const matches = message.match(seekAddRegex);
+  const matches = seekAddRegex.exec(message);
   if (!matches) return null;
 
   const triggerMoveAmount = parseInt(matches[13]);
@@ -109,14 +109,14 @@ function parseAddSeekMessage(message: string): SeekEntry | null {
 }
 
 function parseRemoveSeekMessage(message: string): number | null {
-  const matches = message.match(seekRemoveRegex);
+  const matches = seekRemoveRegex.exec(message);
   if (!matches) return null;
 
   return parseInt(matches[1]);
 }
 
 function parseGameAddMessage(message: string): GameListEntry | null {
-  const matches = message.match(gameAddRegex);
+  const matches = gameAddRegex.exec(message);
   if (!matches) return null;
 
   return {
@@ -142,7 +142,7 @@ function parseGameAddMessage(message: string): GameListEntry | null {
 }
 
 function parseRemoveGameMessage(message: string): number | null {
-  const matches = message.match(gameRemoveRegex);
+  const matches = gameRemoveRegex.exec(message);
   if (!matches) return null;
 
   return parseInt(matches[1]);
@@ -156,7 +156,7 @@ function isGameMoveMessage(message: string): boolean {
 const gameTimeMessagePattern = /^Game#\d+ Timems (\d+) (\d+)/;
 
 function parseGameTimeMessage(message: string): TimeMessage | null {
-  const matches = message.match(gameTimeMessagePattern);
+  const matches = gameTimeMessagePattern.exec(message);
   if (!matches) return null;
 
   return {
@@ -176,7 +176,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   const [games, setGames] = useState<GameListEntry[]>([]);
 
   function parseGameUpdateMessage(message: string): string | null {
-    const matches = message.match(/^Game#(\d+) (.+)/);
+    const matches = /^Game#(\d+) (.+)/.exec(message);
     if (!matches) return null;
 
     return matches[1];
