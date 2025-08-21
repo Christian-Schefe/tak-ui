@@ -1,18 +1,21 @@
+import { Modal, Select, Slider, Switch } from '@mantine/core';
 import { themes, type ColorTheme } from '../assets/2d-themes';
 import { useSettings } from '../settings';
-import { Modal, type ModalInheritedProps } from './Modal';
-import Select from 'react-select';
 
 interface ThemeOption {
   value: ColorTheme;
   label: string;
 }
 
-export function SettingsDialog({ isOpen, onClose }: ModalInheritedProps) {
+export function SettingsDialog({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
   const { boardType, setBoardType, board2dSettings, setBoard2dSettings } =
     useSettings();
-
-  if (!isOpen) return null;
 
   const themeOptions: ThemeOption[] = Object.keys(themes).map((colorTheme) => ({
     value: colorTheme as ColorTheme,
@@ -20,58 +23,47 @@ export function SettingsDialog({ isOpen, onClose }: ModalInheritedProps) {
   }));
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      className="p-4 rounded-lg flex flex-col gap-2"
-    >
-      <h1 className="font-bold text-lg text-center">Settings</h1>
-      <div className="flex items-center gap-2">
-        <p>Board Type:</p>
-        <button
-          onClick={() => {
-            setBoardType('2d');
-          }}
-          className={`py-2 px-4 m-1 bg-surface-500 hover:bg-surface-550 outline-primary-500 rounded-md ${boardType === '2d' ? 'outline-2' : ''}`}
-        >
-          2D
-        </button>
-        <button
-          onClick={() => {
-            setBoardType('3d');
-          }}
-          className={`py-2 px-4 m-1 bg-surface-500 hover:bg-surface-550 outline-primary-500 rounded-md ${boardType === '3d' ? 'outline-2' : ''}`}
-        >
-          3D
-        </button>
-      </div>
-      <div className="flex items-center gap-2">
-        <p>Color Theme:</p>
-        <Select
-          value={
-            themeOptions.find(
-              (option) => option.value === board2dSettings.colorTheme,
-            ) ?? null
-          }
-          onChange={(e) => {
-            setBoard2dSettings((prev) => ({
-              ...board2dSettings,
-              ...prev,
-              colorTheme: e?.value ?? 'classic',
-            }));
-          }}
-          options={themeOptions}
-          styles={{
-            option: (provided, state) => ({
-              ...provided,
-              color: state.isSelected ? 'white' : 'black',
-              backgroundColor: state.isSelected
-                ? 'var(--color-primary-600)'
-                : provided.backgroundColor,
-            }),
-          }}
-        />
-      </div>
+    <Modal opened={isOpen} onClose={onClose} centered title="Settings">
+      <p className="mt-4">3D Board</p>
+      <Switch
+        checked={boardType === '3d'}
+        onChange={(e) => {
+          setBoardType(e.currentTarget.checked ? '3d' : '2d');
+        }}
+      />
+      <p className="mt-4">Color Theme</p>
+      <Select
+        value={board2dSettings.colorTheme}
+        onChange={(e) => {
+          setBoard2dSettings({
+            ...board2dSettings,
+            colorTheme: (e ?? 'classic') as ColorTheme,
+          });
+        }}
+        data={themeOptions}
+      />
+      <p className="mt-4">Axis Labels</p>
+      <Switch
+        checked={board2dSettings.axisLabels}
+        onChange={(e) => {
+          setBoard2dSettings({
+            ...board2dSettings,
+            axisLabels: e.currentTarget.checked,
+          });
+        }}
+      />
+      <Slider
+        value={board2dSettings.axisLabelSize}
+        onChange={(value) => {
+          setBoard2dSettings({
+            ...board2dSettings,
+            axisLabelSize: value,
+          });
+        }}
+        min={8}
+        max={24}
+        step={1}
+      />
     </Modal>
   );
 }

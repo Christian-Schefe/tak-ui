@@ -7,6 +7,7 @@ import type { BoardProps } from '../board';
 import { useSettings } from '../../settings';
 import { VariantSelector } from './VariantSelector';
 import { PlayerInfoBar } from './PlayerInfoBar';
+import { History } from './History';
 
 export function Board2D({
   game,
@@ -43,48 +44,58 @@ export function Board2D({
 
   return (
     <div
-      className="w-full grow flex flex-col"
+      className="w-full grow"
       style={{ backgroundColor: themeParams.background }}
     >
-      <div className="w-full max-w-4xl mx-auto">
-        <PlayerInfoBar
-          player="white"
-          username={playerInfo.white.username}
-          rating={playerInfo.white.rating}
-          game={game}
-          onTimeout={onTimeout}
-        />
-        <div
-          className="grid relative select-none touch-none justify-start items-start w-full aspect-square"
-          style={{
-            gridTemplateColumns: `repeat(${size.toString()}, 1fr)`,
-            gridTemplateRows: `repeat(${size.toString()}, 1fr)`,
-          }}
-        >
-          {tileCoords.map((pos) => (
-            <Tile
-              key={coordToString(pos)}
-              pos={pos}
-              game={game}
-              interactive={interactive}
-              onClick={() => {
-                onClickTile(pos);
-              }}
-            />
-          ))}
-          {pieceIds.map((id) => (
-            <Piece key={id} id={id} game={game} />
-          ))}
+      <div className="w-full grow flex flex-col max-w-4xl lg:max-w-6xl mx-auto lg:flex-row">
+        <div className="grow">
+          <PlayerInfoBar
+            player="white"
+            username={playerInfo.white.username}
+            rating={playerInfo.white.rating}
+            game={game}
+            onTimeout={onTimeout}
+          />
+          <div
+            className="grid relative select-none touch-none justify-start items-start w-full aspect-square"
+            style={{
+              gridTemplateColumns: `repeat(${size.toString()}, 1fr)`,
+              gridTemplateRows: `repeat(${size.toString()}, 1fr)`,
+            }}
+          >
+            {tileCoords.map((pos) => (
+              <Tile
+                key={coordToString(pos)}
+                pos={pos}
+                game={game}
+                interactive={interactive}
+                onClick={() => {
+                  onClickTile(pos);
+                }}
+              />
+            ))}
+            {pieceIds.map((id) => (
+              <Piece key={id} id={id} game={game} />
+            ))}
+          </div>
+          {interactive && (
+            <VariantSelector variant={variant} setVariant={setVariant} />
+          )}
+          <PlayerInfoBar
+            player="black"
+            username={playerInfo.black.username}
+            rating={playerInfo.black.rating}
+            game={game}
+            onTimeout={onTimeout}
+          />
         </div>
-        {interactive && (
-          <VariantSelector variant={variant} setVariant={setVariant} />
-        )}
-        <PlayerInfoBar
-          player="black"
-          username={playerInfo.black.username}
-          rating={playerInfo.black.rating}
+        <History
           game={game}
-          onTimeout={onTimeout}
+          onClick={(plyIndex) => {
+            setGame((draft) => {
+              ui.setPlyIndex(draft, plyIndex);
+            });
+          }}
         />
       </div>
     </div>

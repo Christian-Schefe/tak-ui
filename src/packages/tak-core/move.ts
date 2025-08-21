@@ -1,4 +1,4 @@
-import type { Direction, Move, PieceVariant } from '.';
+import type { Direction, Move, MoveRecord, PieceVariant } from '.';
 
 export function moveFromString(str: string): Move {
   function stringToVariant(variant: string): PieceVariant {
@@ -53,4 +53,35 @@ export function moveFromString(str: string): Move {
   }
 
   throw new Error(`Invalid move string: ${str}`);
+}
+
+export function moveToString(move: MoveRecord): string {
+  if (move.type === 'place') {
+    const variant =
+      move.variant === 'capstone'
+        ? 'C'
+        : move.variant === 'standing'
+          ? 'S'
+          : '';
+
+    const col = String.fromCharCode(move.pos.x + 'a'.charCodeAt(0));
+    const row = move.pos.y + 1;
+    return `${variant}${col}${row.toString()}`;
+  } else {
+    const col = String.fromCharCode(move.from.x + 'a'.charCodeAt(0));
+    const row = move.from.y + 1;
+    const dir =
+      move.dir === 'up'
+        ? '+'
+        : move.dir === 'down'
+          ? '-'
+          : move.dir === 'left'
+            ? '<'
+            : '>';
+    const takeSum = move.drops.reduce((a, b) => a + b, 0);
+    const take = takeSum === 1 ? '' : takeSum.toString();
+    const drops = move.drops.length === 1 ? '' : move.drops.join('');
+    const smash = move.smash ? '*' : '';
+    return `${take}${col}${row.toString()}${dir}${drops}${smash}`;
+  }
 }

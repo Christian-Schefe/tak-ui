@@ -7,6 +7,7 @@ export type BoardType = '2d' | '3d';
 export interface Board2DSettings {
   colorTheme: ColorTheme;
   axisLabels: boolean;
+  axisLabelSize: number;
 }
 
 export type Setter<T> = React.Dispatch<React.SetStateAction<T | undefined>>;
@@ -30,6 +31,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     useLocalStorage<Board2DSettings>('board2dSettings', {
       colorTheme: 'classic',
       axisLabels: true,
+      axisLabelSize: 12,
     });
 
   const themeParams = useMemo(() => {
@@ -42,6 +44,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       board2dSettings: board2dSettings ?? {
         colorTheme: 'classic',
         axisLabels: true,
+        axisLabelSize: 12,
       },
       themeParams,
       setBoardType,

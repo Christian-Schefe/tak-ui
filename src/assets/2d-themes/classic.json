@@ -4,7 +4,7 @@
   "board1": "oklch(0.6756 0.0292 254.84)",
   "board2": "oklch(0.7049 0.0292 254.84)",
   "highlight": "oklch(0.6601 0.144 254.84 / 0.7)",
-  "hover": "#FFFFFF55",
+  "hover": "oklch(0.9233 0.0292 254.84 / 0.4)",
   "piece1": {
     "background": "oklch(0.9233 0.0292 254.84)",
     "border": "oklch(0.3533 0.0292 254.84)"

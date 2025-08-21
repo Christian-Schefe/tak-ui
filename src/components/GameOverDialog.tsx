@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Modal } from './Modal';
 import type { GameUI } from '../packages/tak-core/ui';
 import type { PlayerInfo } from './board';
 import type { Player } from '../packages/tak-core';
+import { Modal } from '@mantine/core';
 
 export function GameOverDialog({
   game,
@@ -19,13 +19,13 @@ export function GameOverDialog({
 
   return (
     <Modal
-      isOpen={isOpen}
+      opened={isOpen}
       onClose={() => {
         setIsOpen(false);
       }}
-      className="p-4 rounded-lg flex flex-col gap-2"
+      title="Game Over"
+      centered
     >
-      <h1 className="font-bold text-lg text-center mb-2">Game Over</h1>
       <p className="text-center">
         {(() => {
           switch (game.actualGame.gameState.type) {

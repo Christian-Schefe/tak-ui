@@ -166,6 +166,21 @@ function parseGameTimeMessage(message: string): TimeMessage | null {
     black: parseInt(matches[2]),
   };
 }
+
+function parseGameUpdateMessage(message: string): string | null {
+  const matches = /^Game#(\d+) (.+)/.exec(message);
+  if (!matches) return null;
+
+  return matches[1];
+}
+
+function parseObserveMessage(message: string): string | null {
+  const matches = /^Observe (\d+)/.exec(message);
+  if (!matches) return null;
+
+  return matches[1];
+}
+
 export function GameDataProvider({ children }: { children: React.ReactNode }) {
   const [gameInfo, setGameInfo] = useState<
     Record<string, GameInfoEntry | undefined>
@@ -175,13 +190,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
 
   const [seeks, setSeeks] = useState<SeekEntry[]>([]);
   const [games, setGames] = useState<GameListEntry[]>([]);
-
-  function parseGameUpdateMessage(message: string): string | null {
-    const matches = /^Game#(\d+) (.+)/.exec(message);
-    if (!matches) return null;
-
-    return matches[1];
-  }
 
   const onMsg = (msg: TextMessage) => {
     const text = msg.text;
@@ -238,6 +246,18 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
         }));
       } else {
         console.error('Failed to update game:', text);
+      }
+    } else if (text.startsWith('Observe')) {
+      const id = parseObserveMessage(text);
+      if (id) {
+        console.log('Received observe message for game:', id);
+        setGameInfo((prev) => {
+          const newGameInfo = { ...prev };
+          const { [id]: _, ...rest } = newGameInfo;
+          return rest;
+        });
+      } else {
+        console.error('Failed to parse observe game message:', text);
       }
     }
   };

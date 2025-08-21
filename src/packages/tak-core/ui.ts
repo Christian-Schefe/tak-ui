@@ -23,6 +23,7 @@ export interface UITile {
 
 export interface GameUI {
   actualGame: Game;
+  plyIndex: number | null;
   pieces: UIPiece[];
   priorityPieces: number[];
   tiles: UITile[][];
@@ -46,9 +47,18 @@ export function newGameUI(game: Game): GameUI {
     tiles: [],
     partialMove: null,
     priorityPieces: [],
+    plyIndex: null,
   };
   onGameUpdate(gameUI);
   return gameUI;
+}
+
+export function setPlyIndex(ui: GameUI, index: number | null) {
+  ui.plyIndex =
+    index !== null && index >= ui.actualGame.history.length ? null : index;
+  ui.priorityPieces = [];
+  ui.partialMove = null;
+  onGameUpdate(ui);
 }
 
 export function checkTimeout(ui: GameUI) {
@@ -68,6 +78,7 @@ export function doMove(ui: GameUI, move: Move, triggerMove: boolean) {
   const player = ui.actualGame.currentPlayer;
   game.doMove(ui.actualGame, move);
   ui.partialMove = null;
+  ui.plyIndex = null;
   ui.priorityPieces = getLastMovePiecesInOrder(ui.actualGame);
   onGameUpdate(ui);
   if (triggerMove) {
@@ -80,6 +91,9 @@ export function tryPlaceOrAddToPartialMove(
   pos: Coord,
   variant: PieceVariant,
 ) {
+  if (ui.plyIndex !== null) {
+    return;
+  }
   const move: Move = {
     type: 'place',
     pos,
@@ -232,9 +246,14 @@ function getLastMovePiecesInOrder(game: Game): number[] {
 }
 
 function onGameUpdate(ui: GameUI) {
-  const shownGame = structuredClone(
+  const gameClone = structuredClone(
     isDraft(ui) ? current(ui).actualGame : ui.actualGame,
   );
+  const shownGame =
+    ui.plyIndex !== null
+      ? game.gameFromPlyCount(gameClone, ui.plyIndex)
+      : gameClone;
+
   const partialMove = partialMoveToMove(ui.partialMove);
   if (partialMove) {
     game.doMove(shownGame, partialMove.move);
@@ -284,6 +303,8 @@ function onGameUpdate(ui: GameUI) {
   ui.tiles = [];
 
   const isOngoing = ui.actualGame.gameState.type === 'ongoing';
+  const isNotHistoric = ui.plyIndex === null;
+
   for (let y = 0; y < size; y++) {
     ui.tiles[y] = [];
     for (let x = 0; x < size; x++) {
@@ -321,15 +342,18 @@ function onGameUpdate(ui: GameUI) {
       ui.tiles[y][x] = {
         owner: stack?.composition[0].player ?? null,
         highlighted: false,
-        selectable: isOngoing && selectable,
-        hoverable: isOngoing && (hoverable || selectable),
+        selectable: isOngoing && isNotHistoric && selectable,
+        hoverable: isOngoing && isNotHistoric && (hoverable || selectable),
         lastMove: false,
       };
     }
   }
 
-  if (ui.actualGame.history.length >= 1) {
-    const lastMove = ui.actualGame.history[ui.actualGame.history.length - 1];
+  if ((ui.plyIndex ?? ui.actualGame.history.length) >= 1) {
+    const lastMove =
+      ui.actualGame.history[
+        ui.plyIndex ? ui.plyIndex - 1 : ui.actualGame.history.length - 1
+      ];
     if (lastMove.type === 'place') {
       ui.tiles[lastMove.pos.y][lastMove.pos.x].lastMove = true;
     } else {

@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useGameData, type GameListEntry } from '../../gameData';
 import type { GameSettings } from '../../packages/tak-core';
 import { useEffect, useMemo, useRef } from 'react';
 import { PlayedGame } from '../../components/PlayedGame';
+import { useUpdate } from 'react-use';
 
 export const Route = createFileRoute('/_authenticated/spectate/$gameId')({
   component: RouteComponent,
@@ -16,17 +17,15 @@ function RouteComponent() {
     [gameData.games, gameId],
   );
   const gameEntryRef = useRef<GameListEntry | undefined>(gameEntry);
+  const update = useUpdate();
   useEffect(() => {
     if (!gameEntry) return;
     gameEntryRef.current = gameEntry;
-  }, [gameEntry]);
+    update();
+  }, [gameEntry, update]);
 
   if (!gameEntryRef.current) {
-    return (
-      <div>
-        <Link to="/seeks">Find a Game</Link>
-      </div>
-    );
+    return <div>Game {gameId} isn't ongoing</div>;
   }
   const settings: GameSettings = {
     boardSize: gameEntryRef.current.boardSize,

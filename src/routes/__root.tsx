@@ -8,63 +8,134 @@ import type { AuthState } from '../auth';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
 import { SettingsDialog } from '../components/SettingsDialog';
-import { FaCog, FaGamepad, FaHome, FaSearch, FaUser } from 'react-icons/fa';
+import {
+  FaCog,
+  FaEye,
+  FaGamepad,
+  FaHome,
+  FaSearch,
+  FaUser,
+} from 'react-icons/fa';
+import { AppShell, Burger, Group } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { SeeksDialog } from '../components/SeeksDialog';
+import { SpectateDialog } from '../components/SpectateDialog';
 
 interface RouterContext {
   auth: AuthState;
 }
 
-export function SettingsButton() {
-  const [isOpen, setOpen] = useState(false);
-  return (
+const linkClassName =
+  'flex gap-[6px] items-center py-2 px-3 [&.active]:font-bold';
+
+export const Route = createRootRouteWithContext<RouterContext>()({
+  component: () => <Root />,
+});
+
+function Root() {
+  const [opened, { toggle }] = useDisclosure();
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [isSeeksOpen, setSeeksOpen] = useState(false);
+  const [isSpectateOpen, setSpectateOpen] = useState(false);
+
+  const navElements = (
     <>
+      <Link to="/" className={linkClassName} onClick={toggle}>
+        <FaHome size={18} />
+        Home
+      </Link>
+      <Link to="/play" className={linkClassName} onClick={toggle}>
+        <FaGamepad size={18} />
+        Play
+      </Link>
       <button
-        className="flex gap-1 items-center py-2 px-3 hover:bg-surface-600 cursor-pointer"
+        className="flex gap-[6px] items-center py-2 px-3 cursor-pointer"
         onClick={() => {
-          setOpen(true);
+          setSeeksOpen(true);
+          toggle();
         }}
       >
-        <FaCog />
+        <FaSearch size={18} />
+        Seeks
+      </button>
+      <button
+        className="flex gap-[6px] items-center py-2 px-3 cursor-pointer"
+        onClick={() => {
+          setSpectateOpen(true);
+          toggle();
+        }}
+      >
+        <FaEye size={18} />
+        Games
+      </button>
+      <Link to="/account" className={linkClassName} onClick={toggle}>
+        <FaUser size={18} />
+        Account
+      </Link>
+      <button
+        className="flex gap-[6px] items-center py-2 px-3 cursor-pointer"
+        onClick={() => {
+          setSettingsOpen(true);
+          toggle();
+        }}
+      >
+        <FaCog size={18} />
         Settings
       </button>
+    </>
+  );
+
+  const modals = (
+    <>
       <SettingsDialog
-        isOpen={isOpen}
+        isOpen={isSettingsOpen}
         onClose={() => {
-          setOpen(false);
+          setSettingsOpen(false);
+        }}
+      />
+      <SeeksDialog
+        isOpen={isSeeksOpen}
+        onClose={() => {
+          setSeeksOpen(false);
+        }}
+      />
+      <SpectateDialog
+        isOpen={isSpectateOpen}
+        onClose={() => {
+          setSpectateOpen(false);
         }}
       />
     </>
   );
+
+  return (
+    <AppShell
+      header={{ height: 40 }}
+      navbar={{
+        width: 0,
+        breakpoint: 'sm',
+        collapsed: { mobile: !opened },
+      }}
+    >
+      <AppShell.Header>
+        <div
+          className="flex items-center justify-start"
+          style={{ height: '40px' }}
+        >
+          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+          <p className="font-bold absolute inset-0 text-center flex justify-center items-center md:static px-2">
+            Tak
+          </p>
+          <Group visibleFrom="sm">{navElements}</Group>
+        </div>
+      </AppShell.Header>
+      <AppShell.Navbar hiddenFrom="sm">{navElements}</AppShell.Navbar>
+      <AppShell.Main className="flex flex-col">
+        <Outlet />
+        {modals}
+        <TanStackRouterDevtools />
+        <ReactQueryDevtools />
+      </AppShell.Main>
+    </AppShell>
+  );
 }
-
-const linkClassName =
-  'flex gap-1 items-center py-2 px-3 [&.active]:font-bold hover:bg-surface-600';
-
-export const Route = createRootRouteWithContext<RouterContext>()({
-  component: () => (
-    <>
-      <div className="flex bg-surface-500 sticky top-0 z-50 overflow-hidden">
-        <Link to="/" className={linkClassName}>
-          <FaHome />
-          Home
-        </Link>
-        <Link to="/play" className={linkClassName}>
-          <FaGamepad />
-          Play
-        </Link>
-        <Link to="/seeks" className={linkClassName}>
-          <FaSearch />
-          Seeks
-        </Link>
-        <Link to="/account" className={linkClassName}>
-          <FaUser />
-          Account
-        </Link>
-        <SettingsButton />
-      </div>
-      <Outlet />
-      <TanStackRouterDevtools />
-      <ReactQueryDevtools />
-    </>
-  ),
-});

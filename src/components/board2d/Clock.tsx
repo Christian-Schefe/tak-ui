@@ -1,6 +1,6 @@
 import { useRafLoop } from 'react-use';
 import { type Player } from '../../packages/tak-core';
-import { getTimeRemaining } from '../../packages/tak-core/game';
+import { getTimeRemaining, isClockActive } from '../../packages/tak-core/game';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useMemo, useState } from 'react';
 import { useSettings } from '../../settings';
@@ -29,7 +29,7 @@ export function Clock({
   useRafLoop(() => {
     const remaining = getTimeRemaining(game.actualGame, player, new Date());
     if (
-      game.actualGame.gameState.type === 'ongoing' &&
+      isClockActive(game.actualGame, player) &&
       remaining !== null &&
       remaining === 0
     ) {
@@ -44,7 +44,7 @@ export function Clock({
 
   return (
     <div
-      className="py-1 px-4 rounded-md flex items-center gap-2 justify-between"
+      className="py-1 px-3 rounded-md flex items-center gap-2 justify-between"
       style={{
         backgroundColor:
           player === 'white'
@@ -61,7 +61,7 @@ export function Clock({
       <FaClock
         className="w-4 h-4"
         style={{
-          opacity: isActive ? 1 : 0,
+          opacity: isActive ? 1 : 0.5,
           transition: 'opacity 150ms ease-in-out',
         }}
       />

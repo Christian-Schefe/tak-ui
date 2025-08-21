@@ -99,7 +99,10 @@ export function Tile({
           className={
             'flex absolute right-1 bottom-0 justify-end items-end font-mono font-bold opacity-70'
           }
-          style={{ color: themeParams.text }}
+          style={{
+            color: themeParams.text,
+            fontSize: board2dSettings.axisLabelSize,
+          }}
         >
           {pos.x + 1}
         </div>
@@ -109,7 +112,10 @@ export function Tile({
           className={
             'flex absolute left-1 top-0 justify-end items-end font-mono font-bold opacity-70'
           }
-          style={{ color: themeParams.text }}
+          style={{
+            color: themeParams.text,
+            fontSize: board2dSettings.axisLabelSize,
+          }}
         >
           {String.fromCharCode('A'.charCodeAt(0) + pos.y).toUpperCase()}
         </div>

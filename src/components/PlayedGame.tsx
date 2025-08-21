@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type RefObject,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ui, type GameSettings, type Move } from '../packages/tak-core';
 import { newGame, setTimeRemaining } from '../packages/tak-core/game';
 import { moveFromString } from '../packages/tak-core/move';
@@ -33,19 +27,10 @@ export function PlayedGame({
   settings: GameSettings;
   observed: boolean;
 }) {
-  const subscriptionState: RefObject<
-    'unsubscribed' | 'pending' | 'subscribed'
-  > = useRef('unsubscribed');
-
   const { sendMessage } = useWSListener({
-    onClose: () => {
-      subscriptionState.current = 'unsubscribed';
-    },
     onOpen: () => {
-      if (observed && gameId && subscriptionState.current === 'unsubscribed') {
-        subscriptionState.current = 'pending';
+      if (observed) {
         console.log('Subscribing to game:', gameId);
-        gameData.removeGameInfo(gameId);
         sendMessage(`Observe ${gameId}`);
       }
     },
@@ -54,6 +39,7 @@ export function PlayedGame({
   const gameData = useGameData();
 
   const [game, setGame] = useImmer<ui.GameUI>(() => {
+    console.log('Creating new game with settings:', settings);
     const game = ui.newGameUI(newGame(settings));
     if (!observed) {
       game.onMove = (_player, move) => {
@@ -64,37 +50,45 @@ export function PlayedGame({
   });
 
   const resetGame = useCallback(() => {
-    console.log('resetting game');
+    console.log('resetting game:', settings);
     setGame(() => ui.newGameUI(newGame(settings)));
   }, [setGame, settings]);
 
+  const removeGameData = gameData.removeGameInfo;
+
+  const [readMessageIndex, setReadMessageIndex] = useState(0);
+
   useEffect(() => {
-    if (observed && gameId && subscriptionState.current === 'unsubscribed') {
-      subscriptionState.current = 'pending';
+    if (observed) {
       console.log('Subscribing to game:', gameId);
-      gameData.removeGameInfo(gameId);
       sendMessage(`Observe ${gameId}`);
     }
     return () => {
-      if (!gameId || !observed || subscriptionState.current !== 'subscribed')
-        return;
+      if (!observed) return;
       console.log('Unsubscribing from game:', gameId);
       sendMessage(`Unobserve ${gameId}`);
-      gameData.removeGameInfo(gameId);
-      subscriptionState.current = 'unsubscribed';
+      removeGameData(gameId);
     };
-  }, [observed, gameData, sendMessage, gameId]);
+  }, [observed, removeGameData, sendMessage, gameId, setReadMessageIndex]);
 
-  const [readMessageIndex, setReadMessageIndex] = useState(0);
+  useEffect(() => {
+    setReadMessageIndex(0);
+  }, [gameId, setReadMessageIndex]);
+
+  useEffect(() => {
+    if (!gameData.gameInfo[gameId]) {
+      resetGame();
+    }
+  }, [gameData.gameInfo, gameId, resetGame]);
 
   const moveMessages = gameData.gameInfo[gameId]?.moveMessages;
 
   useEffect(() => {
     if (!moveMessages) return;
+    const toRead = moveMessages.length - readMessageIndex;
     if (readMessageIndex === 0) {
       resetGame();
     }
-    const toRead = moveMessages.length - readMessageIndex;
 
     console.log(moveMessages.length, readMessageIndex, toRead);
 

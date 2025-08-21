@@ -10,16 +10,6 @@
   --color-primary-600: var(--clr-primary-600);
   --color-primary-text: var(--clr-primary-text);
 
-  --color-surface-200: var(--clr-surface-200);
-  --color-surface-500: var(--clr-surface-500);
-  --color-surface-550: color-mix(
-    in oklch,
-    var(--clr-surface-500) 50%,
-    var(--clr-surface-600)
-  );
-  --color-surface-600: var(--clr-surface-600);
-  --color-surface-text: var(--clr-surface-text);
-
   --color-status-error: var(--clr-status-error);
   --color-status-warning: var(--clr-status-warning);
   --color-status-success: var(--clr-status-success);
@@ -30,9 +20,6 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color: var(--clr-surface-text);
-  background-color: var(--clr-surface-200);
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -41,11 +28,6 @@
   --clr-primary-500: #4f79db;
   --clr-primary-600: #5d91e5;
   --clr-primary-text: #fafafa;
-
-  --clr-surface-200: oklch(0.2049 0.0292 254.84);
-  --clr-surface-500: oklch(0.3549 0.0292 254.84);
-  --clr-surface-600: oklch(0.5049 0.0292 254.84);
-  --clr-surface-text: #fafafa;
 
   --clr-status-error: #fa3355;
   --clr-status-warning: #fa8855;
@@ -56,16 +38,6 @@
 *::before,
 *::after {
   box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: start;
-  min-width: 320px;
-  min-height: 100vh;
 }
 
 #root {

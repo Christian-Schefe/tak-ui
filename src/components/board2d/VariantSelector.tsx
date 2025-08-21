@@ -13,7 +13,7 @@ export function VariantSelector({
   const pieceVariants: PieceVariant[] = ['flat', 'standing', 'capstone'];
 
   return (
-    <div className="w-full flex p-2 gap-2">
+    <div className="w-full flex p-2 gap-2" style={{ color: themeParams.text }}>
       {pieceVariants.map((v) => (
         <button
           key={v}
@@ -38,7 +38,10 @@ export function VariantSelector({
               transition: 'opacity 150ms ease-in-out',
             }}
           ></div>
-          <p className="absolute flex items-center justify-center inset-0 pointer-events-none">
+          <p
+            className="absolute flex items-center justify-center inset-0 pointer-events-none font-bold"
+            style={{ color: themeParams.text }}
+          >
             {v.charAt(0).toUpperCase() + v.slice(1)}
           </p>
         </button>

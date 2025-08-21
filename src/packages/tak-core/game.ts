@@ -21,7 +21,7 @@ export function newGame(settings: GameSettings): Game {
   const board = newBoard(settings.boardSize);
   return {
     board,
-    komi: settings.komi,
+    settings,
     currentPlayer: 'white',
     history: [],
     reserves: {
@@ -77,6 +77,23 @@ function isReserveEmpty(game: Game) {
     (game.reserves.white.pieces === 0 && game.reserves.white.capstones === 0) ||
     (game.reserves.black.pieces === 0 && game.reserves.black.capstones === 0)
   );
+}
+
+export function isClockActive(game: Game, player: Player): boolean {
+  return (
+    game.gameState.type === 'ongoing' &&
+    game.currentPlayer === player &&
+    !!game.clock?.lastMove
+  );
+}
+
+export function gameFromPlyCount(game: Game, plyCount: number): Game {
+  const resultGame = newGame({ ...game.settings, clock: undefined });
+  const history = game.history.slice(0, plyCount);
+  for (const move of history) {
+    doMove(resultGame, move);
+  }
+  return resultGame;
 }
 
 export function getTimeRemaining(
@@ -193,7 +210,7 @@ export function doMove(game: Game, move: Move, now?: Date) {
   } else if (isReserveEmpty(game) || isFilled(game.board)) {
     const flatCounts = countFlats(game.board);
     const whiteScore = flatCounts.white;
-    const blackScore = flatCounts.black + game.komi;
+    const blackScore = flatCounts.black + game.settings.komi;
     if (whiteScore !== blackScore) {
       game.gameState = {
         type: 'win',

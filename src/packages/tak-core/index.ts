@@ -65,10 +65,10 @@ export interface Clock {
 }
 
 export interface Game {
+  settings: GameSettings;
   board: Board;
   currentPlayer: Player;
   reserves: Record<Player, Reserve>;
-  komi: number;
   gameState: GameState;
   history: MoveRecord[];
   clock?: Clock;
