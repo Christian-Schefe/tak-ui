@@ -123,7 +123,7 @@ function Root() {
           style={{ height: '40px' }}
         >
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          <p className="font-bold absolute inset-0 text-center flex justify-center items-center md:static px-2">
+          <p className="font-bold absolute inset-0 text-center flex justify-center items-center md:static px-2 pointer-events-none">
             Tak
           </p>
           <Group visibleFrom="sm">{navElements}</Group>
