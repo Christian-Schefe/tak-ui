@@ -42,7 +42,9 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
       <div
         className="w-full h-full flex items-center justify-center"
         style={{
-          animation: 'scaleIn 150ms ease-out forwards',
+          animation: data.deleted
+            ? 'scaleOut 150ms ease-out forwards'
+            : 'scaleIn 150ms ease-out forwards',
         }}
       >
         <div

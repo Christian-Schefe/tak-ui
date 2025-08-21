@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { type GameListEntry, useGameData } from '../../gameData';
 import type { GameSettings } from '../../packages/tak-core';
 import { useAuth } from '../../authHooks';
 import { PlayedGame } from '../../components/PlayedGame';
 import { useEffect, useRef } from 'react';
+import { useUpdate } from 'react-use';
 
 export const Route = createFileRoute('/_authenticated/play')({
   component: RouteComponent,
@@ -17,16 +18,14 @@ function RouteComponent() {
     ? gameData.games.find((g) => g.white === username || g.black === username)
     : undefined;
   const gameEntryRef = useRef<GameListEntry | undefined>(gameEntry);
+  const update = useUpdate();
   useEffect(() => {
     if (!gameEntry) return;
     gameEntryRef.current = gameEntry;
-  }, [gameEntry]);
+    update();
+  }, [gameEntry, update]);
   if (!gameEntryRef.current) {
-    return (
-      <div>
-        <Link to="/seeks">Find a Game</Link>
-      </div>
-    );
+    return <div>You're not playing a game</div>;
   }
   const settings: GameSettings = {
     boardSize: gameEntryRef.current.boardSize,

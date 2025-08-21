@@ -11,6 +11,7 @@ export interface UIPiece {
   height: number;
   isFloating: boolean;
   zPriority: number | null;
+  deleted: boolean;
 }
 
 export interface UITile {
@@ -299,7 +300,12 @@ function onGameUpdate(ui: GameUI) {
     }
   }
 
-  ui.pieces = [];
+  ui.pieces = ui.pieces
+    .filter((piece) => !piece.deleted)
+    .map((piece) => ({
+      ...piece,
+      deleted: true,
+    }));
   ui.tiles = [];
 
   const isOngoing = ui.actualGame.gameState.type === 'ongoing';
@@ -331,6 +337,7 @@ function onGameUpdate(ui: GameUI) {
             isFloating:
               floatingHeightThreshold !== null &&
               height >= floatingHeightThreshold,
+            deleted: false,
           };
         }
         hoverable &&=
