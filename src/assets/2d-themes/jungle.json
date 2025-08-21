@@ -5,8 +5,8 @@
   "board2": "#95aab5",
   "highlight": "#8bc34a99",
   "hover": "#FFFFFF33",
-  "piece1": { "background": "#546e7a", "border": "#cfd8dc" },
-  "piece2": { "background": "#cfd8dc", "border": "#546e7a" },
+  "piece1": { "background": "#cfd8dc", "border": "#546e7a" },
+  "piece2": { "background": "#546e7a", "border": "#cfd8dc" },
   "board": {
     "spacing": "2px",
     "rounded": "2px",
