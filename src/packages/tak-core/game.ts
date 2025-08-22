@@ -25,16 +25,15 @@ export function newGame(settings: GameSettings): Game {
     currentPlayer: 'white',
     history: [],
     reserves: {
-      white: structuredClone(settings.reserve),
-      black: structuredClone(settings.reserve),
+      white: { ...settings.reserve },
+      black: { ...settings.reserve },
     },
     gameState: { type: 'ongoing' },
     clock: settings.clock && {
       lastMove: null,
-      increment: settings.clock.increment,
-      remaining: {
-        white: settings.clock.contingent,
-        black: settings.clock.contingent,
+      remainingMs: {
+        white: settings.clock.contingentMs,
+        black: settings.clock.contingentMs,
       },
     },
   };
@@ -42,7 +41,9 @@ export function newGame(settings: GameSettings): Game {
 
 export function canDoMove(game: Game, move: Move, now?: Date): string | null {
   now ??= new Date();
-  checkTimeout(game, now);
+  if (isTimeout(game, now)) {
+    return 'Game is over: timeout';
+  }
 
   if (game.gameState.type !== 'ongoing')
     return `Game is not ongoing: ${game.gameState.type}`;
@@ -104,7 +105,7 @@ export function getTimeRemaining(
   if (game.clock) {
     return Math.max(
       0,
-      game.clock.remaining[player] -
+      game.clock.remainingMs[player] -
         (now &&
         game.gameState.type === 'ongoing' &&
         game.currentPlayer === player &&
@@ -122,8 +123,8 @@ export function setTimeRemaining(
   now: Date,
 ) {
   if (game.clock) {
-    game.clock.remaining.white = remaining.white;
-    game.clock.remaining.black = remaining.black;
+    game.clock.remainingMs.white = remaining.white;
+    game.clock.remainingMs.black = remaining.black;
     game.clock.lastMove = now;
     checkTimeout(game, now);
   }
@@ -132,9 +133,17 @@ export function setTimeRemaining(
 function applyTimeToClock(game: Game, now: Date) {
   const remaining = getTimeRemaining(game, game.currentPlayer, now);
   if (game.clock && remaining !== null) {
-    game.clock.remaining[game.currentPlayer] = remaining;
+    game.clock.remainingMs[game.currentPlayer] = remaining;
     game.clock.lastMove = now;
   }
+}
+
+export function isTimeout(game: Game, now: Date): boolean {
+  if (game.gameState.type !== 'ongoing') return false;
+
+  const player = game.currentPlayer;
+  const timeRemaining = getTimeRemaining(game, player, now);
+  return timeRemaining !== null && timeRemaining <= 0;
 }
 
 export function checkTimeout(game: Game, now: Date): number | null {
@@ -187,14 +196,26 @@ export function doMove(game: Game, move: Move, now?: Date) {
     );
   }
 
-  game.history.push(record);
-
-  if (game.clock && timeRemaining) {
-    game.clock.remaining[game.currentPlayer] =
-      timeRemaining + game.clock.increment;
+  if (game.clock && game.settings.clock && timeRemaining) {
+    const move = Math.floor(game.history.length / 2) + 1;
+    const extraGain =
+      game.settings.clock.extra && move === game.settings.clock.extra.move
+        ? game.settings.clock.extra.amountMs
+        : 0;
+    if (extraGain) {
+      console.log(
+        'gained',
+        extraGain,
+        timeRemaining,
+        extraGain + timeRemaining,
+      );
+    }
+    game.clock.remainingMs[game.currentPlayer] =
+      timeRemaining + game.settings.clock.incrementMs + extraGain;
     game.clock.lastMove = now;
   }
 
+  game.history.push(record);
   game.currentPlayer = playerOpposite(player);
 
   const road =

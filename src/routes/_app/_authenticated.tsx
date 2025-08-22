@@ -1,6 +1,6 @@
 import { createFileRoute, redirect, Outlet } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/_authenticated')({
+export const Route = createFileRoute('/_app/_authenticated')({
   beforeLoad: ({ context, location }) => {
     if (!context.auth.isAuthenticated) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error

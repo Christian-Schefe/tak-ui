@@ -53,6 +53,7 @@ export function Tile({
     <div
       className={'relative flex items-center justify-center h-full w-full'}
       onClick={() => {
+        if (!interactive) return;
         onClick();
       }}
     >
@@ -104,7 +105,7 @@ export function Tile({
             fontSize: board2dSettings.axisLabelSize,
           }}
         >
-          {pos.x + 1}
+          {String.fromCharCode('A'.charCodeAt(0) + pos.x).toUpperCase()}
         </div>
       ) : null}
       {pos.x === 0 && board2dSettings.axisLabels ? (
@@ -117,7 +118,7 @@ export function Tile({
             fontSize: board2dSettings.axisLabelSize,
           }}
         >
-          {String.fromCharCode('A'.charCodeAt(0) + pos.y).toUpperCase()}
+          {pos.y + 1}
         </div>
       ) : null}
     </div>

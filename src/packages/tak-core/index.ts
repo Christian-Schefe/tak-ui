@@ -59,9 +59,8 @@ export interface Reserve {
 }
 
 export interface Clock {
-  increment: number;
   lastMove: Date | null;
-  remaining: Record<Player, number>;
+  remainingMs: Record<Player, number>;
 }
 
 export interface Game {
@@ -79,8 +78,12 @@ export interface GameSettings {
   komi: number;
   reserve: Reserve;
   clock?: {
-    contingent: number;
-    increment: number;
+    contingentMs: number;
+    incrementMs: number;
+    extra?: {
+      move: number;
+      amountMs: number;
+    };
   };
 }
 

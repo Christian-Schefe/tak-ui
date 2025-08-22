@@ -31,7 +31,7 @@ export interface WebSocketMessageState {
 
 export interface WebSocketAPIState {
   sendMessage: (message: string) => void;
-  addOnCloseListener: (key: string, callback: () => void) => void;
+  addOnCloseListener: (key: string, callback: CloseEventListener) => void;
   addOnOpenListener: (key: string, callback: () => void) => void;
   removeOnCloseListener: (key: string) => void;
   removeOnOpenListener: (key: string) => void;
@@ -42,11 +42,15 @@ export interface TextMessage {
   timestamp: Date;
 }
 
+export type CloseEventListener = (ev: CloseEvent) => void;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const onCloseListeners = useRef<{ key: string; callback: () => void }[]>([]);
+  const onCloseListeners = useRef<
+    { key: string; callback: CloseEventListener }[]
+  >([]);
   const onOpenListeners = useRef<{ key: string; callback: () => void }[]>([]);
 
   const { sendMessage, lastMessage } = useWebSocket(WS_URL, {
@@ -59,16 +63,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         listener.callback();
       });
     },
-    onClose: () => {
-      console.warn('WebSocket closed');
+    onClose: (ev) => {
+      console.warn('WebSocket closed', ev);
       onCloseListeners.current.forEach((listener) => {
-        listener.callback();
+        listener.callback(ev);
       });
     },
   });
 
   const addOnCloseListener = useCallback(
-    (key: string, callback: () => void) => {
+    (key: string, callback: CloseEventListener) => {
       onCloseListeners.current.push({ key, callback });
     },
     [],

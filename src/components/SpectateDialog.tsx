@@ -53,7 +53,7 @@ export function SpectateDialog({
       </Table.Td>
       <Table.Td>{game.komi / 2}</Table.Td>
       <Table.Td>
-        {game.timeContingent / 60}|{game.timeIncrement}
+        {game.timeContingentSeconds / 60}|{game.timeIncrementSeconds}
       </Table.Td>
       <Table.Td>
         {game.pieces}/{game.capstones}

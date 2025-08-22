@@ -38,7 +38,7 @@ export function useWSListener({
   onOpen,
 }: {
   onMessage?: (msg: TextMessage) => void;
-  onClose?: () => void;
+  onClose?: (ev: CloseEvent) => void;
   onOpen?: () => void;
 }) {
   const api = useWSAPI();

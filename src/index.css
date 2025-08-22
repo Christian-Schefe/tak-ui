@@ -1,37 +1,22 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-primary-500: var(--clr-primary-500);
-  --color-primary-550: color-mix(
-    in oklch,
-    var(--clr-primary-500) 50%,
-    var(--clr-primary-600)
-  );
-  --color-primary-600: var(--clr-primary-600);
-  --color-primary-text: var(--clr-primary-text);
-
-  --color-status-error: var(--clr-status-error);
-  --color-status-warning: var(--clr-status-warning);
-  --color-status-success: var(--clr-status-success);
+  --font-sans: 'Nunito', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
 }
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Nunito', sans-serif;
   line-height: 1.5;
   font-weight: 400;
+
+  font-optical-sizing: auto;
+  font-style: normal;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  --clr-primary-500: #4f79db;
-  --clr-primary-600: #5d91e5;
-  --clr-primary-text: #fafafa;
-
-  --clr-status-error: #fa3355;
-  --clr-status-warning: #fa8855;
-  --clr-status-success: #44e033;
 }
 
 *,

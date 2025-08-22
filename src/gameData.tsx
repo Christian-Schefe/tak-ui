@@ -44,8 +44,8 @@ export interface GameListEntry {
   white: string;
   black: string;
   boardSize: number;
-  timeContingent: number;
-  timeIncrement: number;
+  timeContingentSeconds: number;
+  timeIncrementSeconds: number;
   komi: number;
   pieces: number;
   capstones: number;
@@ -54,7 +54,7 @@ export interface GameListEntry {
   triggerMove:
     | {
         move: number;
-        amount: number;
+        amountSeconds: number;
       }
     | undefined;
 }
@@ -125,8 +125,8 @@ function parseGameAddMessage(message: string): GameListEntry | null {
     white: matches[2],
     black: matches[3],
     boardSize: parseInt(matches[4]),
-    timeContingent: parseInt(matches[5]),
-    timeIncrement: parseInt(matches[6]),
+    timeContingentSeconds: parseInt(matches[5]),
+    timeIncrementSeconds: parseInt(matches[6]),
     komi: parseInt(matches[7]),
     pieces: parseInt(matches[8]),
     capstones: parseInt(matches[9]),
@@ -136,7 +136,7 @@ function parseGameAddMessage(message: string): GameListEntry | null {
       parseInt(matches[12]) > 0
         ? {
             move: parseInt(matches[12]),
-            amount: parseInt(matches[13]),
+            amountSeconds: parseInt(matches[13]),
           }
         : undefined,
   };

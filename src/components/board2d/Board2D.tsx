@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ui, type Coord, type PieceVariant } from '../../packages/tak-core/';
+import { ui, type PieceVariant } from '../../packages/tak-core/';
 import { coordToString } from '../../packages/tak-core/coord';
 import { Tile } from './Tile';
 import { Piece } from './Piece';
@@ -14,6 +14,8 @@ export function Board2D({
   setGame,
   playerInfo,
   interactive,
+  localPlayer,
+  onClickTile,
 }: BoardProps) {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const { themeParams } = useSettings();
@@ -29,13 +31,6 @@ export function Board2D({
     }
   }
 
-  const onClickTile = (pos: Coord) => {
-    if (!interactive) return;
-    setGame((draft) => {
-      ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
-    });
-  };
-
   const onTimeout = () => {
     setGame((draft) => {
       ui.checkTimeout(draft);
@@ -44,10 +39,10 @@ export function Board2D({
 
   return (
     <div
-      className="w-full grow"
+      className="w-full grow flex flex-col lg:justify-center"
       style={{ backgroundColor: themeParams.background }}
     >
-      <div className="w-full grow flex flex-col max-w-4xl lg:max-w-6xl mx-auto lg:flex-row">
+      <div className="w-full flex flex-col max-w-4xl lg:max-w-6xl mx-auto lg:flex-row">
         <div className="grow">
           <PlayerInfoBar
             player="white"
@@ -68,9 +63,13 @@ export function Board2D({
                 key={coordToString(pos)}
                 pos={pos}
                 game={game}
-                interactive={interactive}
+                interactive={
+                  interactive &&
+                  (!localPlayer ||
+                    game.actualGame.currentPlayer === localPlayer)
+                }
                 onClick={() => {
-                  onClickTile(pos);
+                  onClickTile(pos, variant);
                 }}
               />
             ))}
@@ -79,7 +78,12 @@ export function Board2D({
             ))}
           </div>
           {interactive && (
-            <VariantSelector variant={variant} setVariant={setVariant} />
+            <VariantSelector
+              variant={variant}
+              setVariant={setVariant}
+              game={game}
+              player={localPlayer ?? game.actualGame.currentPlayer}
+            />
           )}
           <PlayerInfoBar
             player="black"

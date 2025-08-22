@@ -7,7 +7,11 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
 
   const size = ui.boardSize(game);
   const data = game.pieces[id];
-  const height = data.isFloating ? data.height + 2 : data.height;
+
+  const effectiveHeight = data.canBePicked
+    ? data.height - data.buriedPieceCount
+    : data.height;
+  const height = data.isFloating ? effectiveHeight + 2 : effectiveHeight;
   const isWhite = data.player === 'white';
 
   const animationSetting = '150ms ease-in-out';
@@ -17,6 +21,7 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
   const pieceSize = themeParams.pieces.size;
   const wallWidthRatio = 2 / 5;
   const roundedPercent = themeParams.pieces.rounded;
+  const buriedSizeFactor = 0.25;
 
   const radiusStr =
     data.variant === 'standing'
@@ -25,7 +30,27 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
         ? '100%'
         : `${roundedPercent.toString()}%`;
 
-  const zIndex = data.zPriority !== null ? data.zPriority + 100 : height;
+  const zIndex =
+    data.zPriority !== null
+      ? data.zPriority + 50
+      : data.canBePicked
+        ? height + 20
+        : height;
+
+  const buriedLimit = 12;
+  const buriedHeightOffset = Math.max(
+    0,
+    data.buriedPieceCount - (buriedLimit - 1),
+  );
+
+  const xTransform = data.pos.x * 100 + (data.canBePicked ? 0 : 35);
+  const yTransform =
+    (size - 1 - data.pos.y) * 100 -
+    (data.canBePicked ? height : height - buriedHeightOffset) * 7 +
+    (data.canBePicked ? 0 : 35);
+
+  const hidden =
+    !data.canBePicked && data.buriedPieceCount - height >= buriedLimit;
 
   return (
     <div
@@ -33,9 +58,10 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
       style={{
         width: `${(100 / size).toString()}%`,
         height: `${(100 / size).toString()}%`,
-        transform: `translate(${(data.pos.x * 100).toString()}%, ${((size - 1 - data.pos.y) * 100 - height * 7).toString()}%)`,
+        transform: `translate(${xTransform.toString()}%, ${yTransform.toString()}%)`,
         zIndex: zIndex,
-        transition: `transform ${animationSetting}`,
+        transition: `transform ${animationSetting}, opacity ${animationSetting}`,
+        opacity: hidden ? 0 : 1,
         filter: 'drop-shadow(0 5px 5px rgb(0, 0, 0, 0.1))',
       }}
     >
@@ -50,7 +76,9 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
         <div
           className="outline"
           style={{
-            width: `${pieceSize.toString()}%`,
+            width: data.canBePicked
+              ? `${pieceSize.toString()}%`
+              : `${(pieceSize * buriedSizeFactor).toString()}%`,
             outlineWidth: themeParams.pieces.border,
             outlineColor:
               data.variant === 'capstone' && colors.capstoneOverride
@@ -60,10 +88,11 @@ export function Piece({ id, game }: { id: number; game: GameUI }) {
               data.variant === 'capstone' && colors.capstoneOverride
                 ? colors.capstoneOverride.background
                 : colors.background,
-            height:
-              data.variant === 'standing'
+            height: data.canBePicked
+              ? data.variant === 'standing'
                 ? `${(pieceSize * wallWidthRatio).toString()}%`
-                : `${pieceSize.toString()}%`,
+                : `${pieceSize.toString()}%`
+              : `${(pieceSize * buriedSizeFactor).toString()}%`,
             borderBottomLeftRadius: radiusStr,
             borderBottomRightRadius: radiusStr,
             borderTopLeftRadius: radiusStr,

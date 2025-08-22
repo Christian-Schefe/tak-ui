@@ -11,10 +11,13 @@ import {
   MantineProvider,
   mergeMantineTheme,
 } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
+
 import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
 
 const theme = createTheme({
-  fontFamily: 'Open Sans, sans-serif',
+  fontFamily: 'Nunito, sans-serif',
   primaryColor: 'blue',
 });
 
@@ -30,6 +33,7 @@ const queryClient = new QueryClient();
 export function App() {
   return (
     <MantineProvider theme={mergedTheme} defaultColorScheme="dark">
+      <Notifications />
       <SettingsProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>

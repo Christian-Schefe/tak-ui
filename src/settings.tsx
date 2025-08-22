@@ -41,10 +41,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const settingsMemo = useMemo<SettingsState>(() => {
     return {
       boardType: boardType ?? '2d',
-      board2dSettings: board2dSettings ?? {
+      board2dSettings: {
         colorTheme: 'classic',
         axisLabels: true,
         axisLabelSize: 12,
+        ...board2dSettings,
       },
       themeParams,
       setBoardType,

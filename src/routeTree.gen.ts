@@ -10,19 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/play'
-import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
-import { Route as AuthenticatedSpectateGameIdRouteImport } from './routes/_authenticated/spectate.$gameId'
+import { Route as AppAuthenticatedRouteImport } from './routes/_app/_authenticated'
+import { Route as AppAuthenticatedScratchRouteImport } from './routes/_app/_authenticated/scratch'
+import { Route as AppAuthenticatedPlayRouteImport } from './routes/_app/_authenticated/play'
+import { Route as AppAuthenticatedAccountRouteImport } from './routes/_app/_authenticated/account'
+import { Route as AppAuthenticatedSpectateGameIdRouteImport } from './routes/_app/_authenticated/spectate.$gameId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -30,64 +32,85 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedPlayRoute = AuthenticatedPlayRouteImport.update({
+const AppAuthenticatedRoute = AppAuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAuthenticatedScratchRoute = AppAuthenticatedScratchRouteImport.update({
+  id: '/scratch',
+  path: '/scratch',
+  getParentRoute: () => AppAuthenticatedRoute,
+} as any)
+const AppAuthenticatedPlayRoute = AppAuthenticatedPlayRouteImport.update({
   id: '/play',
   path: '/play',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => AppAuthenticatedRoute,
 } as any)
-const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+const AppAuthenticatedAccountRoute = AppAuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => AppAuthenticatedRoute,
 } as any)
-const AuthenticatedSpectateGameIdRoute =
-  AuthenticatedSpectateGameIdRouteImport.update({
+const AppAuthenticatedSpectateGameIdRoute =
+  AppAuthenticatedSpectateGameIdRouteImport.update({
     id: '/spectate/$gameId',
     path: '/spectate/$gameId',
-    getParentRoute: () => AuthenticatedRoute,
+    getParentRoute: () => AppAuthenticatedRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/account': typeof AuthenticatedAccountRoute
-  '/play': typeof AuthenticatedPlayRoute
-  '/spectate/$gameId': typeof AuthenticatedSpectateGameIdRoute
+  '/account': typeof AppAuthenticatedAccountRoute
+  '/play': typeof AppAuthenticatedPlayRoute
+  '/scratch': typeof AppAuthenticatedScratchRoute
+  '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/account': typeof AuthenticatedAccountRoute
-  '/play': typeof AuthenticatedPlayRoute
-  '/spectate/$gameId': typeof AuthenticatedSpectateGameIdRoute
+  '/account': typeof AppAuthenticatedAccountRoute
+  '/play': typeof AppAuthenticatedPlayRoute
+  '/scratch': typeof AppAuthenticatedScratchRoute
+  '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/account': typeof AuthenticatedAccountRoute
-  '/_authenticated/play': typeof AuthenticatedPlayRoute
-  '/_authenticated/spectate/$gameId': typeof AuthenticatedSpectateGameIdRoute
+  '/_app/_authenticated': typeof AppAuthenticatedRouteWithChildren
+  '/_app/_authenticated/account': typeof AppAuthenticatedAccountRoute
+  '/_app/_authenticated/play': typeof AppAuthenticatedPlayRoute
+  '/_app/_authenticated/scratch': typeof AppAuthenticatedScratchRoute
+  '/_app/_authenticated/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/account' | '/play' | '/spectate/$gameId'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/account'
+    | '/play'
+    | '/scratch'
+    | '/spectate/$gameId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/account' | '/play' | '/spectate/$gameId'
+  to: '/' | '/login' | '/account' | '/play' | '/scratch' | '/spectate/$gameId'
   id:
     | '__root__'
     | '/'
-    | '/_authenticated'
+    | '/_app'
     | '/login'
-    | '/_authenticated/account'
-    | '/_authenticated/play'
-    | '/_authenticated/spectate/$gameId'
+    | '/_app/_authenticated'
+    | '/_app/_authenticated/account'
+    | '/_app/_authenticated/play'
+    | '/_app/_authenticated/scratch'
+    | '/_app/_authenticated/spectate/$gameId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
 }
 
@@ -100,11 +123,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
+    '/_app': {
+      id: '/_app'
       path: ''
       fullPath: ''
-      preLoaderRoute: typeof AuthenticatedRouteImport
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -114,49 +137,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/play': {
-      id: '/_authenticated/play'
+    '/_app/_authenticated': {
+      id: '/_app/_authenticated'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AppAuthenticatedRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/_authenticated/scratch': {
+      id: '/_app/_authenticated/scratch'
+      path: '/scratch'
+      fullPath: '/scratch'
+      preLoaderRoute: typeof AppAuthenticatedScratchRouteImport
+      parentRoute: typeof AppAuthenticatedRoute
+    }
+    '/_app/_authenticated/play': {
+      id: '/_app/_authenticated/play'
       path: '/play'
       fullPath: '/play'
-      preLoaderRoute: typeof AuthenticatedPlayRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof AppAuthenticatedPlayRouteImport
+      parentRoute: typeof AppAuthenticatedRoute
     }
-    '/_authenticated/account': {
-      id: '/_authenticated/account'
+    '/_app/_authenticated/account': {
+      id: '/_app/_authenticated/account'
       path: '/account'
       fullPath: '/account'
-      preLoaderRoute: typeof AuthenticatedAccountRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof AppAuthenticatedAccountRouteImport
+      parentRoute: typeof AppAuthenticatedRoute
     }
-    '/_authenticated/spectate/$gameId': {
-      id: '/_authenticated/spectate/$gameId'
+    '/_app/_authenticated/spectate/$gameId': {
+      id: '/_app/_authenticated/spectate/$gameId'
       path: '/spectate/$gameId'
       fullPath: '/spectate/$gameId'
-      preLoaderRoute: typeof AuthenticatedSpectateGameIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof AppAuthenticatedSpectateGameIdRouteImport
+      parentRoute: typeof AppAuthenticatedRoute
     }
   }
 }
 
-interface AuthenticatedRouteChildren {
-  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
-  AuthenticatedPlayRoute: typeof AuthenticatedPlayRoute
-  AuthenticatedSpectateGameIdRoute: typeof AuthenticatedSpectateGameIdRoute
+interface AppAuthenticatedRouteChildren {
+  AppAuthenticatedAccountRoute: typeof AppAuthenticatedAccountRoute
+  AppAuthenticatedPlayRoute: typeof AppAuthenticatedPlayRoute
+  AppAuthenticatedScratchRoute: typeof AppAuthenticatedScratchRoute
+  AppAuthenticatedSpectateGameIdRoute: typeof AppAuthenticatedSpectateGameIdRoute
 }
 
-const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
-  AuthenticatedPlayRoute: AuthenticatedPlayRoute,
-  AuthenticatedSpectateGameIdRoute: AuthenticatedSpectateGameIdRoute,
+const AppAuthenticatedRouteChildren: AppAuthenticatedRouteChildren = {
+  AppAuthenticatedAccountRoute: AppAuthenticatedAccountRoute,
+  AppAuthenticatedPlayRoute: AppAuthenticatedPlayRoute,
+  AppAuthenticatedScratchRoute: AppAuthenticatedScratchRoute,
+  AppAuthenticatedSpectateGameIdRoute: AppAuthenticatedSpectateGameIdRoute,
 }
 
-const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
-  AuthenticatedRouteChildren,
-)
+const AppAuthenticatedRouteWithChildren =
+  AppAuthenticatedRoute._addFileChildren(AppAuthenticatedRouteChildren)
+
+interface AppRouteChildren {
+  AppAuthenticatedRoute: typeof AppAuthenticatedRouteWithChildren
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAuthenticatedRoute: AppAuthenticatedRouteWithChildren,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport

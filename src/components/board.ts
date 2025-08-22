@@ -1,5 +1,5 @@
 import type { Updater } from 'use-immer';
-import type { Player } from '../packages/tak-core';
+import type { Coord, PieceVariant, Player } from '../packages/tak-core';
 import type { GameUI } from '../packages/tak-core/ui';
 
 export interface BoardProps {
@@ -7,6 +7,8 @@ export interface BoardProps {
   setGame: Updater<GameUI>;
   interactive: boolean;
   playerInfo: Record<Player, PlayerInfo>;
+  localPlayer?: Player;
+  onClickTile: (pos: Coord, variant: PieceVariant) => void;
 }
 
 export interface PlayerInfo {

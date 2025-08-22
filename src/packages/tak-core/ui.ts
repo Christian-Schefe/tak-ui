@@ -12,6 +12,8 @@ export interface UIPiece {
   isFloating: boolean;
   zPriority: number | null;
   deleted: boolean;
+  buriedPieceCount: number;
+  canBePicked: boolean;
 }
 
 export interface UITile {
@@ -34,7 +36,6 @@ export interface GameUI {
     pos: Coord;
     dir: Direction | null;
   } | null;
-  onMove?: (player: Player, move: Move) => void;
 }
 
 export function boardSize(ui: GameUI): number {
@@ -75,25 +76,21 @@ export function canDoMove(ui: GameUI, move: Move): boolean {
   return true;
 }
 
-export function doMove(ui: GameUI, move: Move, triggerMove: boolean) {
-  const player = ui.actualGame.currentPlayer;
+export function doMove(ui: GameUI, move: Move) {
   game.doMove(ui.actualGame, move);
   ui.partialMove = null;
   ui.plyIndex = null;
   ui.priorityPieces = getLastMovePiecesInOrder(ui.actualGame);
   onGameUpdate(ui);
-  if (triggerMove) {
-    ui.onMove?.(player, move);
-  }
 }
 
 export function tryPlaceOrAddToPartialMove(
   ui: GameUI,
   pos: Coord,
   variant: PieceVariant,
-) {
+): Move | null {
   if (ui.plyIndex !== null) {
-    return;
+    return null;
   }
   const move: Move = {
     type: 'place',
@@ -101,9 +98,10 @@ export function tryPlaceOrAddToPartialMove(
     variant,
   };
   if (!ui.partialMove && canDoMove(ui, move)) {
-    doMove(ui, move, true);
+    doMove(ui, move);
+    return move;
   } else {
-    addToPartialMove(ui, pos);
+    return addToPartialMove(ui, pos);
   }
 }
 
@@ -130,15 +128,16 @@ function partialMoveToMove(
   return null;
 }
 
-export function addToPartialMove(ui: GameUI, pos: Coord) {
+export function addToPartialMove(ui: GameUI, pos: Coord): Move | null {
   addToPartialMoveHelper(ui, pos);
   const partialMove = partialMoveToMove(ui.partialMove);
 
   if (partialMove?.complete) {
-    doMove(ui, partialMove.move, true);
-    return;
+    doMove(ui, partialMove.move);
+    return partialMove.move;
   }
   onGameUpdate(ui);
+  return null;
 }
 
 function addToPartialMoveHelper(ui: GameUI, pos: Coord) {
@@ -323,12 +322,17 @@ function onGameUpdate(ui: GameUI) {
           floatingData && coordEquals(pos, floatingData.pos)
             ? stack.composition.length - floatingData.floatingCount
             : null;
+        const buriedPieceCount = Math.max(0, stack.composition.length - size);
+
         for (let height = 0; height < stack.composition.length; height++) {
-          const priority_index = ui.priorityPieces.findIndex(
+          const priorityIndex = ui.priorityPieces.findIndex(
             (id) => id === stack.composition[height].id,
           );
+          const canBePicked = stack.composition.length - height <= size;
           ui.pieces[stack.composition[height].id] = {
-            zPriority: priority_index >= 0 ? priority_index : null,
+            buriedPieceCount,
+            canBePicked,
+            zPriority: priorityIndex >= 0 ? priorityIndex : null,
             player: stack.composition[height].player,
             variant:
               height === stack.composition.length - 1 ? stack.variant : 'flat',
