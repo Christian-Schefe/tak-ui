@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useGameData } from '../../../gameData';
+import { useGameData } from '../../../gameDataHooks';
 import { useAuth } from '../../../authHooks';
 
 import { RemoteGame } from '../../../components/RemoteGame';

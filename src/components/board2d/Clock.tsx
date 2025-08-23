@@ -18,11 +18,11 @@ export function Clock({
   const { themeParams } = useSettings();
 
   const [timeRemaining, setTimeRemaining] = useState(
-    getTimeRemaining(game.actualGame, player, new Date()) ?? 0,
+    getTimeRemaining(game.actualGame, player, new Date()),
   );
 
   const { seconds, minutes } = useMemo(() => {
-    const fullSeconds = Math.floor(timeRemaining / 1000);
+    const fullSeconds = Math.floor((timeRemaining ?? 0) / 1000);
     return { seconds: fullSeconds % 60, minutes: Math.floor(fullSeconds / 60) };
   }, [timeRemaining]);
 
@@ -35,7 +35,7 @@ export function Clock({
     ) {
       onTimeout();
     }
-    setTimeRemaining(remaining ?? 0);
+    setTimeRemaining(remaining);
   }, true);
 
   const isActive =
@@ -65,7 +65,11 @@ export function Clock({
           transition: 'opacity 150ms ease-in-out',
         }}
       />
-      <p className="font-bold font-mono">{`${minutes.toString()}:${seconds.toString().padStart(2, '0')}`}</p>
+      <p className="font-bold font-mono">
+        {timeRemaining !== null
+          ? `${minutes.toString()}:${seconds.toString().padStart(2, '0')}`
+          : '-:--'}
+      </p>
     </div>
   );
 }

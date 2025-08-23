@@ -1,18 +1,34 @@
 import { ScrollArea } from '@mantine/core';
-import type { MoveRecord } from '../../packages/tak-core';
+import type { MoveRecord, Player } from '../../packages/tak-core';
 import { moveToString } from '../../packages/tak-core/move';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useSettings } from '../../settings';
 import { useEffect, useRef } from 'react';
+import { FaHandshake, FaHandshakeSlash } from 'react-icons/fa';
+import { useUpdate } from 'react-use';
 
 export function History({
   game,
+  hasDrawOffer,
   onClick,
+  sendDrawOffer,
 }: {
   game: GameUI;
+  hasDrawOffer?: boolean;
   onClick: (plyIndex: number) => void;
+  sendDrawOffer?: (offer: boolean) => void;
 }) {
   const { themeParams } = useSettings();
+
+  const hasOfferedDraw = useRef(false);
+  const update = useUpdate();
+
+  const setHasOfferedDraw = (value: boolean) => {
+    hasOfferedDraw.current = value;
+    sendDrawOffer?.(value);
+    update();
+    console.log('Set draw offer to', value);
+  };
 
   const perChunk = 2; // items per chunk
 
@@ -34,61 +50,45 @@ export function History({
     result.push([undefined, undefined]);
   }
 
+  const makeHistoryItem = (index: number, player: Player, move: MoveRecord) => {
+    const colors =
+      (player === 'white') === index > 2
+        ? themeParams.piece1
+        : themeParams.piece2;
+    return (
+      <div className="min-w-12">
+        <button
+          className="text-left rounded-md px-1 hover:outline-2 text-nowrap"
+          style={{
+            width: '100%',
+            backgroundColor: colors.background,
+            color: colors.text ?? colors.border,
+            outlineColor: colors.border,
+            opacity: game.plyIndex !== null && game.plyIndex < index ? 0.5 : 1,
+          }}
+          onClick={() => {
+            if (
+              (game.plyIndex !== null && game.plyIndex === index) ||
+              (game.plyIndex === null &&
+                game.actualGame.history.length === index)
+            ) {
+              onClick(index - 1);
+            } else {
+              onClick(index);
+            }
+          }}
+        >
+          <span className="font-bold">{moveToString(move)}</span>
+        </button>
+      </div>
+    );
+  };
+
   const rows = result.map(([whiteMove, blackMove], index) => (
     <div key={`move-${index.toString()}`} className="flex gap-2 p-1 font-mono">
       <div className="w-8">{index + 1}.</div>
-      {whiteMove ? (
-        <div className="min-w-12">
-          <button
-            className="text-left rounded-md px-1 hover:outline-2 text-nowrap"
-            style={{
-              width: '100%',
-              backgroundColor: themeParams.piece1.background,
-              color: themeParams.piece1.text ?? themeParams.piece1.border,
-              outlineColor: themeParams.piece1.border,
-              opacity:
-                game.plyIndex !== null && game.plyIndex < index * 2 + 1
-                  ? 0.5
-                  : 1,
-            }}
-            onClick={() => {
-              if (game.plyIndex !== null && game.plyIndex === index * 2 + 1) {
-                onClick(index * 2);
-              } else {
-                onClick(index * 2 + 1);
-              }
-            }}
-          >
-            <span className="font-bold">{moveToString(whiteMove)}</span>
-          </button>
-        </div>
-      ) : null}
-      {blackMove ? (
-        <div className="min-w-12">
-          <button
-            className="text-left rounded-md px-1 hover:outline-2 text-nowrap"
-            style={{
-              width: '100%',
-              backgroundColor: themeParams.piece2.background,
-              color: themeParams.piece2.text ?? themeParams.piece2.border,
-              outlineColor: themeParams.piece2.border,
-              opacity:
-                game.plyIndex !== null && game.plyIndex < index * 2 + 2
-                  ? 0.5
-                  : 1,
-            }}
-            onClick={() => {
-              if (game.plyIndex !== null && game.plyIndex === index * 2 + 2) {
-                onClick(index * 2 + 1);
-              } else {
-                onClick(index * 2 + 2);
-              }
-            }}
-          >
-            <span className="font-bold">{moveToString(blackMove)}</span>
-          </button>
-        </div>
-      ) : null}
+      {whiteMove ? makeHistoryItem(index * 2 + 1, 'white', whiteMove) : null}
+      {blackMove ? makeHistoryItem(index * 2 + 2, 'black', blackMove) : null}
     </div>
   ));
 
@@ -109,13 +109,39 @@ export function History({
 
   return (
     <div
-      className="flex flex-col justify-center lg:ml-4 lg:w-72"
-      style={{ color: themeParams.text }}
+      className="flex flex-col rounded-md p-2 m-2 justify-center lg:ml-4 lg:w-72 lg:h-128"
+      style={{ color: themeParams.text, backgroundColor: themeParams.board1 }}
     >
+      {sendDrawOffer &&
+        (!hasOfferedDraw.current || hasDrawOffer ? (
+          <FaHandshake
+            className={`m-2 ${hasDrawOffer ? 'hover:outline-3 outline-2' : 'hover:outline-2'} rounded-md p-1 cursor-pointer`}
+            size={32}
+            style={{
+              color: themeParams.text,
+              outlineColor: themeParams.text,
+              backgroundColor: hasDrawOffer ? themeParams.highlight : undefined,
+            }}
+            onClick={() => {
+              setHasOfferedDraw(true);
+            }}
+          />
+        ) : (
+          <FaHandshakeSlash
+            className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
+            size={32}
+            style={{
+              color: themeParams.text,
+              outlineColor: themeParams.text,
+            }}
+            onClick={() => {
+              setHasOfferedDraw(false);
+            }}
+          />
+        ))}
       <ScrollArea
         viewportRef={viewport}
-        className="lg:h-128 rounded-md p-2 m-2"
-        style={{ backgroundColor: themeParams.board1 }}
+        className="grow"
         overscrollBehavior="contain"
       >
         <div className="flex lg:flex-col">{rows}</div>

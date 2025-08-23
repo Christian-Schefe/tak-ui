@@ -1,5 +1,5 @@
 import { Modal, Table, Tooltip } from '@mantine/core';
-import { useGameData } from '../gameData';
+import { useGameData } from '../gameDataHooks';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth, useWSAPI } from '../authHooks';
 import { useMemo } from 'react';

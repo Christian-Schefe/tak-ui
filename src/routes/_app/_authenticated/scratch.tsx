@@ -19,11 +19,6 @@ function RouteComponent() {
         boardSize: 6,
         komi: 2,
         reserve: defaultReserve(7),
-        clock: {
-          contingentMs: 300000,
-          incrementMs: 5000,
-          extra: { move: 5, amountMs: 100000 },
-        },
       }),
     ),
   );
@@ -46,8 +41,8 @@ function RouteComponent() {
           game={game}
           setGame={setGame}
           playerInfo={playerInfo}
-          interactive={true}
           onClickTile={onClickTile}
+          mode={{ type: 'local' }}
         />
       )}
       {boardType === '3d' && (
@@ -55,8 +50,8 @@ function RouteComponent() {
           game={game}
           setGame={setGame}
           playerInfo={playerInfo}
-          interactive={true}
           onClickTile={onClickTile}
+          mode={{ type: 'local' }}
         />
       )}
       <GameOverDialog game={game} playerInfo={playerInfo} />

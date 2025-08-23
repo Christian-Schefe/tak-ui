@@ -7,12 +7,9 @@ import React, {
 } from 'react';
 import { msgToString, WS_URL, wsOptions } from './websocket';
 import { router } from './router';
-import useWebSocket from 'react-use-websocket';
-import {
-  AuthContext,
-  WebSocketAPIContext,
-  WebSocketMessageContext,
-} from './authHooks';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { AuthContext, WebSocketAPIContext } from './authHooks';
+import { Affix, Button } from '@mantine/core';
 
 interface User {
   username: string;
@@ -25,14 +22,13 @@ export interface AuthState {
   logout: () => void;
 }
 
-export interface WebSocketMessageState {
-  lastMessage: MessageEvent | null;
-}
-
 export interface WebSocketAPIState {
-  sendMessage: (message: string) => void;
+  readyState: ReadyState;
+  sendMessage: (message: string, keep?: boolean) => void;
+  addOnMessageListener: (key: string, callback: MessageListener) => void;
+  removeOnMessageListener: (key: string) => void;
   addOnCloseListener: (key: string, callback: CloseEventListener) => void;
-  addOnOpenListener: (key: string, callback: () => void) => void;
+  addOnOpenListener: (key: string, callback: OpenEventListener) => void;
   removeOnCloseListener: (key: string) => void;
   removeOnOpenListener: (key: string) => void;
 }
@@ -43,6 +39,8 @@ export interface TextMessage {
 }
 
 export type CloseEventListener = (ev: CloseEvent) => void;
+export type MessageListener = (msg: MessageEvent) => void;
+export type OpenEventListener = () => void;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -51,25 +49,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const onCloseListeners = useRef<
     { key: string; callback: CloseEventListener }[]
   >([]);
-  const onOpenListeners = useRef<{ key: string; callback: () => void }[]>([]);
+  const onOpenListeners = useRef<
+    { key: string; callback: OpenEventListener }[]
+  >([]);
+  const onMessageListeners = useRef<
+    { key: string; callback: MessageListener }[]
+  >([]);
 
-  const { sendMessage, lastMessage } = useWebSocket(WS_URL, {
-    ...wsOptions,
-    onOpen: () => {
-      console.log('WebSocket opened');
-      sendMessage('Protocol 2');
-      sendToken();
-      onOpenListeners.current.forEach((listener) => {
-        listener.callback();
-      });
+  const { sendMessage, lastMessage, getWebSocket, readyState } = useWebSocket(
+    WS_URL,
+    {
+      ...wsOptions,
+      onOpen: () => {
+        console.log('WebSocket opened');
+        sendMessage('Protocol 2');
+        sendToken();
+        onOpenListeners.current.forEach((listener) => {
+          console.log('Called onOpen listener', listener.key);
+          listener.callback();
+        });
+      },
+      onClose: (ev) => {
+        console.warn('WebSocket closed', ev);
+        onCloseListeners.current.forEach((listener) => {
+          console.log('Called onClose listener', listener.key);
+          listener.callback(ev);
+        });
+      },
+      onMessage: (msg) => {
+        onMessageListeners.current.forEach((listener) => {
+          listener.callback(msg);
+        });
+      },
     },
-    onClose: (ev) => {
-      console.warn('WebSocket closed', ev);
-      onCloseListeners.current.forEach((listener) => {
-        listener.callback(ev);
-      });
-    },
-  });
+  );
 
   const addOnCloseListener = useCallback(
     (key: string, callback: CloseEventListener) => {
@@ -94,19 +107,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  const addOnMessageListener = useCallback(
+    (key: string, callback: MessageListener) => {
+      onMessageListeners.current.push({ key, callback });
+    },
+    [],
+  );
+
+  const removeOnMessageListener = useCallback((key: string) => {
+    onMessageListeners.current = onMessageListeners.current.filter(
+      (listener) => listener.key !== key,
+    );
+  }, []);
+
+  const triggerClose = useCallback(() => {
+    const ws = getWebSocket();
+    if (ws) {
+      ws.close();
+    }
+  }, [getWebSocket]);
+
   const api = useMemo<WebSocketAPIState>(() => {
     return {
-      sendMessage: (msg) => {
+      readyState,
+      sendMessage: (msg, keep) => {
         console.log('sent:', msg);
-        sendMessage(msg);
+        sendMessage(msg, keep ?? true);
       },
       addOnCloseListener,
       removeOnCloseListener,
       addOnOpenListener,
       removeOnOpenListener,
+      addOnMessageListener,
+      removeOnMessageListener,
     };
   }, [
+    readyState,
     sendMessage,
+    addOnMessageListener,
+    removeOnMessageListener,
     addOnCloseListener,
     removeOnCloseListener,
     addOnOpenListener,
@@ -172,10 +211,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { isAuthenticated, user, login, logout };
   }, [isAuthenticated, user, login, logout]);
 
-  const messageContextMemo = useMemo<WebSocketMessageState>(() => {
-    return { lastMessage };
-  }, [lastMessage]);
-
   // Show loading state while checking auth
   if (isLoading) {
     return (
@@ -187,9 +222,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext value={authContextMemo}>
-      <WebSocketMessageContext value={messageContextMemo}>
-        <WebSocketAPIContext value={api}>{children}</WebSocketAPIContext>
-      </WebSocketMessageContext>
+      <WebSocketAPIContext value={api}>{children}</WebSocketAPIContext>
+      <Affix position={{ bottom: 20, right: 20 }}>
+        <Button onClick={triggerClose}>Close WebSocket</Button>
+      </Affix>
     </AuthContext>
   );
 }

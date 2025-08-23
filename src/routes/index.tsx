@@ -83,10 +83,12 @@ function RouteComponent() {
           </a>
         </div>
         <div className="w-full grow flex flex-col justify-start items-center text-black">
-          <h1 className="text-3xl mt-10 text-black">
-            UPCOMING <span className="font-bold">EVENTS</span>
-          </h1>
-          <Table data={eventTableData} />
+          <div className="w-full max-w-4xl">
+            <h1 className="text-3xl mt-10 text-black">
+              UPCOMING <span className="font-bold">EVENTS</span>
+            </h1>
+            <Table data={eventTableData} />
+          </div>
         </div>
       </Flex>
     </div>

@@ -1,15 +1,10 @@
 import { useSeeks } from './api/seeks';
-import {
-  createContext,
-  use,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type TextMessage } from './auth';
-import type { Player } from './packages/tak-core';
+import type { GameState, Player } from './packages/tak-core';
 import { useWSListener } from './authHooks';
+import { GameDataContext } from './gameDataHooks';
+import { notifications } from '@mantine/notifications';
 
 export interface GameDataState {
   seeks: SeekEntry[];
@@ -67,9 +62,9 @@ export interface GameInfoEntry {
   messages: string[];
   moveMessages: string[];
   timeMessages: TimeMessage[];
+  drawOffer: boolean;
+  gameOver: GameState | null;
 }
-
-const GameDataContext = createContext<GameDataState | undefined>(undefined);
 
 const seekAddRegex =
   /^Seek new (\d+) ([A-Za-z0-9_]+) (\d+) (\d+) (\d+) ([WBA]) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+) ([A-Za-z0-9_]*)/;
@@ -167,6 +162,14 @@ function parseGameTimeMessage(message: string): TimeMessage | null {
   };
 }
 
+const gameDrawMessagePattern = /^Game#\d+ (Offer|Remove)Draw/;
+
+function parseGameDrawMessage(message: string): boolean | null {
+  const matches = gameDrawMessagePattern.exec(message);
+  if (!matches) return null;
+  return matches[1] === 'Offer';
+}
+
 function parseGameUpdateMessage(message: string): string | null {
   const matches = /^Game#(\d+) (.+)/.exec(message);
   if (!matches) return null;
@@ -181,6 +184,32 @@ function parseObserveMessage(message: string): string | null {
   return matches[1];
 }
 
+const gameOverPattern = /^Game#\d+ Over (1\/2-1\/2|0-1|1-0|0-F|F-0|0-R|R-0)/;
+
+function parseGameOverPattern(message: string): GameState | null {
+  const matches = gameOverPattern.exec(message);
+  if (!matches) return null;
+
+  switch (matches[1]) {
+    case '1/2-1/2':
+      return { type: 'draw', reason: 'mutual agreement' };
+    case '0-1':
+      return { type: 'win', player: 'black', reason: 'resignation' };
+    case '1-0':
+      return { type: 'win', player: 'white', reason: 'resignation' };
+    case '0-F':
+      return { type: 'win', player: 'black', reason: 'flats' };
+    case 'F-0':
+      return { type: 'win', player: 'white', reason: 'flats' };
+    case '0-R':
+      return { type: 'win', player: 'black', reason: 'road' };
+    case 'R-0':
+      return { type: 'win', player: 'white', reason: 'road' };
+    default:
+      return null;
+  }
+}
+
 export function GameDataProvider({ children }: { children: React.ReactNode }) {
   const [gameInfo, setGameInfo] = useState<
     Record<string, GameInfoEntry | undefined>
@@ -191,7 +220,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   const [seeks, setSeeks] = useState<SeekEntry[]>([]);
   const [games, setGames] = useState<GameListEntry[]>([]);
 
-  const onMsg = (msg: TextMessage) => {
+  const onMsg = useCallback((msg: TextMessage) => {
     const text = msg.text;
     console.log('Called with message:', text);
     if (text.startsWith('Seek new')) {
@@ -230,19 +259,31 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
       const id = parseGameUpdateMessage(text);
       if (id) {
         const timeMessage = parseGameTimeMessage(text);
+        const drawOffer = parseGameDrawMessage(text);
+        const gameOver = parseGameOverPattern(text);
         setGameInfo((prev) => ({
           ...prev,
-          [id]: {
-            messages: [...(prev[id]?.messages ?? []), text],
-            moveMessages: [
-              ...(prev[id]?.moveMessages ?? []),
-              ...(isGameMoveMessage(text) ? [text] : []),
-            ],
-            timeMessages: [
-              ...(prev[id]?.timeMessages ?? []),
-              ...(timeMessage ? [timeMessage] : []),
-            ],
-          },
+          [id]: prev[id]
+            ? {
+                messages: [...prev[id].messages, text],
+                moveMessages: [
+                  ...prev[id].moveMessages,
+                  ...(isGameMoveMessage(text) ? [text] : []),
+                ],
+                timeMessages: [
+                  ...prev[id].timeMessages,
+                  ...(timeMessage ? [timeMessage] : []),
+                ],
+                drawOffer: drawOffer ?? prev[id].drawOffer,
+                gameOver: gameOver ?? prev[id].gameOver,
+              }
+            : {
+                messages: [text],
+                moveMessages: isGameMoveMessage(text) ? [text] : [],
+                timeMessages: timeMessage ? [timeMessage] : [],
+                drawOffer: drawOffer ?? false,
+                gameOver: gameOver ?? null,
+              },
         }));
       } else {
         console.error('Failed to update game:', text);
@@ -260,19 +301,33 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to parse observe game message:', text);
       }
     }
-  };
+  }, []);
 
-  useWSListener({
+  const onOpen = useCallback(() => {
+    setGameInfo({});
+    setSeeks([]);
+    setGames([]);
+    notifications.show({
+      title: 'Connection opened',
+      message: 'Connection opened',
+      position: 'top-right',
+    });
+  }, []);
+
+  const onClose = useCallback((ev: CloseEvent) => {
+    console.warn('Removing game info');
+    setGameInfo({});
+    notifications.show({
+      title: 'Connection closed',
+      message: `Connection closed ${ev.wasClean ? 'cleanly' : 'abruptly'}: ${ev.reason || 'No reason provided'}`,
+      position: 'top-right',
+    });
+  }, []);
+
+  useWSListener('GameData', {
     onMessage: onMsg,
-    onOpen: () => {
-      setGameInfo({});
-      setSeeks([]);
-      setGames([]);
-    },
-    onClose: () => {
-      console.warn('Removing game info');
-      setGameInfo({});
-    },
+    onOpen,
+    onClose,
   });
 
   useEffect(() => {
@@ -294,13 +349,4 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   }, [seeks, games, gameInfo, removeGameInfo]);
 
   return <GameDataContext value={gameDataMemo}>{children}</GameDataContext>;
-}
-
-/* eslint-disable-next-line react-refresh/only-export-components */
-export function useGameData() {
-  const context = use(GameDataContext);
-  if (context === undefined) {
-    throw new Error('useGameData must be used within a GameDataProvider');
-  }
-  return context;
 }

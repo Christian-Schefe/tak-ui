@@ -13,15 +13,18 @@ import {
   dirToString,
   offsetCoord,
 } from '../packages/tak-core/coord';
-import { type GameListEntry, useGameData } from '../gameData';
+import { type GameListEntry } from '../gameData';
 import { Board3D } from './board3d/Board3D';
 import { useImmer } from 'use-immer';
-import { useAuth, useWSListener } from '../authHooks';
+import { useAuth, useWSAPI } from '../authHooks';
 import { useSettings } from '../settings';
 import { Board2D } from './board2d/Board2D';
 import { GameOverDialog } from './GameOverDialog';
 import { notifications } from '@mantine/notifications';
 import { current } from 'immer';
+import { useGameData } from '../gameDataHooks';
+import { ReadyState } from 'react-use-websocket';
+import type { BoardMode } from './board';
 
 const placeRegex = /Game#\d+ P ([A-Z])([1-9])(?: ([CW]))?/;
 const moveRegex = /Game#\d+ M ([A-Z])([1-9]) ([A-Z])([1-9])((?: [1-9])*)/;
@@ -38,34 +41,43 @@ export function PlayedGame({
   const gameId = useMemo(() => gameEntry.id.toString(), [gameEntry.id]);
   const { user } = useAuth();
 
-  const localPlayer = useMemo(() => {
-    if (user?.username === gameEntry.white) return 'white';
-    if (user?.username === gameEntry.black) return 'black';
-    return undefined;
-  }, [user?.username, gameEntry.white, gameEntry.black]);
+  const boardMode: BoardMode = useMemo(() => {
+    if (observed) return { type: 'spectator' };
+    if (user?.username === gameEntry.white)
+      return { type: 'remote', localPlayer: 'white' };
+    if (user?.username === gameEntry.black)
+      return { type: 'remote', localPlayer: 'black' };
+    return { type: 'spectator' };
+  }, [observed, user?.username, gameEntry.white, gameEntry.black]);
 
-  const { sendMessage } = useWSListener({
-    onOpen: () => {
-      if (observed) {
-        console.log('Subscribing to game:', gameId);
-        sendMessage(`Observe ${gameId}`);
-      }
-      notifications.show({
-        title: 'Connection opened',
-        message: 'Connection opened',
-        position: 'top-right',
-      });
-    },
-    onClose: (ev) => {
-      notifications.show({
-        title: 'Connection closed',
-        message: `Connection closed: ${ev.reason}`,
-        position: 'top-right',
-      });
-    },
-  });
+  const { sendMessage, readyState } = useWSAPI();
 
   const gameData = useGameData();
+  const removeGameData = gameData.removeGameInfo;
+  const maybeGameOver = gameData.gameInfo[gameId]?.gameOver;
+
+  useEffect(() => {
+    if (observed && readyState === ReadyState.OPEN) {
+      console.log('Subscribing to game:', gameId);
+      sendMessage(`Observe ${gameId}`);
+      notifications.show({
+        title: 'Subscribing to game',
+        message: `Subscribing to game: ${gameId}`,
+        position: 'top-right',
+      });
+
+      return () => {
+        console.log('Unsubscribing from game:', gameId);
+        sendMessage(`Unobserve ${gameId}`, false);
+        removeGameData(gameId);
+        notifications.show({
+          title: 'Unsubscribing from game',
+          message: `Unsubscribing from game: ${gameId}`,
+          position: 'top-right',
+        });
+      };
+    }
+  }, [observed, readyState, gameId, sendMessage, removeGameData]);
 
   const [game, setGame] = useImmer<ui.GameUI>(() => {
     console.log('Creating new game with settings:', settings);
@@ -80,32 +92,18 @@ export function PlayedGame({
     });
   }, [setGame]);
 
-  const removeGameData = gameData.removeGameInfo;
+  useEffect(() => {
+    if (maybeGameOver) {
+      if (game.actualGame.gameState.type !== maybeGameOver.type) {
+        console.log('received game over:', maybeGameOver);
+        setGame((prev) => {
+          prev.actualGame.gameState = maybeGameOver;
+        });
+      }
+    }
+  }, [maybeGameOver, game.actualGame.gameState, setGame]);
 
   const [readMessageIndex, setReadMessageIndex] = useState(0);
-
-  useEffect(() => {
-    if (observed) {
-      console.log('Subscribing to game:', gameId);
-      sendMessage(`Observe ${gameId}`);
-      notifications.show({
-        title: 'Subscribing to game',
-        message: `Subscribing to game: ${gameId}`,
-        position: 'top-right',
-      });
-    }
-    return () => {
-      if (!observed) return;
-      console.log('Unsubscribing from game:', gameId);
-      sendMessage(`Unobserve ${gameId}`);
-      removeGameData(gameId);
-      notifications.show({
-        title: 'Unsubscribing from game',
-        message: `Unsubscribing from game: ${gameId}`,
-        position: 'top-right',
-      });
-    };
-  }, [observed, removeGameData, sendMessage, gameId, setReadMessageIndex]);
 
   useEffect(() => {
     setReadMessageIndex(0);
@@ -241,7 +239,10 @@ export function PlayedGame({
 
   const onClickTile = (pos: Coord, variant: PieceVariant) => {
     if (observed) return;
-    if (game.actualGame.currentPlayer !== localPlayer) {
+    if (
+      boardMode.type !== 'remote' ||
+      game.actualGame.currentPlayer !== boardMode.localPlayer
+    ) {
       throw new Error('not your turn');
     }
     setGame((draft) => {
@@ -253,6 +254,16 @@ export function PlayedGame({
     });
   };
 
+  const drawProps =
+    boardMode.type === 'remote'
+      ? {
+          hasDrawOffer: gameData.gameInfo[gameId]?.drawOffer ?? false,
+          sendDrawOffer: (offer: boolean) => {
+            sendMessage(`Game#${gameId} ${offer ? 'Offer' : 'Remove'}Draw`);
+          },
+        }
+      : undefined;
+
   return (
     <div className="w-full grow flex flex-col">
       {boardType === '2d' && (
@@ -260,9 +271,9 @@ export function PlayedGame({
           game={game}
           setGame={setGame}
           playerInfo={playerInfo}
-          interactive={!observed}
-          localPlayer={localPlayer}
+          mode={boardMode}
           onClickTile={onClickTile}
+          drawProps={drawProps}
         />
       )}
       {boardType === '3d' && (
@@ -270,9 +281,9 @@ export function PlayedGame({
           game={game}
           setGame={setGame}
           playerInfo={playerInfo}
-          interactive={!observed}
-          localPlayer={localPlayer}
+          mode={boardMode}
           onClickTile={onClickTile}
+          drawProps={drawProps}
         />
       )}
       <GameOverDialog game={game} playerInfo={playerInfo} />

@@ -1,17 +1,8 @@
 import { createContext, use, useEffect, useRef } from 'react';
-import type {
-  AuthState,
-  TextMessage,
-  WebSocketAPIState,
-  WebSocketMessageState,
-} from './auth';
-import { v4 } from 'uuid';
+import type { AuthState, TextMessage, WebSocketAPIState } from './auth';
 import { msgToString } from './websocket';
 
 export const AuthContext = createContext<AuthState | undefined>(undefined);
-export const WebSocketMessageContext = createContext<
-  WebSocketMessageState | undefined
->(undefined);
 export const WebSocketAPIContext = createContext<WebSocketAPIState | undefined>(
   undefined,
 );
@@ -32,58 +23,82 @@ export function useWSAPI() {
   return context;
 }
 
-export function useWSListener({
-  onMessage,
-  onClose,
-  onOpen,
-}: {
-  onMessage?: (msg: TextMessage) => void;
-  onClose?: (ev: CloseEvent) => void;
-  onOpen?: () => void;
-}) {
+export function useWSListener(
+  id: string,
+  {
+    onMessage,
+    onClose,
+    onOpen,
+  }: {
+    onMessage?: (msg: TextMessage) => void;
+    onClose?: (ev: CloseEvent) => void;
+    onOpen?: () => void;
+  },
+) {
   const api = useWSAPI();
   const {
     addOnOpenListener,
     addOnCloseListener,
     removeOnOpenListener,
     removeOnCloseListener,
+    addOnMessageListener,
+    removeOnMessageListener,
   } = api;
-  const { lastMessage } = use(WebSocketMessageContext) ?? {
-    lastMessage: null,
-  };
-  const callbackRef = useRef({ onMessage, onClose, onOpen });
-  callbackRef.current = { onMessage, onClose, onOpen };
+
+  const onMessageRef = useRef(onMessage);
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
+
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  const onOpenRef = useRef(onOpen);
+  useEffect(() => {
+    onOpenRef.current = onOpen;
+  }, [onOpen]);
 
   useEffect(() => {
-    if (!lastMessage) return;
-    msgToString(lastMessage)
-      .then((text) => {
-        if (!text || !callbackRef.current.onMessage) return;
-        callbackRef.current.onMessage({ text, timestamp: new Date() });
-      })
-      .catch((err: unknown) => {
-        console.error('Error parsing WebSocket message:', err);
-      });
-  }, [lastMessage]);
-
-  useEffect(() => {
-    if (!callbackRef.current.onClose) return;
-    const id = v4();
-    console.log('Adding onClose listener:', id);
-    addOnCloseListener(id, callbackRef.current.onClose);
+    console.log('Adding onMessage listener:', id);
+    addOnMessageListener(id, (msg) => {
+      msgToString(msg)
+        .then((text) => {
+          if (!text) return;
+          onMessageRef.current?.({ text, timestamp: new Date() });
+        })
+        .catch((err: unknown) => {
+          console.error('Error parsing WebSocket message:', err);
+        });
+    });
     return () => {
+      console.log('Removing onMessage listener:', id);
+      removeOnMessageListener(id);
+    };
+  }, [addOnMessageListener, id, removeOnMessageListener]);
+
+  useEffect(() => {
+    console.log('Adding onClose listener:', id);
+    addOnCloseListener(id, (ev) => {
+      onCloseRef.current?.(ev);
+    });
+    return () => {
+      console.log('Removing onClose listener:', id);
       removeOnCloseListener(id);
     };
-  }, [addOnCloseListener, removeOnCloseListener]);
+  }, [addOnCloseListener, id, removeOnCloseListener]);
 
   useEffect(() => {
-    if (!callbackRef.current.onOpen) return;
-    const id = v4();
-    addOnOpenListener(id, callbackRef.current.onOpen);
+    console.log('Adding onOpen listener:', id);
+    addOnOpenListener(id, () => {
+      onOpenRef.current?.();
+    });
     return () => {
+      console.log('Removing onOpen listener:', id);
       removeOnOpenListener(id);
     };
-  }, [addOnOpenListener, removeOnOpenListener]);
+  }, [addOnOpenListener, id, removeOnOpenListener]);
 
   return api;
 }

@@ -13,9 +13,9 @@ export function Board2D({
   game,
   setGame,
   playerInfo,
-  interactive,
-  localPlayer,
   onClickTile,
+  mode,
+  drawProps,
 }: BoardProps) {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const { themeParams } = useSettings();
@@ -37,12 +37,17 @@ export function Board2D({
     });
   };
 
+  const areTilesInteractive =
+    (mode.type === 'remote' &&
+      game.actualGame.currentPlayer === mode.localPlayer) ||
+    mode.type === 'local';
+
   return (
     <div
       className="w-full grow flex flex-col lg:justify-center"
       style={{ backgroundColor: themeParams.background }}
     >
-      <div className="w-full flex flex-col max-w-4xl lg:max-w-6xl mx-auto lg:flex-row">
+      <div className="w-full flex flex-col max-w-4xl lg:max-w-6xl mx-auto lg:flex-row lg:items-center">
         <div className="grow">
           <PlayerInfoBar
             player="white"
@@ -63,11 +68,7 @@ export function Board2D({
                 key={coordToString(pos)}
                 pos={pos}
                 game={game}
-                interactive={
-                  interactive &&
-                  (!localPlayer ||
-                    game.actualGame.currentPlayer === localPlayer)
-                }
+                interactive={areTilesInteractive}
                 onClick={() => {
                   onClickTile(pos, variant);
                 }}
@@ -77,12 +78,16 @@ export function Board2D({
               <Piece key={id} id={id} game={game} />
             ))}
           </div>
-          {interactive && (
+          {mode.type !== 'spectator' && (
             <VariantSelector
               variant={variant}
               setVariant={setVariant}
               game={game}
-              player={localPlayer ?? game.actualGame.currentPlayer}
+              player={
+                mode.type === 'local'
+                  ? game.actualGame.currentPlayer
+                  : mode.localPlayer
+              }
             />
           )}
           <PlayerInfoBar
@@ -100,6 +105,8 @@ export function Board2D({
               ui.setPlyIndex(draft, plyIndex);
             });
           }}
+          hasDrawOffer={drawProps?.hasDrawOffer}
+          sendDrawOffer={drawProps?.sendDrawOffer}
         />
       </div>
     </div>

@@ -7,7 +7,7 @@ import {
 } from '@babylonjs/core';
 import { useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { Engine, Scene, Skybox } from 'react-babylonjs';
-import { ui, type Coord, type PieceVariant } from '../../packages/tak-core';
+import { ui, type PieceVariant } from '../../packages/tak-core';
 import { Table, Board, Tile, Piece, VariantButton } from './Objects';
 import type { BoardProps } from '../board';
 import { coordToString } from '../../packages/tak-core/coord';
@@ -22,8 +22,9 @@ export interface EnvConfig {
 export const Board3D: FC<BoardProps> = ({
   game,
   setGame,
-  interactive,
   playerInfo,
+  onClickTile,
+  mode,
 }) => {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const canvasContainer = useRef<HTMLDivElement | null>(null);
@@ -76,18 +77,16 @@ export const Board3D: FC<BoardProps> = ({
     }
   }, []);
 
-  const onClickTile = (pos: Coord) => {
-    if (!interactive) return;
-    setGame((draft) => {
-      ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
-    });
-  };
-
   const onTimeout = () => {
     setGame((draft) => {
       ui.checkTimeout(draft);
     });
   };
+
+  const areTilesInteractive =
+    (mode.type === 'remote' &&
+      game.actualGame.currentPlayer === mode.localPlayer) ||
+    mode.type === 'local';
 
   return (
     <div className="fixed top-0 bottom-0 left-0 right-0" ref={canvasContainer}>
@@ -141,9 +140,9 @@ export const Board3D: FC<BoardProps> = ({
               tile={game.tiles[pos.y][pos.x]}
               pos={pos}
               cubeTextureRef={cubeTextureRef}
-              interactive={interactive}
+              interactive={areTilesInteractive}
               onClick={() => {
-                onClickTile(pos);
+                onClickTile(pos, variant);
               }}
             />
           ))}
@@ -182,7 +181,7 @@ export const Board3D: FC<BoardProps> = ({
           <Board size={size} cubeTextureRef={cubeTextureRef} />
           <Table size={size} cubeTextureRef={cubeTextureRef} />
 
-          {interactive && (
+          {mode.type !== 'spectator' && (
             <>
               <VariantButton
                 variant="flat"
