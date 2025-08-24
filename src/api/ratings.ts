@@ -17,6 +17,16 @@ export function useRatings(playerNames: string[]) {
       queryKey: ['ratings', playerName],
       staleTime: 1000 * 60 * 60,
       queryFn: async () => {
+        if (playerName.startsWith('Guest')) {
+          return {
+            name: playerName,
+            rating: 1000,
+            maxrating: 0,
+            ratedgames: 0,
+            isbot: false,
+            participation_rating: null,
+          };
+        }
         const res = await fetch(`${API_BASE_URL}/v1/ratings/${playerName}`);
         if (!res.ok)
           //TODO: error handling
