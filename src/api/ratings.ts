@@ -8,7 +8,7 @@ const RatingSchema = z.object({
   maxrating: z.number(),
   ratedgames: z.number(),
   isbot: z.boolean(),
-  participation_rating: z.number(),
+  participation_rating: z.number().nullable(),
 });
 
 export function useRatings(playerNames: string[]) {
@@ -26,7 +26,7 @@ export function useRatings(playerNames: string[]) {
             maxrating: 0,
             ratedgames: 0,
             isbot: false,
-            participation_rating: 0,
+            participation_rating: null,
           };
         return RatingSchema.parse(await res.json());
       },

@@ -1,2 +1,1 @@
-//export const API_BASE_URL = 'https://api.playtak.com';
-export const API_BASE_URL = 'https://localhost/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
