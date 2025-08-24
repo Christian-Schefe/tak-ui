@@ -16,10 +16,10 @@
       Access-Control-Allow-Credentials true
     }
   }
-  
+
   handle {
     try_files {path} /index.html
     file_server
   }
-  tls /certs/certificate.pem /certs/key.pem
+  tls internal
 }

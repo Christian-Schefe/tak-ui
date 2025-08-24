@@ -1,12 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useImmer } from 'use-immer';
-import { ui, type Coord, type PieceVariant } from '../../../packages/tak-core';
+import {
+  ui,
+  type Coord,
+  type Move,
+  type PieceVariant,
+} from '../../../packages/tak-core';
 import { newGame } from '../../../packages/tak-core/game';
 import { defaultReserve } from '../../../packages/tak-core/piece';
 import { useSettings } from '../../../settings';
 import { Board2D } from '../../../components/board2d/Board2D';
 import { Board3D } from '../../../components/board3d/Board3D';
 import { GameOverDialog } from '../../../components/GameOverDialog';
+import { BoardNinja } from '../../../components/boardNinja/BoardNinja';
 
 export const Route = createFileRoute('/_app/_authenticated/scratch')({
   component: RouteComponent,
@@ -17,7 +23,7 @@ function RouteComponent() {
     ui.newGameUI(
       newGame({
         boardSize: 6,
-        komi: 2,
+        halfKomi: 4,
         reserve: defaultReserve(7),
       }),
     ),
@@ -34,26 +40,30 @@ function RouteComponent() {
     });
   };
 
+  const onMakeMove = (move: Move) => {
+    setGame((draft) => {
+      if (!ui.canDoMove(draft, move)) {
+        console.error('Invalid move:', move);
+        return;
+      }
+      console.log('doing move', move);
+      ui.doMove(draft, move);
+    });
+  };
+
+  const BoardComponent =
+    boardType === '2d' ? Board2D : boardType === '3d' ? Board3D : BoardNinja;
+
   return (
     <div className="w-full grow flex flex-col">
-      {boardType === '2d' && (
-        <Board2D
-          game={game}
-          setGame={setGame}
-          playerInfo={playerInfo}
-          onClickTile={onClickTile}
-          mode={{ type: 'local' }}
-        />
-      )}
-      {boardType === '3d' && (
-        <Board3D
-          game={game}
-          setGame={setGame}
-          playerInfo={playerInfo}
-          onClickTile={onClickTile}
-          mode={{ type: 'local' }}
-        />
-      )}
+      <BoardComponent
+        game={game}
+        setGame={setGame}
+        playerInfo={playerInfo}
+        onClickTile={onClickTile}
+        onMakeMove={onMakeMove}
+        mode={{ type: 'local' }}
+      />
       <GameOverDialog game={game} playerInfo={playerInfo} />
     </div>
   );

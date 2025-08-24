@@ -51,7 +51,7 @@ export function SpectateDialog({
       <Table.Td>
         {game.boardSize}x{game.boardSize}
       </Table.Td>
-      <Table.Td>{game.komi / 2}</Table.Td>
+      <Table.Td>{game.halfKomi / 2}</Table.Td>
       <Table.Td>
         {game.timeContingentSeconds / 60}|{game.timeIncrementSeconds}
       </Table.Td>

@@ -25,6 +25,7 @@ import { current } from 'immer';
 import { useGameData } from '../gameDataHooks';
 import { ReadyState } from 'react-use-websocket';
 import type { BoardMode } from './board';
+import { BoardNinja } from './boardNinja/BoardNinja';
 
 const placeRegex = /Game#\d+ P ([A-Z])([1-9])(?: ([CW]))?/;
 const moveRegex = /Game#\d+ M ([A-Z])([1-9]) ([A-Z])([1-9])((?: [1-9])*)/;
@@ -53,7 +54,6 @@ export function PlayedGame({
   const { sendMessage, readyState } = useWSAPI();
 
   const gameData = useGameData();
-  const removeGameData = gameData.removeGameInfo;
   const maybeGameOver = gameData.gameInfo[gameId]?.gameOver;
 
   useEffect(() => {
@@ -69,7 +69,6 @@ export function PlayedGame({
       return () => {
         console.log('Unsubscribing from game:', gameId);
         sendMessage(`Unobserve ${gameId}`, false);
-        removeGameData(gameId);
         notifications.show({
           title: 'Unsubscribing from game',
           message: `Unsubscribing from game: ${gameId}`,
@@ -77,7 +76,7 @@ export function PlayedGame({
         });
       };
     }
-  }, [observed, readyState, gameId, sendMessage, removeGameData]);
+  }, [observed, readyState, gameId, sendMessage]);
 
   const [game, setGame] = useImmer<ui.GameUI>(() => {
     console.log('Creating new game with settings:', settings);
@@ -85,8 +84,8 @@ export function PlayedGame({
   });
 
   const resetGame = useCallback(() => {
-    setGame((prev) => {
-      const settings = current(prev.actualGame.settings);
+    setGame((draft) => {
+      const settings = current(draft.actualGame.settings);
       console.log('Resetting game to new game with settings:', settings);
       return ui.newGameUI(newGame(settings));
     });
@@ -96,8 +95,9 @@ export function PlayedGame({
     if (maybeGameOver) {
       if (game.actualGame.gameState.type !== maybeGameOver.type) {
         console.log('received game over:', maybeGameOver);
-        setGame((prev) => {
-          prev.actualGame.gameState = maybeGameOver;
+        setGame((draft) => {
+          draft.actualGame.gameState = maybeGameOver;
+          ui.onGameUpdate(draft);
         });
       }
     }
@@ -115,14 +115,26 @@ export function PlayedGame({
     });
   }, [gameId, setReadMessageIndex, resetGame]);
 
-  const moveMessages = gameData.gameInfo[gameId]?.moveMessages;
+  const gameInfo = gameData.gameInfo[gameId];
+  const hasGameInfo = !!gameInfo;
+
+  useEffect(() => {
+    if (!hasGameInfo) {
+      setReadMessageIndex(0);
+      resetGame();
+      notifications.show({
+        title: 'Reset game state',
+        message: 'Reset game as game data was removed',
+        position: 'top-right',
+      });
+    }
+  }, [hasGameInfo, setReadMessageIndex, resetGame]);
+
+  const moveMessages = gameInfo?.moveMessages;
 
   useEffect(() => {
     if (!moveMessages) return;
     const toRead = moveMessages.length - readMessageIndex;
-    if (readMessageIndex === 0) {
-      resetGame();
-    }
 
     console.log(moveMessages.length, readMessageIndex, toRead);
 
@@ -180,13 +192,7 @@ export function PlayedGame({
         console.error('desync: ', err);
       }
     });
-  }, [
-    setGame,
-    resetGame,
-    moveMessages,
-    readMessageIndex,
-    game.actualGame.currentPlayer,
-  ]);
+  }, [setGame, moveMessages, readMessageIndex, game.actualGame.currentPlayer]);
 
   const sendMoveMessage = useCallback(
     (move: Move) => {
@@ -254,6 +260,26 @@ export function PlayedGame({
     });
   };
 
+  const onMakeMove = (move: Move) => {
+    if (observed) return;
+    if (
+      boardMode.type !== 'remote' ||
+      game.actualGame.currentPlayer !== boardMode.localPlayer
+    ) {
+      throw new Error('not your turn');
+    }
+    setGame((draft) => {
+      if (!ui.canDoMove(draft, move)) {
+        console.error('Invalid move:', move);
+        return;
+      }
+      console.log('doing move', move);
+      ui.doMove(draft, move);
+      //TODO: react strict mode causes duplicated send.
+      sendMoveMessage(move);
+    });
+  };
+
   const drawProps =
     boardMode.type === 'remote'
       ? {
@@ -264,28 +290,20 @@ export function PlayedGame({
         }
       : undefined;
 
+  const BoardComponent =
+    boardType === '2d' ? Board2D : boardType === '3d' ? Board3D : BoardNinja;
+
   return (
     <div className="w-full grow flex flex-col">
-      {boardType === '2d' && (
-        <Board2D
-          game={game}
-          setGame={setGame}
-          playerInfo={playerInfo}
-          mode={boardMode}
-          onClickTile={onClickTile}
-          drawProps={drawProps}
-        />
-      )}
-      {boardType === '3d' && (
-        <Board3D
-          game={game}
-          setGame={setGame}
-          playerInfo={playerInfo}
-          mode={boardMode}
-          onClickTile={onClickTile}
-          drawProps={drawProps}
-        />
-      )}
+      <BoardComponent
+        game={game}
+        setGame={setGame}
+        playerInfo={playerInfo}
+        mode={boardMode}
+        onClickTile={onClickTile}
+        onMakeMove={onMakeMove}
+        drawProps={drawProps}
+      />
       <GameOverDialog game={game} playerInfo={playerInfo} />
     </div>
   );

@@ -23,7 +23,7 @@ export function RemoteGame({
     if (!gameEntryRef) return undefined;
     const settings: GameSettings = {
       boardSize: gameEntryRef.boardSize,
-      komi: gameEntryRef.komi,
+      halfKomi: gameEntryRef.halfKomi,
       reserve: {
         pieces: gameEntryRef.pieces,
         capstones: gameEntryRef.capstones,

@@ -3,7 +3,7 @@ import { type Options } from 'react-use-websocket';
 export const wsOptions: Options = {
   shouldReconnect: () => true,
   heartbeat: {
-    interval: 10000,
+    interval: 30000,
     message: 'PING',
   },
   protocols: ['binary'],

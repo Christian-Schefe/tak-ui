@@ -1,10 +1,10 @@
-import { useSeeks } from './api/seeks';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { type TextMessage } from './auth';
 import type { GameState, Player } from './packages/tak-core';
 import { useWSListener } from './authHooks';
 import { GameDataContext } from './gameDataHooks';
 import { notifications } from '@mantine/notifications';
+import { useInterval } from 'react-use';
 
 export interface GameDataState {
   seeks: SeekEntry[];
@@ -18,7 +18,7 @@ export interface SeekEntry {
   creator: string;
   timeContingent: number;
   timeIncrement: number;
-  komi: number;
+  halfKomi: number;
   boardSize: number;
   capstones: number;
   pieces: number;
@@ -41,7 +41,7 @@ export interface GameListEntry {
   boardSize: number;
   timeContingentSeconds: number;
   timeIncrementSeconds: number;
-  komi: number;
+  halfKomi: number;
   pieces: number;
   capstones: number;
   unrated: boolean;
@@ -88,7 +88,7 @@ function parseAddSeekMessage(message: string): SeekEntry | null {
     timeContingent: parseInt(matches[4]),
     timeIncrement: parseInt(matches[5]),
     color: matches[6] as 'W' | 'B' | 'A',
-    komi: parseInt(matches[7]),
+    halfKomi: parseInt(matches[7]),
     pieces: parseInt(matches[8]),
     capstones: parseInt(matches[9]),
     unrated: matches[10] === '1',
@@ -122,7 +122,7 @@ function parseGameAddMessage(message: string): GameListEntry | null {
     boardSize: parseInt(matches[4]),
     timeContingentSeconds: parseInt(matches[5]),
     timeIncrementSeconds: parseInt(matches[6]),
-    komi: parseInt(matches[7]),
+    halfKomi: parseInt(matches[7]),
     pieces: parseInt(matches[8]),
     capstones: parseInt(matches[9]),
     unrated: matches[10] === '1',
@@ -215,8 +215,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     Record<string, GameInfoEntry | undefined>
   >({});
 
-  const { data: freshSeeks } = useSeeks();
-
   const [seeks, setSeeks] = useState<SeekEntry[]>([]);
   const [games, setGames] = useState<GameListEntry[]>([]);
 
@@ -304,6 +302,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const onOpen = useCallback(() => {
+    console.warn('Removing data');
     setGameInfo({});
     setSeeks([]);
     setGames([]);
@@ -315,8 +314,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const onClose = useCallback((ev: CloseEvent) => {
-    console.warn('Removing game info');
-    setGameInfo({});
     notifications.show({
       title: 'Connection closed',
       message: `Connection closed ${ev.wasClean ? 'cleanly' : 'abruptly'}: ${ev.reason || 'No reason provided'}`,
@@ -324,17 +321,15 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  useWSListener('GameData', {
+  const { sendMessage } = useWSListener('GameData', {
     onMessage: onMsg,
     onOpen,
     onClose,
   });
 
-  useEffect(() => {
-    if (freshSeeks) {
-      setSeeks(freshSeeks);
-    }
-  }, [freshSeeks]);
+  useInterval(() => {
+    sendMessage('PING');
+  }, 10000);
 
   const removeGameInfo = useCallback((id: string) => {
     setGameInfo((prev) => {

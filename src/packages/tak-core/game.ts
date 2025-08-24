@@ -226,12 +226,13 @@ export function doMove(game: Game, move: Move, now?: Date) {
       type: 'win',
       player,
       reason: 'road',
+      road,
     };
     console.log('Road: ', road);
   } else if (isReserveEmpty(game) || isFilled(game.board)) {
     const flatCounts = countFlats(game.board);
-    const whiteScore = flatCounts.white;
-    const blackScore = flatCounts.black + game.settings.komi;
+    const whiteScore = flatCounts.white * 2;
+    const blackScore = flatCounts.black * 2 + game.settings.halfKomi;
     if (whiteScore !== blackScore) {
       game.gameState = {
         type: 'win',

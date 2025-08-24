@@ -80,7 +80,7 @@ export function SeeksDialog({
         <Table.Td>
           {seek.boardSize}x{seek.boardSize}
         </Table.Td>
-        <Table.Td>{seek.komi / 2}</Table.Td>
+        <Table.Td>{seek.halfKomi / 2}</Table.Td>
         <Table.Td>
           {seek.timeContingent / 60}|{seek.timeIncrement}
         </Table.Td>

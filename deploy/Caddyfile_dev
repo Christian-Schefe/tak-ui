@@ -1,6 +1,20 @@
 {$SITE_ADDRESS} {
-  root * /srv/www/dist
-  file_server
-  try_files {path} /index.html
+  handle_path /api/* {
+    reverse_proxy https://api.playtak.com {
+      header_up Host {http.reverse_proxy.upstream.hostport}
+      header_up X-Forwarded-Host {host}
+      
+      header_up Origin https://playtak.com
+      header_up Referer https://playtak.com/
+    }
+    header {
+      Access-Control-Allow-Origin  *
+      Access-Control-Allow-Methods GET, POST, PUT, DELETE, OPTIONS
+      Access-Control-Allow-Headers *
+      Access-Control-Allow-Credentials true
+    }
+  }
+
+  reverse_proxy host.docker.internal:5173
   tls internal
 }

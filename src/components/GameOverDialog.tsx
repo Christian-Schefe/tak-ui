@@ -43,6 +43,7 @@ export function GameOverDialog({
       <Affix
         position={{ top: 50, left: '50%' }}
         style={{ transform: 'translateX(-50%)' }}
+        zIndex={100}
       >
         <Transition
           transition="slide-down"

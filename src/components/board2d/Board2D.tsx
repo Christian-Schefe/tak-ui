@@ -38,9 +38,10 @@ export function Board2D({
   };
 
   const areTilesInteractive =
-    (mode.type === 'remote' &&
+    ((mode.type === 'remote' &&
       game.actualGame.currentPlayer === mode.localPlayer) ||
-    mode.type === 'local';
+      mode.type === 'local') &&
+    game.actualGame.gameState.type === 'ongoing';
 
   return (
     <div

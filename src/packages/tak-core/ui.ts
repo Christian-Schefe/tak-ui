@@ -245,7 +245,7 @@ function getLastMovePiecesInOrder(game: Game): number[] {
   }
 }
 
-function onGameUpdate(ui: GameUI) {
+export function onGameUpdate(ui: GameUI) {
   const gameClone = structuredClone(
     isDraft(ui) ? current(ui).actualGame : ui.actualGame,
   );

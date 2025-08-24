@@ -10,6 +10,7 @@ import { router } from './router';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { AuthContext, WebSocketAPIContext } from './authHooks';
 import { Affix, Button } from '@mantine/core';
+import { useSettings } from './settings';
 
 interface User {
   username: string;
@@ -211,6 +212,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { isAuthenticated, user, login, logout };
   }, [isAuthenticated, user, login, logout]);
 
+  const { devMode } = useSettings();
+
   // Show loading state while checking auth
   if (isLoading) {
     return (
@@ -223,9 +226,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext value={authContextMemo}>
       <WebSocketAPIContext value={api}>{children}</WebSocketAPIContext>
-      <Affix position={{ bottom: 20, right: 20 }}>
-        <Button onClick={triggerClose}>Close WebSocket</Button>
-      </Affix>
+      {devMode.value && (
+        <Affix position={{ bottom: 20, right: 20 }} zIndex={100}>
+          <Button onClick={triggerClose}>Close WebSocket</Button>
+        </Affix>
+      )}
     </AuthContext>
   );
 }

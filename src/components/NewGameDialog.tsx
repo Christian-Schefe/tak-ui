@@ -5,7 +5,6 @@ import {
   Input,
   InputWrapper,
   Modal,
-  NumberInput,
   Select,
   Stack,
 } from '@mantine/core';
@@ -37,11 +36,11 @@ export function NewGameDialog({
   }));
   const [boardSize, setBoardSize] = useState<number>(5);
 
-  const komiData = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4].map((size) => ({
-    value: size.toString(),
-    label: size.toFixed(1),
+  const komiData = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((halfKomi) => ({
+    value: halfKomi.toString(),
+    label: (halfKomi / 2).toFixed(1),
   }));
-  const [komi, setKomi] = useState<number>(0);
+  const [halfKomi, setHalfKomi] = useState<number>(0);
 
   const gameType = ['normal', 'unrated', 'tournament'].map((type) => ({
     value: type,
@@ -51,7 +50,7 @@ export function NewGameDialog({
     'unrated' | 'normal' | 'tournament'
   >('normal');
 
-  const [time, setTime] = useState<number>(10);
+  const [time, setTime] = useState<number | null>(10);
   const [increment, setIncrement] = useState<number | null>(0);
   const [extraTimeMove, setExtraTimeMove] = useState<number | null>(null);
   const [extraTimeAmount, setExtraTimeAmount] = useState<number | null>(0);
@@ -60,7 +59,13 @@ export function NewGameDialog({
 
   const defaultPieces = defaultReserve(boardSize);
 
-  const seekString = `Seek ${boardSize.toString()} ${time.toString()} ${increment?.toString() ?? '0'} ${color} ${(komi * 2).toString()} ${(stones ?? defaultPieces.pieces).toString()} ${(capstones ?? defaultPieces.capstones).toString()} ${gameTypeValue === 'unrated' ? '1' : '0'} ${gameTypeValue === 'tournament' ? '1' : '0'}`;
+  const valid = !!time;
+
+  const onClickCreate = () => {
+    if (!valid) return;
+    const seekString = `Seek ${boardSize.toString()} ${(time * 60).toString()} ${increment?.toString() ?? '0'} ${color} ${halfKomi.toString()} ${(stones ?? defaultPieces.pieces).toString()} ${(capstones ?? defaultPieces.capstones).toString()} ${gameTypeValue === 'unrated' ? '1' : '0'} ${gameTypeValue === 'tournament' ? '1' : '0'} ${extraTimeMove?.toString() ?? '0'} ${((extraTimeAmount ?? 0) * 60).toString()} ${opponent}`;
+    sendMessage(seekString);
+  };
 
   return (
     <Modal opened={isOpen} onClose={onClose} title="Seeks" size="lg" centered>
@@ -97,23 +102,21 @@ export function NewGameDialog({
               />
             </InputWrapper>
             <InputWrapper label="Time (minutes per player)">
-              <NumberInput
-                value={time}
-                allowDecimal={false}
-                onChange={(value) => {
-                  if (typeof value === 'string') {
-                    value = parseInt(value);
+              <Input
+                value={time?.toString() ?? ''}
+                onChange={(e) => {
+                  e.target.value = e.target.value
+                    .split('')
+                    .filter((c) => '0123456789'.includes(c))
+                    .join('');
+                  if (e.target.value === '') {
+                    setTime(null);
+                    return;
                   }
-                  if (!isNaN(value)) {
-                    setTime(value);
-                  } else {
-                    setTime(1);
-                  }
+                  setTime(Math.max(1, parseInt(e.target.value)));
                 }}
-                allowNegative={false}
-                clampBehavior="strict"
-                min={1}
-                max={1000000}
+                placeholder="Enter a time"
+                error={time === null}
               />
             </InputWrapper>
             <InputWrapper label="Extra Time Move">
@@ -162,7 +165,11 @@ export function NewGameDialog({
                 data={gameType}
                 value={gameTypeValue}
                 onChange={(v) => {
-                  if (!v) return;
+                  if (
+                    !v ||
+                    (v !== 'normal' && v !== 'unrated' && v !== 'tournament')
+                  )
+                    return;
                   setGameTypeValue(v);
                 }}
               />
@@ -170,10 +177,10 @@ export function NewGameDialog({
             <InputWrapper label="Komi">
               <Select
                 data={komiData}
-                value={komi.toString()}
+                value={halfKomi.toString()}
                 onChange={(v) => {
                   if (!v) return;
-                  setKomi(parseFloat(v));
+                  setHalfKomi(parseInt(v));
                 }}
               />
             </InputWrapper>
@@ -236,7 +243,14 @@ export function NewGameDialog({
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={() => {}}>Create Game</Button>
+        <Button
+          onClick={() => {
+            onClickCreate();
+          }}
+          disabled={!valid}
+        >
+          Create Game
+        </Button>
       </Flex>
     </Modal>
   );

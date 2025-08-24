@@ -1,5 +1,5 @@
 import type { Updater } from 'use-immer';
-import type { Coord, PieceVariant, Player } from '../packages/tak-core';
+import type { Coord, Move, PieceVariant, Player } from '../packages/tak-core';
 import type { GameUI } from '../packages/tak-core/ui';
 
 export interface BoardProps {
@@ -8,6 +8,7 @@ export interface BoardProps {
   playerInfo: Record<Player, PlayerInfo>;
   mode: BoardMode;
   onClickTile: (pos: Coord, variant: PieceVariant) => void;
+  onMakeMove: (move: Move) => void;
   drawProps?: {
     hasDrawOffer: boolean;
     sendDrawOffer: (offer: boolean) => void;

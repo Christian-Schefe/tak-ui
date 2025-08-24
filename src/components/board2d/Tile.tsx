@@ -3,6 +3,7 @@ import type { Coord } from '../../packages/tak-core';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useSettings } from '../../settings';
 import Color from 'colorjs.io';
+import { coordEquals } from '../../packages/tak-core/coord';
 
 export function Tile({
   pos,
@@ -15,7 +16,10 @@ export function Tile({
   interactive: boolean;
   onClick: () => void;
 }) {
-  const { themeParams, board2dSettings } = useSettings();
+  const {
+    themeParams,
+    boardSettings: { board2d: board2dSettings },
+  } = useSettings();
 
   const boardSize = game.actualGame.board.size;
 
@@ -39,6 +43,13 @@ export function Tile({
   }, [pos, boardSize, themeParams.board.tiling]);
 
   const data = game.tiles[pos.y][pos.x];
+
+  const isRoad =
+    game.plyIndex === null &&
+    game.actualGame.gameState.type === 'win' &&
+    game.actualGame.gameState.reason === 'road' &&
+    !!game.actualGame.gameState.road?.some((coord) => coordEquals(coord, pos));
+
   const isHover = interactive && data.hoverable;
 
   const backgroundColorEven = new Color(themeParams.board1);
@@ -87,7 +98,7 @@ export function Tile({
         }}
       ></div>
       <div
-        className={`absolute inset-0 opacity-0 ${isHover ? 'hover:opacity-100' : ''}`}
+        className={`absolute inset-0 opacity-0 ${isHover ? 'hover:opacity-100' : ''} ${isRoad ? 'opacity-100' : ''}`}
         style={{
           backgroundColor: themeParams.hover,
           transition: 'opacity 150ms ease-in-out',

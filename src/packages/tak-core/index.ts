@@ -14,7 +14,13 @@ export type GameState =
   | {
       type: 'win';
       player: Player;
-      reason: 'flats' | 'road' | 'resignation' | 'timeout';
+      reason: 'flats' | 'resignation' | 'timeout';
+    }
+  | {
+      type: 'win';
+      player: Player;
+      reason: 'road';
+      road?: Coord[];
     }
   | { type: 'draw'; reason: 'flats' | 'mutual agreement' };
 
@@ -75,7 +81,7 @@ export interface Game {
 
 export interface GameSettings {
   boardSize: number;
-  komi: number;
+  halfKomi: number;
   reserve: Reserve;
   clock?: {
     contingentMs: number;

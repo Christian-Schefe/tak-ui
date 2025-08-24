@@ -6,12 +6,33 @@ import {
   useMantineColorScheme,
 } from '@mantine/core';
 import { themes, type ColorTheme } from '../assets/2d-themes';
-import { useSettings } from '../settings';
+import { useSettings, type BoardType, type Ninja2DThemes } from '../settings';
 
 interface ThemeOption {
   value: ColorTheme;
   label: string;
 }
+
+const ninja2DNames: Record<Ninja2DThemes, string> = {
+  aaron: 'Aaron',
+  aer: 'Aer',
+  aether: 'Aether',
+  aqua: 'Aqua',
+  atlas: 'Atlas',
+  backlit: 'Backlit',
+  bubbletron: 'BubbleTron',
+  classic: 'Classic',
+  discord: 'Discord',
+  essence: 'Essence',
+  fresh: 'Fresh',
+  ignis: 'Ignis',
+  luna: 'Luna',
+  paper: 'Paper',
+  retro: 'Retro',
+  stealth: 'Stealth',
+  terra: 'Terra',
+  zen: 'Zen',
+};
 
 export function SettingsDialog({
   isOpen,
@@ -20,8 +41,16 @@ export function SettingsDialog({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { boardType, setBoardType, board2dSettings, setBoard2dSettings } =
-    useSettings();
+  const {
+    boardType,
+    setBoardType,
+    boardSettings: { board2d: board2dSettings, boardNinja: boardNinjaSettings },
+    setBoardSettings: {
+      board2d: setBoard2dSettings,
+      boardNinja: setBoardNinjaSettings,
+    },
+    devMode: devMove,
+  } = useSettings();
 
   const { colorScheme, setColorScheme } = useMantineColorScheme();
 
@@ -44,12 +73,17 @@ export function SettingsDialog({
           { value: 'auto', label: 'Auto' },
         ]}
       />
-      <p className="mt-4">3D Board</p>
-      <Switch
-        checked={boardType === '3d'}
-        onChange={(e) => {
-          setBoardType(e.currentTarget.checked ? '3d' : '2d');
+      <p className="mt-4">Board Type</p>
+      <Select
+        value={boardType}
+        onChange={(value) => {
+          setBoardType(value as BoardType);
         }}
+        data={[
+          { value: '2d', label: '2D' },
+          { value: '3d', label: '3D' },
+          { value: 'ninja', label: 'Ninja' },
+        ]}
       />
       {boardType === '2d' && (
         <>
@@ -93,6 +127,46 @@ export function SettingsDialog({
           )}
         </>
       )}
+      {boardType === 'ninja' && (
+        <>
+          <p className="mt-4">Color Theme</p>
+          <Select
+            value={boardNinjaSettings.colorTheme}
+            onChange={(e) => {
+              setBoardNinjaSettings({
+                ...boardNinjaSettings,
+                colorTheme: (e ?? 'classic') as Ninja2DThemes,
+              });
+            }}
+            data={Object.entries(ninja2DNames).map(([id, name]) => ({
+              value: id,
+              label: name,
+            }))}
+          />
+          <p className="mt-4">Axis Labels</p>
+          <Select
+            value={boardNinjaSettings.axisLabels}
+            onChange={(e) => {
+              setBoardNinjaSettings({
+                ...boardNinjaSettings,
+                axisLabels: (e ?? 'normal') as 'normal' | 'small' | 'none',
+              });
+            }}
+            data={[
+              { value: 'normal', label: 'Normal' },
+              { value: 'small', label: 'Small' },
+              { value: 'none', label: 'None' },
+            ]}
+          />
+        </>
+      )}
+      <p className="mt-4">Dev Mode</p>
+      <Switch
+        checked={devMove.value}
+        onChange={(e) => {
+          devMove.setValue(e.currentTarget.checked);
+        }}
+      />
     </Modal>
   );
 }
