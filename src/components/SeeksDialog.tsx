@@ -1,4 +1,4 @@
-import { Modal, Table, Tooltip } from '@mantine/core';
+import { Modal, ScrollArea, Table, Tooltip } from '@mantine/core';
 import { useGameData } from '../gameDataHooks';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth, useWSAPI } from '../authHooks';
@@ -92,20 +92,22 @@ export function SeeksDialog({
 
   return (
     <Modal opened={isOpen} onClose={onClose} title="Seeks" size="lg" centered>
-      <Table highlightOnHover>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Color</Table.Th>
-            <Table.Th>Opponent</Table.Th>
-            <Table.Th>Rating</Table.Th>
-            <Table.Th>Size</Table.Th>
-            <Table.Th>Komi</Table.Th>
-            <Table.Th>Time</Table.Th>
-            <Table.Th>Pieces</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
-      </Table>
+      <ScrollArea>
+        <Table highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Color</Table.Th>
+              <Table.Th>Opponent</Table.Th>
+              <Table.Th>Rating</Table.Th>
+              <Table.Th>Size</Table.Th>
+              <Table.Th>Komi</Table.Th>
+              <Table.Th>Time</Table.Th>
+              <Table.Th>Pieces</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>{rows}</Table.Tbody>
+        </Table>
+      </ScrollArea>
     </Modal>
   );
 }

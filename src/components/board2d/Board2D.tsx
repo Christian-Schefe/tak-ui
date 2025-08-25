@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ui, type PieceVariant } from '../../packages/tak-core/';
+import { useCallback, useState } from 'react';
+import { ui, type Coord, type PieceVariant } from '../../packages/tak-core/';
 import { coordToString } from '../../packages/tak-core/coord';
 import { Tile } from './Tile';
 import { Piece } from './Piece';
@@ -13,9 +13,10 @@ export function Board2D({
   game,
   setGame,
   playerInfo,
-  onClickTile,
+  callbacks,
   mode,
   drawProps,
+  doResign,
 }: BoardProps) {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const { themeParams } = useSettings();
@@ -31,17 +32,22 @@ export function Board2D({
     }
   }
 
-  const onTimeout = () => {
-    setGame((draft) => {
-      ui.checkTimeout(draft);
-    });
-  };
-
   const areTilesInteractive =
     ((mode.type === 'remote' &&
       game.actualGame.currentPlayer === mode.localPlayer) ||
       mode.type === 'local') &&
     game.actualGame.gameState.type === 'ongoing';
+
+  const onTimeout = useCallback(() => {
+    callbacks.current.onTimeout();
+  }, [callbacks]);
+
+  const onClickTile = useCallback(
+    (pos: Coord) => {
+      callbacks.current.onClickTile(pos, variant);
+    },
+    [callbacks, variant],
+  );
 
   return (
     <div
@@ -70,9 +76,7 @@ export function Board2D({
                 pos={pos}
                 game={game}
                 interactive={areTilesInteractive}
-                onClick={() => {
-                  onClickTile(pos, variant);
-                }}
+                onClick={onClickTile}
               />
             ))}
             {pieceIds.map((id) => (
@@ -108,6 +112,7 @@ export function Board2D({
           }}
           hasDrawOffer={drawProps?.hasDrawOffer}
           sendDrawOffer={drawProps?.sendDrawOffer}
+          doResign={doResign}
         />
       </div>
     </div>

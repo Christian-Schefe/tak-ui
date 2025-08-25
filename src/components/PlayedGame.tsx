@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ui,
   type Coord,
@@ -21,26 +21,48 @@ import { useSettings } from '../settings';
 import { Board2D } from './board2d/Board2D';
 import { GameOverDialog } from './GameOverDialog';
 import { notifications } from '@mantine/notifications';
-import { current } from 'immer';
 import { useGameData } from '../gameDataHooks';
 import { ReadyState } from 'react-use-websocket';
 import type { BoardMode } from './board';
 import { BoardNinja } from './boardNinja/BoardNinja';
+import { useRatings } from '../api/ratings';
 
 const placeRegex = /Game#\d+ P ([A-Z])([1-9])(?: ([CW]))?/;
 const moveRegex = /Game#\d+ M ([A-Z])([1-9]) ([A-Z])([1-9])((?: [1-9])*)/;
 
 export function PlayedGame({
-  settings,
   observed,
   gameEntry,
 }: {
-  settings: GameSettings;
   observed: boolean;
   gameEntry: GameListEntry;
 }) {
+  const settings = useMemo(() => {
+    const settings: GameSettings = {
+      boardSize: gameEntry.boardSize,
+      halfKomi: gameEntry.halfKomi,
+      reserve: {
+        pieces: gameEntry.pieces,
+        capstones: gameEntry.capstones,
+      },
+      clock: {
+        contingentMs: gameEntry.timeContingentSeconds * 1000,
+        incrementMs: gameEntry.timeIncrementSeconds * 1000,
+        extra: gameEntry.triggerMove
+          ? {
+              move: gameEntry.triggerMove.move,
+              amountMs: gameEntry.triggerMove.amountSeconds * 1000,
+            }
+          : undefined,
+      },
+    };
+    return settings;
+  }, [gameEntry]);
+
   const gameId = useMemo(() => gameEntry.id.toString(), [gameEntry.id]);
   const { user } = useAuth();
+
+  const ratings = useRatings([gameEntry.white, gameEntry.black]);
 
   const boardMode: BoardMode = useMemo(() => {
     if (observed) return { type: 'spectator' };
@@ -56,24 +78,34 @@ export function PlayedGame({
   const gameData = useGameData();
   const maybeGameOver = gameData.gameInfo[gameId]?.gameOver;
 
+  const { devMode } = useSettings();
+  const showNotifications = useRef(devMode.value);
+  useEffect(() => {
+    showNotifications.current = devMode.value;
+  }, [devMode.value]);
+
   useEffect(() => {
     if (observed && readyState === ReadyState.OPEN) {
       console.log('Subscribing to game:', gameId);
       sendMessage(`Observe ${gameId}`);
-      notifications.show({
-        title: 'Subscribing to game',
-        message: `Subscribing to game: ${gameId}`,
-        position: 'top-right',
-      });
+      if (showNotifications.current) {
+        notifications.show({
+          title: 'Subscribing to game',
+          message: `Subscribing to game: ${gameId}`,
+          position: 'top-right',
+        });
+      }
 
       return () => {
         console.log('Unsubscribing from game:', gameId);
         sendMessage(`Unobserve ${gameId}`, false);
-        notifications.show({
-          title: 'Unsubscribing from game',
-          message: `Unsubscribing from game: ${gameId}`,
-          position: 'top-right',
-        });
+        if (showNotifications.current) {
+          notifications.show({
+            title: 'Unsubscribing from game',
+            message: `Unsubscribing from game: ${gameId}`,
+            position: 'top-right',
+          });
+        }
       };
     }
   }, [observed, readyState, gameId, sendMessage]);
@@ -84,12 +116,12 @@ export function PlayedGame({
   });
 
   const resetGame = useCallback(() => {
-    setGame((draft) => {
-      const settings = current(draft.actualGame.settings);
+    setGame(() => {
       console.log('Resetting game to new game with settings:', settings);
       return ui.newGameUI(newGame(settings));
     });
-  }, [setGame]);
+    setReadMessageIndex(0);
+  }, [settings, setGame]);
 
   useEffect(() => {
     if (maybeGameOver) {
@@ -106,29 +138,31 @@ export function PlayedGame({
   const [readMessageIndex, setReadMessageIndex] = useState(0);
 
   useEffect(() => {
-    setReadMessageIndex(0);
     resetGame();
-    notifications.show({
-      title: 'Game Id Changed',
-      message: `Game ID changed to: ${gameId}`,
-      position: 'top-right',
-    });
-  }, [gameId, setReadMessageIndex, resetGame]);
+    if (showNotifications.current) {
+      notifications.show({
+        title: 'Game Id Changed',
+        message: `Game ID changed to: ${gameId}`,
+        position: 'top-right',
+      });
+    }
+  }, [gameId, resetGame]);
 
   const gameInfo = gameData.gameInfo[gameId];
   const hasGameInfo = !!gameInfo;
 
   useEffect(() => {
     if (!hasGameInfo) {
-      setReadMessageIndex(0);
       resetGame();
-      notifications.show({
-        title: 'Reset game state',
-        message: 'Reset game as game data was removed',
-        position: 'top-right',
-      });
+      if (showNotifications.current) {
+        notifications.show({
+          title: 'Reset game state',
+          message: 'Reset game as game data was removed',
+          position: 'top-right',
+        });
+      }
     }
-  }, [hasGameInfo, setReadMessageIndex, resetGame]);
+  }, [hasGameInfo, resetGame]);
 
   const moveMessages = gameInfo?.moveMessages;
 
@@ -222,11 +256,19 @@ export function PlayedGame({
   );
 
   const playerInfo = {
-    white: { username: gameEntry.white, rating: 1000 },
-    black: { username: gameEntry.black, rating: 1000 },
+    white: {
+      username: gameEntry.white,
+      rating:
+        ratings.data.find((r) => r?.name === gameEntry.white)?.rating ?? 1000,
+    },
+    black: {
+      username: gameEntry.black,
+      rating:
+        ratings.data.find((r) => r?.name === gameEntry.black)?.rating ?? 1000,
+    },
   };
 
-  const timeMessages = gameData.gameInfo[gameId]?.timeMessages;
+  const timeMessages = gameInfo?.timeMessages;
   const lastTimeMessage = timeMessages
     ? timeMessages[timeMessages.length - 1]
     : null;
@@ -243,55 +285,86 @@ export function PlayedGame({
 
   const { boardType } = useSettings();
 
-  const onClickTile = (pos: Coord, variant: PieceVariant) => {
-    if (observed) return;
-    if (
-      boardMode.type !== 'remote' ||
-      game.actualGame.currentPlayer !== boardMode.localPlayer
-    ) {
-      throw new Error('not your turn');
-    }
-    setGame((draft) => {
-      const move = ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
-      //TODO: react strict mode causes duplicated send.
-      if (move) {
-        sendMoveMessage(move);
-      }
-    });
-  };
-
-  const onMakeMove = (move: Move) => {
-    if (observed) return;
-    if (
-      boardMode.type !== 'remote' ||
-      game.actualGame.currentPlayer !== boardMode.localPlayer
-    ) {
-      throw new Error('not your turn');
-    }
-    setGame((draft) => {
-      if (!ui.canDoMove(draft, move)) {
-        console.error('Invalid move:', move);
-        return;
-      }
-      console.log('doing move', move);
-      ui.doMove(draft, move);
-      //TODO: react strict mode causes duplicated send.
-      sendMoveMessage(move);
-    });
-  };
-
-  const drawProps =
-    boardMode.type === 'remote'
+  const drawProps = useMemo(() => {
+    return boardMode.type === 'remote'
       ? {
-          hasDrawOffer: gameData.gameInfo[gameId]?.drawOffer ?? false,
+          hasDrawOffer: gameInfo?.drawOffer ?? false,
           sendDrawOffer: (offer: boolean) => {
             sendMessage(`Game#${gameId} ${offer ? 'Offer' : 'Remove'}Draw`);
           },
         }
       : undefined;
+  }, [boardMode.type, gameInfo, gameId, sendMessage]);
+
+  const gameCallbacks = useMemo(() => {
+    const onClickTile = (pos: Coord, variant: PieceVariant) => {
+      if (observed) return;
+      if (
+        boardMode.type !== 'remote' ||
+        game.actualGame.currentPlayer !== boardMode.localPlayer
+      ) {
+        throw new Error('not your turn');
+      }
+      setGame((draft) => {
+        const move = ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
+        //TODO: react strict mode causes duplicated send.
+        if (move) {
+          sendMoveMessage(move);
+        }
+      });
+    };
+
+    const onMakeMove = (move: Move) => {
+      if (observed) return;
+      if (
+        boardMode.type !== 'remote' ||
+        game.actualGame.currentPlayer !== boardMode.localPlayer ||
+        game.actualGame.gameState.type !== 'ongoing'
+      ) {
+        throw new Error('not your turn');
+      }
+      setGame((draft) => {
+        if (!ui.canDoMove(draft, move)) {
+          console.error('Invalid move:', move);
+          return;
+        }
+        console.log('doing move', move);
+        ui.doMove(draft, move);
+        //TODO: react strict mode causes duplicated send.
+        sendMoveMessage(move);
+      });
+    };
+
+    const onTimeout = () => {
+      setGame((draft) => {
+        ui.checkTimeout(draft);
+      });
+    };
+    return { onTimeout, onClickTile, onMakeMove };
+  }, [
+    setGame,
+    boardMode,
+    game.actualGame.currentPlayer,
+    game.actualGame.gameState.type,
+    observed,
+    sendMoveMessage,
+  ]);
+
+  const currentCallbacks = useRef(gameCallbacks);
+  useEffect(() => {
+    currentCallbacks.current = gameCallbacks;
+  }, [gameCallbacks]);
 
   const BoardComponent =
     boardType === '2d' ? Board2D : boardType === '3d' ? Board3D : BoardNinja;
+
+  const doResign = useMemo(() => {
+    return boardMode.type === 'remote'
+      ? () => {
+          sendMessage(`Game#${gameId} Resign`);
+        }
+      : undefined;
+  }, [gameId, sendMessage, boardMode.type]);
 
   return (
     <div className="w-full grow flex flex-col">
@@ -300,9 +373,9 @@ export function PlayedGame({
         setGame={setGame}
         playerInfo={playerInfo}
         mode={boardMode}
-        onClickTile={onClickTile}
-        onMakeMove={onMakeMove}
+        callbacks={currentCallbacks}
         drawProps={drawProps}
+        doResign={doResign}
       />
       <GameOverDialog game={game} playerInfo={playerInfo} />
     </div>

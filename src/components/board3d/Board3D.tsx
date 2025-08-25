@@ -7,7 +7,7 @@ import {
 } from '@babylonjs/core';
 import { useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { Engine, Scene, Skybox } from 'react-babylonjs';
-import { ui, type PieceVariant } from '../../packages/tak-core';
+import { ui, type Coord, type PieceVariant } from '../../packages/tak-core';
 import { Table, Board, Tile, Piece, VariantButton } from './Objects';
 import type { BoardProps } from '../board';
 import { coordToString } from '../../packages/tak-core/coord';
@@ -21,9 +21,8 @@ export interface EnvConfig {
 
 export const Board3D: FC<BoardProps> = ({
   game,
-  setGame,
   playerInfo,
-  onClickTile,
+  callbacks,
   mode,
 }) => {
   const [variant, setVariant] = useState<PieceVariant>('flat');
@@ -77,11 +76,16 @@ export const Board3D: FC<BoardProps> = ({
     }
   }, []);
 
-  const onTimeout = () => {
-    setGame((draft) => {
-      ui.checkTimeout(draft);
-    });
-  };
+  const onTimeout = useCallback(() => {
+    callbacks.current.onTimeout();
+  }, [callbacks]);
+
+  const onClickTile = useCallback(
+    (pos: Coord) => {
+      callbacks.current.onClickTile(pos, variant);
+    },
+    [callbacks, variant],
+  );
 
   const areTilesInteractive =
     (mode.type === 'remote' &&
@@ -141,9 +145,7 @@ export const Board3D: FC<BoardProps> = ({
               pos={pos}
               cubeTextureRef={cubeTextureRef}
               interactive={areTilesInteractive}
-              onClick={() => {
-                onClickTile(pos, variant);
-              }}
+              onClick={onClickTile}
             />
           ))}
           {pieceIds.map((id) => (

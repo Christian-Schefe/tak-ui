@@ -1,4 +1,4 @@
-import { Modal, Table } from '@mantine/core';
+import { Modal, ScrollArea, Table } from '@mantine/core';
 import { useGameData } from '../gameDataHooks';
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
@@ -63,19 +63,21 @@ export function SpectateDialog({
 
   return (
     <Modal opened={isOpen} onClose={onClose} title="Games" size="lg" centered>
-      <Table highlightOnHover>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>White</Table.Th>
-            <Table.Th>Black</Table.Th>
-            <Table.Th>Size</Table.Th>
-            <Table.Th>Komi</Table.Th>
-            <Table.Th>Time</Table.Th>
-            <Table.Th>Pieces</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
-      </Table>
+      <ScrollArea>
+        <Table highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>White</Table.Th>
+              <Table.Th>Black</Table.Th>
+              <Table.Th>Size</Table.Th>
+              <Table.Th>Komi</Table.Th>
+              <Table.Th>Time</Table.Th>
+              <Table.Th>Pieces</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>{rows}</Table.Tbody>
+        </Table>
+      </ScrollArea>
     </Modal>
   );
 }

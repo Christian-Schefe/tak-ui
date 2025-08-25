@@ -14,7 +14,7 @@ export function Tile({
   pos: Coord;
   game: GameUI;
   interactive: boolean;
-  onClick: () => void;
+  onClick: (pos: Coord) => void;
 }) {
   const {
     themeParams,
@@ -65,7 +65,7 @@ export function Tile({
       className={'relative flex items-center justify-center h-full w-full'}
       onClick={() => {
         if (!interactive) return;
-        onClick();
+        onClick(pos);
       }}
     >
       <div

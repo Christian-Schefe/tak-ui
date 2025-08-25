@@ -7,12 +7,18 @@ export interface BoardProps {
   setGame: Updater<GameUI>;
   playerInfo: Record<Player, PlayerInfo>;
   mode: BoardMode;
-  onClickTile: (pos: Coord, variant: PieceVariant) => void;
-  onMakeMove: (move: Move) => void;
+  callbacks: React.RefObject<GameCallbacks>;
   drawProps?: {
     hasDrawOffer: boolean;
     sendDrawOffer: (offer: boolean) => void;
   };
+  doResign?: () => void;
+}
+
+export interface GameCallbacks {
+  onTimeout: () => void;
+  onClickTile: (pos: Coord, variant: PieceVariant) => void;
+  onMakeMove: (move: Move) => void;
 }
 
 export interface PlayerInfo {

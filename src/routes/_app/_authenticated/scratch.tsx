@@ -13,6 +13,7 @@ import { Board2D } from '../../../components/board2d/Board2D';
 import { Board3D } from '../../../components/board3d/Board3D';
 import { GameOverDialog } from '../../../components/GameOverDialog';
 import { BoardNinja } from '../../../components/boardNinja/BoardNinja';
+import { useMemo, useRef } from 'react';
 
 export const Route = createFileRoute('/_app/_authenticated/scratch')({
   component: RouteComponent,
@@ -34,22 +35,35 @@ function RouteComponent() {
     black: { username: 'Player2', rating: 1600 },
   };
 
-  const onClickTile = (pos: Coord, variant: PieceVariant) => {
-    setGame((draft) => {
-      ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
-    });
-  };
+  const gameCallbacks = useMemo(() => {
+    const onClickTile = (pos: Coord, variant: PieceVariant) => {
+      setGame((draft) => {
+        ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
+      });
+    };
 
-  const onMakeMove = (move: Move) => {
-    setGame((draft) => {
-      if (!ui.canDoMove(draft, move)) {
-        console.error('Invalid move:', move);
-        return;
-      }
-      console.log('doing move', move);
-      ui.doMove(draft, move);
-    });
-  };
+    const onMakeMove = (move: Move) => {
+      setGame((draft) => {
+        if (!ui.canDoMove(draft, move)) {
+          console.error('Invalid move:', move);
+          return;
+        }
+        console.log('doing move', move);
+        ui.doMove(draft, move);
+      });
+    };
+    const onTimeout = () => {
+      setGame((draft) => {
+        ui.checkTimeout(draft);
+      });
+    };
+    return { onTimeout, onClickTile, onMakeMove };
+  }, [setGame]);
+
+  const currentCallbacks = useRef(gameCallbacks);
+  useMemo(() => {
+    currentCallbacks.current = gameCallbacks;
+  }, [gameCallbacks]);
 
   const BoardComponent =
     boardType === '2d' ? Board2D : boardType === '3d' ? Board3D : BoardNinja;
@@ -60,8 +74,7 @@ function RouteComponent() {
         game={game}
         setGame={setGame}
         playerInfo={playerInfo}
-        onClickTile={onClickTile}
-        onMakeMove={onMakeMove}
+        callbacks={currentCallbacks}
         mode={{ type: 'local' }}
       />
       <GameOverDialog game={game} playerInfo={playerInfo} />

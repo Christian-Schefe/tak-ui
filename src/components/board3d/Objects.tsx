@@ -85,7 +85,7 @@ export const Tile: FC<{
   tile: UITile;
   pos: Coord;
   interactive: boolean;
-  onClick: () => void;
+  onClick: (pos: Coord) => void;
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
 }> = ({ tile, pos, onClick, cubeTextureRef, interactive }) => {
   const isEven = (pos.x + pos.y) % 2 === 0;
@@ -138,10 +138,14 @@ export const Tile: FC<{
     }));
   });
 
-  const curOnClick = useRef<() => void>(onClick);
+  const curOnClick = useRef<() => void>(() => {
+    onClick(pos);
+  });
   useEffect(() => {
-    curOnClick.current = onClick;
-  }, [onClick]);
+    curOnClick.current = () => {
+      onClick(pos);
+    };
+  }, [onClick, pos]);
 
   useClick(() => {
     curOnClick.current();

@@ -4,7 +4,7 @@ import { moveToString } from '../../packages/tak-core/move';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useSettings } from '../../settings';
 import { useEffect, useRef } from 'react';
-import { FaHandshake, FaHandshakeSlash } from 'react-icons/fa';
+import { FaFlag, FaHandshake, FaHandshakeSlash } from 'react-icons/fa';
 import { useUpdate } from 'react-use';
 
 export function History({
@@ -12,11 +12,13 @@ export function History({
   hasDrawOffer,
   onClick,
   sendDrawOffer,
+  doResign,
 }: {
   game: GameUI;
   hasDrawOffer?: boolean;
   onClick: (plyIndex: number) => void;
   sendDrawOffer?: (offer: boolean) => void;
+  doResign?: () => void;
 }) {
   const { themeParams } = useSettings();
 
@@ -112,22 +114,38 @@ export function History({
       className="flex flex-col rounded-md p-2 m-2 justify-center lg:ml-4 lg:w-72 lg:h-128"
       style={{ color: themeParams.text, backgroundColor: themeParams.board1 }}
     >
-      {sendDrawOffer &&
-        (!hasOfferedDraw.current || hasDrawOffer ? (
-          <FaHandshake
-            className={`m-2 ${hasDrawOffer ? 'hover:outline-3 outline-2' : 'hover:outline-2'} rounded-md p-1 cursor-pointer`}
-            size={32}
-            style={{
-              color: themeParams.text,
-              outlineColor: themeParams.text,
-              backgroundColor: hasDrawOffer ? themeParams.highlight : undefined,
-            }}
-            onClick={() => {
-              setHasOfferedDraw(true);
-            }}
-          />
-        ) : (
-          <FaHandshakeSlash
+      <div className="flex gap-2">
+        {sendDrawOffer &&
+          (!hasOfferedDraw.current || hasDrawOffer ? (
+            <FaHandshake
+              className={`m-2 ${hasDrawOffer ? 'hover:outline-3 outline-2' : 'hover:outline-2'} rounded-md p-1 cursor-pointer`}
+              size={32}
+              style={{
+                color: themeParams.text,
+                outlineColor: themeParams.text,
+                backgroundColor: hasDrawOffer
+                  ? themeParams.highlight
+                  : undefined,
+              }}
+              onClick={() => {
+                setHasOfferedDraw(true);
+              }}
+            />
+          ) : (
+            <FaHandshakeSlash
+              className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
+              size={32}
+              style={{
+                color: themeParams.text,
+                outlineColor: themeParams.text,
+              }}
+              onClick={() => {
+                setHasOfferedDraw(false);
+              }}
+            />
+          ))}
+        {doResign && (
+          <FaFlag
             className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
             size={32}
             style={{
@@ -135,10 +153,11 @@ export function History({
               outlineColor: themeParams.text,
             }}
             onClick={() => {
-              setHasOfferedDraw(false);
+              doResign();
             }}
           />
-        ))}
+        )}
+      </div>
       <ScrollArea
         viewportRef={viewport}
         className="grow"
