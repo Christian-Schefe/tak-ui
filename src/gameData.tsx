@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type TextMessage } from './auth';
 import type { GameState, Player } from './packages/tak-core';
-import { useWSListener } from './authHooks';
+import { useAuth, useWSListener } from './authHooks';
 import { GameDataContext } from './gameDataHooks';
 import { notifications } from '@mantine/notifications';
 import { useInterval } from 'react-use';
@@ -10,7 +10,24 @@ export interface GameDataState {
   seeks: SeekEntry[];
   games: GameListEntry[];
   gameInfo: Record<string, GameInfoEntry | undefined>;
-  removeGameInfo: (id: string) => void;
+  chats: ChatData;
+  actions: React.RefObject<GameDataActions>;
+}
+
+export interface GameDataActions {
+  leaveRoom: (roomId: string) => void;
+}
+
+export interface ChatData {
+  private: Record<string, ChatEntry[] | undefined>;
+  room: Record<string, ChatEntry[] | undefined>;
+  global: ChatEntry[];
+}
+
+export interface ChatEntry {
+  sender: string;
+  message: string;
+  timestamp: Date;
 }
 
 export interface SeekEntry {
@@ -217,89 +234,155 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
 
   const [seeks, setSeeks] = useState<SeekEntry[]>([]);
   const [games, setGames] = useState<GameListEntry[]>([]);
+  const [chats, setChats] = useState<ChatData>({
+    private: {},
+    room: {},
+    global: [],
+  });
 
-  const onMsg = useCallback((msg: TextMessage) => {
-    const text = msg.text;
-    console.log('Called with message:', text);
-    if (text.startsWith('Seek new')) {
-      const newSeek = parseAddSeekMessage(text);
-      if (newSeek) {
-        setSeeks((prev) =>
-          prev.find((s) => s.id === newSeek.id) ? prev : [...prev, newSeek],
-        );
-      } else {
-        console.error('Failed to add seek:', text);
-      }
-    } else if (text.startsWith('Seek remove')) {
-      const removedSeek = parseRemoveSeekMessage(text);
-      if (removedSeek) {
-        setSeeks((prev) => prev.filter((s) => s.id !== removedSeek));
-      } else {
-        console.error('Failed to remove seek:', text);
-      }
-    } else if (text.startsWith('GameList Add')) {
-      const newGame = parseGameAddMessage(text);
-      if (newGame) {
-        setGames((prev) =>
-          prev.find((g) => g.id === newGame.id) ? prev : [...prev, newGame],
-        );
-      } else {
-        console.error('Failed to add game:', text);
-      }
-    } else if (text.startsWith('GameList Remove')) {
-      const removedGame = parseRemoveGameMessage(text);
-      if (removedGame) {
-        setGames((prev) => prev.filter((g) => g.id !== removedGame));
-      } else {
-        console.error('Failed to remove game:', text);
-      }
-    } else if (text.startsWith('Game#')) {
-      const id = parseGameUpdateMessage(text);
-      if (id) {
-        const timeMessage = parseGameTimeMessage(text);
-        const drawOffer = parseGameDrawMessage(text);
-        const gameOver = parseGameOverPattern(text);
-        setGameInfo((prev) => ({
+  const { user } = useAuth();
+
+  const onMsg = useCallback(
+    (msg: TextMessage) => {
+      const text = msg.text;
+      console.log('Called with message:', text);
+      if (text.startsWith('Seek new')) {
+        const newSeek = parseAddSeekMessage(text);
+        if (newSeek) {
+          setSeeks((prev) =>
+            prev.find((s) => s.id === newSeek.id) ? prev : [...prev, newSeek],
+          );
+        } else {
+          console.error('Failed to add seek:', text);
+        }
+      } else if (text.startsWith('Seek remove')) {
+        const removedSeek = parseRemoveSeekMessage(text);
+        if (removedSeek) {
+          setSeeks((prev) => prev.filter((s) => s.id !== removedSeek));
+        } else {
+          console.error('Failed to remove seek:', text);
+        }
+      } else if (text.startsWith('GameList Add')) {
+        const newGame = parseGameAddMessage(text);
+        if (newGame) {
+          setGames((prev) =>
+            prev.find((g) => g.id === newGame.id) ? prev : [...prev, newGame],
+          );
+        } else {
+          console.error('Failed to add game:', text);
+        }
+      } else if (text.startsWith('GameList Remove')) {
+        const removedGame = parseRemoveGameMessage(text);
+        if (removedGame) {
+          setGames((prev) => prev.filter((g) => g.id !== removedGame));
+        } else {
+          console.error('Failed to remove game:', text);
+        }
+      } else if (text.startsWith('Game#')) {
+        const id = parseGameUpdateMessage(text);
+        if (id) {
+          const timeMessage = parseGameTimeMessage(text);
+          const drawOffer = parseGameDrawMessage(text);
+          const gameOver = parseGameOverPattern(text);
+          setGameInfo((prev) => ({
+            ...prev,
+            [id]: prev[id]
+              ? {
+                  messages: [...prev[id].messages, text],
+                  moveMessages: [
+                    ...prev[id].moveMessages,
+                    ...(isGameMoveMessage(text) ? [text] : []),
+                  ],
+                  timeMessages: [
+                    ...prev[id].timeMessages,
+                    ...(timeMessage ? [timeMessage] : []),
+                  ],
+                  drawOffer: drawOffer ?? prev[id].drawOffer,
+                  gameOver: gameOver ?? prev[id].gameOver,
+                }
+              : {
+                  messages: [text],
+                  moveMessages: isGameMoveMessage(text) ? [text] : [],
+                  timeMessages: timeMessage ? [timeMessage] : [],
+                  drawOffer: drawOffer ?? false,
+                  gameOver: gameOver ?? null,
+                },
+          }));
+        } else {
+          console.error('Failed to update game:', text);
+        }
+      } else if (text.startsWith('Observe')) {
+        const id = parseObserveMessage(text);
+        if (id) {
+          console.log('Received observe message for game:', id);
+          setGameInfo((prev) => {
+            const newGameInfo = { ...prev };
+            const { [id]: _, ...rest } = newGameInfo;
+            return rest;
+          });
+        } else {
+          console.error('Failed to parse observe game message:', text);
+        }
+      } else if (text.startsWith('Tell')) {
+        const matches = /^Tell <(.*)> (.+)/.exec(text);
+        if (matches) {
+          const sender = matches[1];
+          const message = matches[2];
+          setChats((prev) => ({
+            ...prev,
+            private: {
+              ...prev.private,
+              [sender]: [
+                ...(prev.private[sender] ?? []),
+                {
+                  message,
+                  sender,
+                  timestamp: new Date(),
+                },
+              ],
+            },
+          }));
+          console.log('Received tell message from', sender, ':', message);
+        } else {
+          console.error('Failed to parse tell message:', text);
+        }
+      } else if (text.startsWith('Told')) {
+        const matches = /^Told <(.*)> (.+)/.exec(text);
+        if (matches) {
+          const receiver = matches[1];
+          const message = matches[2];
+          const sender = user?.username ?? 'You';
+          setChats((prev) => ({
+            ...prev,
+            private: {
+              ...prev.private,
+              [receiver]: [
+                ...(prev.private[receiver] ?? []),
+                {
+                  message,
+                  sender,
+                  timestamp: new Date(),
+                },
+              ],
+            },
+          }));
+          console.log('Received told message from', sender, ':', message);
+        } else {
+          console.error('Failed to parse told message:', text);
+        }
+      } else if (text.startsWith('Joined room')) {
+        const roomId = text.replace('Joined room ', '');
+        setChats((prev) => ({
           ...prev,
-          [id]: prev[id]
-            ? {
-                messages: [...prev[id].messages, text],
-                moveMessages: [
-                  ...prev[id].moveMessages,
-                  ...(isGameMoveMessage(text) ? [text] : []),
-                ],
-                timeMessages: [
-                  ...prev[id].timeMessages,
-                  ...(timeMessage ? [timeMessage] : []),
-                ],
-                drawOffer: drawOffer ?? prev[id].drawOffer,
-                gameOver: gameOver ?? prev[id].gameOver,
-              }
-            : {
-                messages: [text],
-                moveMessages: isGameMoveMessage(text) ? [text] : [],
-                timeMessages: timeMessage ? [timeMessage] : [],
-                drawOffer: drawOffer ?? false,
-                gameOver: gameOver ?? null,
-              },
+          room: {
+            ...prev.room,
+            [roomId]: [...(prev.room[roomId] ?? [])],
+          },
         }));
-      } else {
-        console.error('Failed to update game:', text);
       }
-    } else if (text.startsWith('Observe')) {
-      const id = parseObserveMessage(text);
-      if (id) {
-        console.log('Received observe message for game:', id);
-        setGameInfo((prev) => {
-          const newGameInfo = { ...prev };
-          const { [id]: _, ...rest } = newGameInfo;
-          return rest;
-        });
-      } else {
-        console.error('Failed to parse observe game message:', text);
-      }
-    }
-  }, []);
+    },
+    [user],
+  );
 
   const onOpen = useCallback(() => {
     console.warn('Removing data');
@@ -331,17 +414,26 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     sendMessage('PING');
   }, 10000);
 
-  const removeGameInfo = useCallback((id: string) => {
-    setGameInfo((prev) => {
-      const newGameInfo = { ...prev };
-      const { [id]: _, ...rest } = newGameInfo;
-      return rest;
-    });
+  const leaveRoom = useCallback((roomId: string) => {
+    setChats((prev) => ({
+      ...prev,
+      room: { ...prev.room, [roomId]: undefined },
+    }));
   }, []);
 
+  const actions = useRef<GameDataActions>({
+    leaveRoom,
+  });
+
+  useEffect(() => {
+    actions.current = {
+      leaveRoom,
+    };
+  }, [leaveRoom]);
+
   const gameDataMemo = useMemo<GameDataState>(() => {
-    return { seeks, games, gameInfo, removeGameInfo };
-  }, [seeks, games, gameInfo, removeGameInfo]);
+    return { seeks, games, gameInfo, chats, actions };
+  }, [seeks, games, gameInfo, chats]);
 
   return <GameDataContext value={gameDataMemo}>{children}</GameDataContext>;
 }

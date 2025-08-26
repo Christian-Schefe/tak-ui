@@ -11,6 +11,7 @@ import {
 import { FaArrowRight, FaDiscord, FaGraduationCap } from 'react-icons/fa';
 import bgImage from '../assets/parallax.jpg';
 import headerImage from '../assets/board-top.svg';
+import { useAuth } from '../authHooks';
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -22,6 +23,8 @@ function RouteComponent() {
     head: ['Event', 'Dates', 'Details'],
     body: [['Test Event 1', '2023-10-01', 'Details | Standings']],
   };
+  const auth = useAuth();
+
   return (
     <div className="w-full min-h-screen bg-white flex flex-col">
       <Flex direction="column" align="center" style={{ flexGrow: 1 }}>
@@ -47,12 +50,26 @@ function RouteComponent() {
             <Image src="/tak.svg" w="70px" h="70px" />
           </div>
           <Stack maw="250px" w="100%" p="md">
-            <Button
-              variant="outline"
-              onClick={() => void navigate({ to: '/scratch' })}
-            >
-              Play
-            </Button>
+            {auth.isAuthenticated ? (
+              <Button
+                variant="outline"
+                onClick={() => void navigate({ to: '/scratch' })}
+              >
+                Play
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() =>
+                  void navigate({
+                    to: '/login',
+                    search: { redirect: '/scratch' },
+                  })
+                }
+              >
+                Login
+              </Button>
+            )}
             <Button onClick={() => void navigate({ to: '/scratch' })}>
               <Group gap={'xs'}>
                 <FaDiscord size={20} />

@@ -2,6 +2,7 @@ import {
   playerOpposite,
   type Game,
   type GameSettings,
+  type GameState,
   type Move,
   type MoveRecord,
   type Player,
@@ -245,5 +246,23 @@ export function doMove(game: Game, move: Move, now?: Date) {
         reason: 'flats',
       };
     }
+  }
+}
+
+export function gameResultToString(gameResult: GameState) {
+  switch (gameResult.type) {
+    case 'win': {
+      const letter =
+        gameResult.reason === 'flats'
+          ? 'F'
+          : gameResult.reason === 'road'
+            ? 'R'
+            : '1';
+      return gameResult.player === 'white' ? `${letter}-0` : `0-${letter}`;
+    }
+    case 'draw':
+      return '1/2-1/2';
+    case 'ongoing':
+      return null;
   }
 }

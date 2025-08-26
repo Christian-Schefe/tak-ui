@@ -64,6 +64,19 @@ export function PlayedGame({
 
   const ratings = useRatings([gameEntry.white, gameEntry.black]);
 
+  const playerInfo = {
+    white: {
+      username: gameEntry.white,
+      rating:
+        ratings.data.find((r) => r?.name === gameEntry.white)?.rating ?? 1000,
+    },
+    black: {
+      username: gameEntry.black,
+      rating:
+        ratings.data.find((r) => r?.name === gameEntry.black)?.rating ?? 1000,
+    },
+  };
+
   const boardMode: BoardMode = useMemo(() => {
     if (observed) return { type: 'spectator' };
     if (user?.username === gameEntry.white)
@@ -88,6 +101,8 @@ export function PlayedGame({
     if (observed && readyState === ReadyState.OPEN) {
       console.log('Subscribing to game:', gameId);
       sendMessage(`Observe ${gameId}`);
+      const roomId = [gameEntry.white, gameEntry.black].sort().join('-');
+      sendMessage(`JoinRoom ${roomId}`);
       if (showNotifications.current) {
         notifications.show({
           title: 'Subscribing to game',
@@ -99,6 +114,8 @@ export function PlayedGame({
       return () => {
         console.log('Unsubscribing from game:', gameId);
         sendMessage(`Unobserve ${gameId}`, false);
+        sendMessage(`LeaveRoom ${roomId}`, false);
+        gameData.actions.current.leaveRoom(roomId);
         if (showNotifications.current) {
           notifications.show({
             title: 'Unsubscribing from game',
@@ -108,7 +125,15 @@ export function PlayedGame({
         }
       };
     }
-  }, [observed, readyState, gameId, sendMessage]);
+  }, [
+    observed,
+    gameEntry.white,
+    gameEntry.black,
+    readyState,
+    gameId,
+    sendMessage,
+    gameData.actions,
+  ]);
 
   const [game, setGame] = useImmer<ui.GameUI>(() => {
     console.log('Creating new game with settings:', settings);
@@ -254,19 +279,6 @@ export function PlayedGame({
     },
     [gameId, sendMessage],
   );
-
-  const playerInfo = {
-    white: {
-      username: gameEntry.white,
-      rating:
-        ratings.data.find((r) => r?.name === gameEntry.white)?.rating ?? 1000,
-    },
-    black: {
-      username: gameEntry.black,
-      rating:
-        ratings.data.find((r) => r?.name === gameEntry.black)?.rating ?? 1000,
-    },
-  };
 
   const timeMessages = gameInfo?.timeMessages;
   const lastTimeMessage = timeMessages

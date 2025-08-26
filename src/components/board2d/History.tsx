@@ -6,6 +6,7 @@ import { useSettings } from '../../settings';
 import { useEffect, useRef } from 'react';
 import { FaFlag, FaHandshake, FaHandshakeSlash } from 'react-icons/fa';
 import { useUpdate } from 'react-use';
+import { gameResultToString } from '../../packages/tak-core/game';
 
 export function History({
   game,
@@ -93,6 +94,17 @@ export function History({
       {blackMove ? makeHistoryItem(index * 2 + 2, 'black', blackMove) : null}
     </div>
   ));
+
+  if (game.actualGame.gameState.type !== 'ongoing') {
+    rows.push(
+      <div key={'move-end'} className="flex gap-2 p-1 font-mono">
+        <div className="w-8" />
+        <div className="min-w-12 font-bold">
+          {gameResultToString(game.actualGame.gameState)}
+        </div>
+      </div>,
+    );
+  }
 
   const viewport = useRef<HTMLDivElement>(null);
 

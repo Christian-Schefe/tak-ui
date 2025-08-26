@@ -4,16 +4,9 @@ import { moveFromString, moveToString } from '../../packages/tak-core/move';
 import { useSettings } from '../../settings';
 import { useEvent, useUpdate } from 'react-use';
 import z from 'zod';
-import { PlayerInfoBar } from './PlayerInfoBar';
-import { Button } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import {
-  FaArrowLeft,
-  FaArrowRight,
-  FaFlag,
-  FaHandshake,
-  FaHandshakeSlash,
-} from 'react-icons/fa';
+import { GameInfoDrawer } from '../classic/GameInfoDrawer';
+import { ui } from '../../packages/tak-core';
+import { ChatDrawer } from '../classic/ChatDrawer';
 
 const NinjaMessageSchema = z.object({
   action: z.string(),
@@ -29,6 +22,7 @@ export function BoardNinja({
   playerInfo,
   doResign,
   drawProps,
+  setGame,
 }: BoardProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
@@ -129,76 +123,67 @@ export function BoardNinja({
     }
   }, [hasLoaded, plyIndex, gameSettings, game, sendMessageToIframe]);
 
+  useEffect(() => {
+    if (!hasLoaded) return;
+    if (game.plyIndex === null) {
+      sendMessageToIframe({
+        action: 'LAST',
+        value: null,
+      });
+      if (mode.type !== 'spectator') {
+        sendMessageToIframe({
+          action: 'SET_UI',
+          value: {
+            disableBoard: false,
+          },
+        });
+      }
+    } else {
+      if (game.plyIndex === 0) {
+        sendMessageToIframe({
+          action: 'FIRST',
+          value: null,
+        });
+      } else {
+        sendMessageToIframe({
+          action: 'GO_TO_PLY',
+          value: {
+            plyID: game.plyIndex - 1,
+            isDone: true,
+          },
+        });
+      }
+      if (mode.type !== 'spectator') {
+        sendMessageToIframe({
+          action: 'SET_UI',
+          value: {
+            disableBoard: true,
+          },
+        });
+      }
+    }
+  }, [hasLoaded, mode.type, game.plyIndex, sendMessageToIframe]);
+
   const onTimeout = useCallback(() => {
     callbacks.current.onTimeout();
   }, [callbacks]);
 
-  const [isSideOpen, { toggle: toggleSide }] = useDisclosure(true);
-
-  const hasOfferedDraw = useRef(false);
-
-  const setHasOfferedDraw = (value: boolean) => {
-    hasOfferedDraw.current = value;
-    drawProps?.sendDrawOffer(value);
-    update();
-    console.log('Set draw offer to', value);
-  };
-
   return (
     <div className="w-full grow flex">
-      {isSideOpen && (
-        <div className="w-64">
-          <PlayerInfoBar
-            game={game}
-            player="white"
-            rating={playerInfo.white.rating}
-            username={playerInfo.white.username}
-            onTimeout={onTimeout}
-          />
-          <PlayerInfoBar
-            game={game}
-            player="black"
-            rating={playerInfo.black.rating}
-            username={playerInfo.black.username}
-            onTimeout={onTimeout}
-          />
-          <div className="flex justify-center">
-            {drawProps?.sendDrawOffer &&
-              (!hasOfferedDraw.current || drawProps.hasDrawOffer ? (
-                <FaHandshake
-                  className={`m-2 ${drawProps.hasDrawOffer ? 'hover:outline-3 outline-2' : 'hover:outline-2'} rounded-md p-1 cursor-pointer`}
-                  size={32}
-                  onClick={() => {
-                    setHasOfferedDraw(true);
-                  }}
-                />
-              ) : (
-                <FaHandshakeSlash
-                  className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
-                  size={32}
-                  onClick={() => {
-                    setHasOfferedDraw(false);
-                  }}
-                />
-              ))}
-            {doResign && (
-              <FaFlag
-                className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
-                size={32}
-                onClick={() => {
-                  doResign();
-                }}
-              />
-            )}
-          </div>
-        </div>
-      )}
-      <div className="grow flex flex-col relative">
-        <div className="absolute top-10 left-0 z-100">
-          <Button onClick={toggleSide} w="25px" h="40px" p="2px">
-            {isSideOpen ? <FaArrowLeft /> : <FaArrowRight />}
-          </Button>
-        </div>
+      <GameInfoDrawer
+        game={game}
+        onTimeout={onTimeout}
+        playerInfo={playerInfo}
+        doResign={doResign}
+        hasDrawOffer={drawProps?.hasDrawOffer}
+        sendDrawOffer={drawProps?.sendDrawOffer}
+        goToPly={(index) => {
+          setGame((draft) => {
+            ui.setPlyIndex(draft, index);
+          });
+        }}
+      />
+      <div className="grow flex flex-col">
         <iframe
           ref={setRef}
           className="w-full grow"
@@ -206,6 +191,7 @@ export function BoardNinja({
           title="Board Ninja"
         />
       </div>
+      <ChatDrawer />
     </div>
   );
 }
