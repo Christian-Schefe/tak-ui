@@ -3,44 +3,61 @@ import type { GameUI } from '../../packages/tak-core/ui';
 import { PlayerInfoBar } from './PlayerInfoBar';
 import type { PlayerInfo } from '../board';
 import type { Player } from '../../packages/tak-core';
-import { useRef } from 'react';
-import { useUpdate } from 'react-use';
 import {
   FaArrowLeft,
   FaArrowRight,
   FaFlag,
   FaHandshake,
-  FaHandshakeSlash,
+  FaUndo,
 } from 'react-icons/fa';
-import { Button, Transition } from '@mantine/core';
+import { Button, Transition, useMantineTheme } from '@mantine/core';
 import { History } from './History';
+import { useGameOffer } from './remoteActions';
 
 export function GameInfoDrawer({
+  gameId,
   game,
   playerInfo,
   onTimeout,
   sendDrawOffer,
   hasDrawOffer,
+  hasUndoOffer,
+  sendUndoOffer,
   doResign,
   goToPly,
 }: {
+  gameId?: string;
   game: GameUI;
   playerInfo: Record<Player, PlayerInfo>;
   onTimeout: () => void;
   sendDrawOffer?: (offer: boolean) => void;
   hasDrawOffer?: boolean;
+  sendUndoOffer?: (offer: boolean) => void;
+  hasUndoOffer?: boolean;
   doResign?: () => void;
   goToPly: (plyIndex: number) => void;
 }) {
   const [isSideOpen, { toggle: toggleSide }] = useDisclosure(true);
-  const update = useUpdate();
-  const hasOfferedDraw = useRef(false);
+
+  const gameOffers = useGameOffer();
 
   const setHasOfferedDraw = (value: boolean) => {
-    hasOfferedDraw.current = value;
+    gameOffers.setHasOfferedDraw(gameId ?? '', value);
     sendDrawOffer?.(value);
-    update();
   };
+
+  const setHasOfferedUndo = (value: boolean) => {
+    gameOffers.setHasOfferedUndo(gameId ?? '', value);
+    sendUndoOffer?.(value);
+  };
+
+  const hasOfferedDraw = !!gameOffers.hasOfferedDraw[gameId ?? ''];
+  const hasOfferedUndo = !!gameOffers.hasOfferedUndo[gameId ?? ''];
+
+  const theme = useMantineTheme();
+
+  const sentColor = theme.colors.red[6];
+  const receivedColor = theme.colors.blue[6];
 
   return (
     <div
@@ -73,24 +90,38 @@ export function GameInfoDrawer({
               onTimeout={onTimeout}
             />
             <div className="flex justify-center">
-              {sendDrawOffer &&
-                (!hasOfferedDraw.current || hasDrawOffer ? (
-                  <FaHandshake
-                    className={`m-2 ${hasDrawOffer ? 'hover:outline-3 outline-2' : 'hover:outline-2'} rounded-md p-1 cursor-pointer`}
-                    size={32}
-                    onClick={() => {
-                      setHasOfferedDraw(true);
-                    }}
-                  />
-                ) : (
-                  <FaHandshakeSlash
-                    className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
-                    size={32}
-                    onClick={() => {
-                      setHasOfferedDraw(false);
-                    }}
-                  />
-                ))}
+              {sendDrawOffer && (
+                <FaUndo
+                  className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
+                  style={{
+                    color: hasUndoOffer
+                      ? receivedColor
+                      : hasOfferedUndo
+                        ? sentColor
+                        : undefined,
+                  }}
+                  size={32}
+                  onClick={() => {
+                    setHasOfferedUndo(!hasOfferedUndo);
+                  }}
+                />
+              )}
+              {sendDrawOffer && (
+                <FaHandshake
+                  className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
+                  style={{
+                    color: hasDrawOffer
+                      ? receivedColor
+                      : hasOfferedDraw
+                        ? sentColor
+                        : undefined,
+                  }}
+                  size={32}
+                  onClick={() => {
+                    setHasOfferedDraw(!hasOfferedDraw);
+                  }}
+                />
+              )}
               {doResign && (
                 <FaFlag
                   className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"

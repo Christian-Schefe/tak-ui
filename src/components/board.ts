@@ -12,6 +12,10 @@ export interface BoardProps {
     hasDrawOffer: boolean;
     sendDrawOffer: (offer: boolean) => void;
   };
+  undoProps?: {
+    hasUndoOffer: boolean;
+    sendUndoOffer: (offer: boolean) => void;
+  };
   doResign?: () => void;
 }
 
@@ -28,5 +32,5 @@ export interface PlayerInfo {
 
 export type BoardMode =
   | { type: 'local' }
-  | { type: 'remote'; localPlayer: Player }
-  | { type: 'spectator' };
+  | { type: 'remote'; localPlayer: Player; gameId: string }
+  | { type: 'spectator'; gameId: string };

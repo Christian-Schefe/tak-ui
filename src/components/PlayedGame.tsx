@@ -28,7 +28,35 @@ import { BoardNinja } from './boardNinja/BoardNinja';
 import { useRatings } from '../api/ratings';
 
 const placeRegex = /Game#\d+ P ([A-Z])([1-9])(?: ([CW]))?/;
+const parsePlaceMove = (placeMatch: RegExpMatchArray): Move => {
+  const [, col, row] = placeMatch;
+  const variant = placeMatch[3] ? (placeMatch[3] === 'C' ? 'C' : 'S') : '';
+  return moveFromString(`${variant}${col.toLowerCase()}${row}`);
+};
+
 const moveRegex = /Game#\d+ M ([A-Z])([1-9]) ([A-Z])([1-9])((?: [1-9])*)/;
+const parseMoveMove = (moveMatch: RegExpMatchArray): Move => {
+  const [, fromCol, fromRow, toCol, toRow, drops] = moveMatch;
+  const dropNums = drops
+    .split(' ')
+    .filter((n) => n !== '')
+    .map((d) => d.charCodeAt(0) - '0'.charCodeAt(0));
+  const fromX = fromCol.charCodeAt(0) - 'A'.charCodeAt(0);
+  const fromY = fromRow.charCodeAt(0) - '1'.charCodeAt(0);
+  const toX = toCol.charCodeAt(0) - 'A'.charCodeAt(0);
+  const toY = toRow.charCodeAt(0) - '1'.charCodeAt(0);
+  const dir = dirFromAligned({ x: toX, y: toY }, { x: fromX, y: fromY });
+  if (!dir) {
+    console.error('invalid move received: from', { fromX, fromY }, 'to', {
+      toX,
+      toY,
+    });
+    throw new Error('invalid move received');
+  }
+  return moveFromString(
+    `${dropNums.reduce((acc, n) => acc + n, 0).toString()}${fromCol.toLowerCase()}${fromRow}${dirToString(dir)}${dropNums.join('')}`,
+  );
+};
 
 export function PlayedGame({
   observed,
@@ -78,13 +106,13 @@ export function PlayedGame({
   };
 
   const boardMode: BoardMode = useMemo(() => {
-    if (observed) return { type: 'spectator' };
+    if (observed) return { type: 'spectator', gameId };
     if (user?.username === gameEntry.white)
-      return { type: 'remote', localPlayer: 'white' };
+      return { type: 'remote', localPlayer: 'white', gameId };
     if (user?.username === gameEntry.black)
-      return { type: 'remote', localPlayer: 'black' };
-    return { type: 'spectator' };
-  }, [observed, user?.username, gameEntry.white, gameEntry.black]);
+      return { type: 'remote', localPlayer: 'black', gameId };
+    return { type: 'spectator', gameId };
+  }, [observed, user?.username, gameEntry.white, gameEntry.black, gameId]);
 
   const { sendMessage, readyState } = useWSAPI();
 
@@ -115,7 +143,6 @@ export function PlayedGame({
         console.log('Unsubscribing from game:', gameId);
         sendMessage(`Unobserve ${gameId}`, false);
         sendMessage(`LeaveRoom ${roomId}`, false);
-        gameData.actions.current.leaveRoom(roomId);
         if (showNotifications.current) {
           notifications.show({
             title: 'Unsubscribing from game',
@@ -132,7 +159,6 @@ export function PlayedGame({
     readyState,
     gameId,
     sendMessage,
-    gameData.actions,
   ]);
 
   const [game, setGame] = useImmer<ui.GameUI>(() => {
@@ -197,7 +223,7 @@ export function PlayedGame({
 
     console.log(moveMessages.length, readMessageIndex, toRead);
 
-    const moves: Move[] = [];
+    const moves: (Move | 'undo')[] = [];
 
     for (let i = 0; i < toRead; i++) {
       const message = moveMessages[readMessageIndex + i];
@@ -207,36 +233,11 @@ export function PlayedGame({
       const moveMatch = moveRegex.exec(message);
 
       if (placeMatch) {
-        const [, col, row] = placeMatch;
-        const variant = placeMatch[3]
-          ? placeMatch[3] === 'C'
-            ? 'C'
-            : 'S'
-          : '';
-        moves.push(moveFromString(`${variant}${col.toLowerCase()}${row}`));
+        moves.push(parsePlaceMove(placeMatch));
       } else if (moveMatch) {
-        const [, fromCol, fromRow, toCol, toRow, drops] = moveMatch;
-        const dropNums = drops
-          .split(' ')
-          .filter((n) => n !== '')
-          .map((d) => d.charCodeAt(0) - '0'.charCodeAt(0));
-        const fromX = fromCol.charCodeAt(0) - 'A'.charCodeAt(0);
-        const fromY = fromRow.charCodeAt(0) - '1'.charCodeAt(0);
-        const toX = toCol.charCodeAt(0) - 'A'.charCodeAt(0);
-        const toY = toRow.charCodeAt(0) - '1'.charCodeAt(0);
-        const dir = dirFromAligned({ x: toX, y: toY }, { x: fromX, y: fromY });
-        if (!dir) {
-          console.error('invalid move received: from', { fromX, fromY }, 'to', {
-            toX,
-            toY,
-          });
-        } else {
-          moves.push(
-            moveFromString(
-              `${dropNums.reduce((acc, n) => acc + n, 0).toString()}${fromCol.toLowerCase()}${fromRow}${dirToString(dir)}${dropNums.join('')}`,
-            ),
-          );
-        }
+        moves.push(parseMoveMove(moveMatch));
+      } else if (message === 'undo') {
+        moves.push('undo');
       } else {
         console.error('Failed to parse move message:', message);
       }
@@ -245,7 +246,11 @@ export function PlayedGame({
     setGame((draft) => {
       try {
         for (const move of moves) {
-          ui.doMove(draft, move);
+          if (move !== 'undo') {
+            ui.doMove(draft, move);
+          } else {
+            ui.undoMove(draft);
+          }
         }
       } catch (err) {
         console.error('desync: ', err);
@@ -303,6 +308,17 @@ export function PlayedGame({
           hasDrawOffer: gameInfo?.drawOffer ?? false,
           sendDrawOffer: (offer: boolean) => {
             sendMessage(`Game#${gameId} ${offer ? 'Offer' : 'Remove'}Draw`);
+          },
+        }
+      : undefined;
+  }, [boardMode.type, gameInfo, gameId, sendMessage]);
+
+  const undoProps = useMemo(() => {
+    return boardMode.type === 'remote'
+      ? {
+          hasUndoOffer: gameInfo?.undoOffer ?? false,
+          sendUndoOffer: (offer: boolean) => {
+            sendMessage(`Game#${gameId} ${offer ? 'Request' : 'Remove'}Undo`);
           },
         }
       : undefined;
@@ -387,9 +403,10 @@ export function PlayedGame({
         mode={boardMode}
         callbacks={currentCallbacks}
         drawProps={drawProps}
+        undoProps={undoProps}
         doResign={doResign}
       />
-      <GameOverDialog game={game} playerInfo={playerInfo} />
+      <GameOverDialog game={game} playerInfo={playerInfo} gameId={gameId} />
     </div>
   );
 }

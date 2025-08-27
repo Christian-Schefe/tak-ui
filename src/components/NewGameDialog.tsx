@@ -2,11 +2,10 @@ import {
   Button,
   Flex,
   Grid,
-  Input,
-  InputWrapper,
   Modal,
   Select,
   Stack,
+  TextInput,
 } from '@mantine/core';
 import { useWSAPI } from '../authHooks';
 import { useState } from 'react';
@@ -68,174 +67,167 @@ export function NewGameDialog({
   };
 
   return (
-    <Modal opened={isOpen} onClose={onClose} title="Seeks" size="lg" centered>
+    <Modal
+      opened={isOpen}
+      onClose={onClose}
+      title="New Game"
+      size="lg"
+      centered
+    >
       <Grid>
         <Grid.Col span={6}>
           <Stack>
-            <InputWrapper label="Opponent">
-              <Input
-                placeholder="Anyone"
-                value={opponent}
-                onChange={(e) => {
-                  setOpponent(e.target.value);
-                }}
-              />
-            </InputWrapper>
-            <InputWrapper label="My Color">
-              <Select
-                data={colorData}
-                value={color}
-                onChange={(v) => {
-                  if (!v) return;
-                  setColor(v as 'W' | 'B' | 'A');
-                }}
-              />
-            </InputWrapper>
-            <InputWrapper label="Board Size">
-              <Select
-                data={boardSizeData}
-                value={boardSize.toString()}
-                onChange={(v) => {
-                  if (!v) return;
-                  setBoardSize(parseInt(v));
-                }}
-              />
-            </InputWrapper>
-            <InputWrapper label="Time (minutes per player)">
-              <Input
-                value={time?.toString() ?? ''}
-                onChange={(e) => {
-                  e.target.value = e.target.value
-                    .split('')
-                    .filter((c) => '0123456789'.includes(c))
-                    .join('');
-                  if (e.target.value === '') {
-                    setTime(null);
-                    return;
-                  }
-                  setTime(Math.max(1, parseInt(e.target.value)));
-                }}
-                placeholder="Enter a time"
-                error={time === null}
-              />
-            </InputWrapper>
-            <InputWrapper label="Extra Time Move">
-              <Input
-                value={extraTimeMove?.toString() ?? ''}
-                onChange={(e) => {
-                  e.target.value = e.target.value
-                    .split('')
-                    .filter((c) => '0123456789'.includes(c))
-                    .join('');
-                  if (e.target.value === '') {
-                    setExtraTimeMove(null);
-                    return;
-                  }
-                  setExtraTimeMove(Math.max(1, parseInt(e.target.value)));
-                }}
-                placeholder="None"
-              />
-            </InputWrapper>
-            <InputWrapper label="Stones">
-              <Input
-                value={stones?.toString() ?? ''}
-                onChange={(e) => {
-                  e.target.value = e.target.value
-                    .split('')
-                    .filter((c) => '0123456789'.includes(c))
-                    .join('');
-                  if (e.target.value === '') {
-                    setStones(null);
-                    return;
-                  }
-                  setStones(Math.max(1, parseInt(e.target.value)));
-                }}
-                placeholder={`Default (${defaultPieces.pieces.toString()})`}
-              />
-            </InputWrapper>
+            <TextInput
+              label="Opponent"
+              placeholder="Anyone"
+              value={opponent}
+              onChange={(e) => {
+                setOpponent(e.target.value);
+              }}
+            />
+            <Select
+              label="My Color"
+              data={colorData}
+              value={color}
+              onChange={(v) => {
+                if (!v) return;
+                setColor(v as 'W' | 'B' | 'A');
+              }}
+            />
+            <Select
+              label="Board Size"
+              data={boardSizeData}
+              value={boardSize.toString()}
+              onChange={(v) => {
+                if (!v) return;
+                setBoardSize(parseInt(v));
+              }}
+            />
+            <TextInput
+              label="Time (minutes per player)"
+              value={time?.toString() ?? ''}
+              onChange={(e) => {
+                e.target.value = e.target.value
+                  .split('')
+                  .filter((c) => '0123456789'.includes(c))
+                  .join('');
+                if (e.target.value === '') {
+                  setTime(null);
+                  return;
+                }
+                setTime(Math.max(1, parseInt(e.target.value)));
+              }}
+              placeholder="Enter a time"
+              error={time === null}
+            />
+            <TextInput
+              label="Extra Time Move"
+              value={extraTimeMove?.toString() ?? ''}
+              onChange={(e) => {
+                e.target.value = e.target.value
+                  .split('')
+                  .filter((c) => '0123456789'.includes(c))
+                  .join('');
+                if (e.target.value === '') {
+                  setExtraTimeMove(null);
+                  return;
+                }
+                setExtraTimeMove(Math.max(1, parseInt(e.target.value)));
+              }}
+              placeholder="None"
+            />
+            <TextInput
+              label="Stones"
+              value={stones?.toString() ?? ''}
+              onChange={(e) => {
+                e.target.value = e.target.value
+                  .split('')
+                  .filter((c) => '0123456789'.includes(c))
+                  .join('');
+                if (e.target.value === '') {
+                  setStones(null);
+                  return;
+                }
+                setStones(Math.max(1, parseInt(e.target.value)));
+              }}
+              placeholder={`Default (${defaultPieces.pieces.toString()})`}
+            />
           </Stack>
         </Grid.Col>
         <Grid.Col span={6}>
           <Stack>
-            <InputWrapper label="Presets">
-              <Select />
-            </InputWrapper>
-            <InputWrapper label="Game Type">
-              <Select
-                data={gameType}
-                value={gameTypeValue}
-                onChange={(v) => {
-                  if (
-                    !v ||
-                    (v !== 'normal' && v !== 'unrated' && v !== 'tournament')
-                  )
-                    return;
-                  setGameTypeValue(v);
-                }}
-              />
-            </InputWrapper>
-            <InputWrapper label="Komi">
-              <Select
-                data={komiData}
-                value={halfKomi.toString()}
-                onChange={(v) => {
-                  if (!v) return;
-                  setHalfKomi(parseInt(v));
-                }}
-              />
-            </InputWrapper>
-            <InputWrapper label="Increment (seconds)">
-              <Input
-                value={increment?.toString() ?? ''}
-                onChange={(e) => {
-                  e.target.value = e.target.value
-                    .split('')
-                    .filter((c) => '0123456789'.includes(c))
-                    .join('');
-                  if (e.target.value === '') {
-                    setIncrement(null);
-                    return;
-                  }
-                  setIncrement(parseInt(e.target.value));
-                }}
-                placeholder="0"
-              />
-            </InputWrapper>
-            <InputWrapper label="Extra Time Amount (minutes)">
-              <Input
-                value={extraTimeAmount?.toString() ?? ''}
-                onChange={(e) => {
-                  e.target.value = e.target.value
-                    .split('')
-                    .filter((c) => '0123456789'.includes(c))
-                    .join('');
-                  if (e.target.value === '') {
-                    setExtraTimeAmount(null);
-                    return;
-                  }
-                  setExtraTimeAmount(parseInt(e.target.value));
-                }}
-                disabled={extraTimeMove === null}
-                placeholder="0"
-              />
-            </InputWrapper>
-            <InputWrapper label="Capstones">
-              <Input
-                value={capstones?.toString() ?? ''}
-                onChange={(e) => {
-                  e.target.value = e.target.value
-                    .split('')
-                    .filter((c) => '0123456789'.includes(c))
-                    .join('');
-                  if (e.target.value === '') {
-                    setCapstones(null);
-                    return;
-                  }
-                  setCapstones(parseInt(e.target.value));
-                }}
-                placeholder={`Default (${defaultPieces.capstones.toString()})`}
-              />
-            </InputWrapper>
+            <Select label="Presets" />
+            <Select
+              label="Game Type"
+              data={gameType}
+              value={gameTypeValue}
+              onChange={(v) => {
+                if (
+                  !v ||
+                  (v !== 'normal' && v !== 'unrated' && v !== 'tournament')
+                )
+                  return;
+                setGameTypeValue(v);
+              }}
+            />
+            <Select
+              label="Komi"
+              data={komiData}
+              value={halfKomi.toString()}
+              onChange={(v) => {
+                if (!v) return;
+                setHalfKomi(parseInt(v));
+              }}
+            />
+            <TextInput
+              label="Increment (seconds)"
+              value={increment?.toString() ?? ''}
+              onChange={(e) => {
+                e.target.value = e.target.value
+                  .split('')
+                  .filter((c) => '0123456789'.includes(c))
+                  .join('');
+                if (e.target.value === '') {
+                  setIncrement(null);
+                  return;
+                }
+                setIncrement(parseInt(e.target.value));
+              }}
+              placeholder="0"
+            />
+            <TextInput
+              label="Extra Time Amount (minutes)"
+              value={extraTimeAmount?.toString() ?? ''}
+              onChange={(e) => {
+                e.target.value = e.target.value
+                  .split('')
+                  .filter((c) => '0123456789'.includes(c))
+                  .join('');
+                if (e.target.value === '') {
+                  setExtraTimeAmount(null);
+                  return;
+                }
+                setExtraTimeAmount(parseInt(e.target.value));
+              }}
+              disabled={extraTimeMove === null}
+              placeholder="0"
+            />
+            <TextInput
+              label="Capstones"
+              value={capstones?.toString() ?? ''}
+              onChange={(e) => {
+                e.target.value = e.target.value
+                  .split('')
+                  .filter((c) => '0123456789'.includes(c))
+                  .join('');
+                if (e.target.value === '') {
+                  setCapstones(null);
+                  return;
+                }
+                setCapstones(parseInt(e.target.value));
+              }}
+              placeholder={`Default (${defaultPieces.capstones.toString()})`}
+            />
           </Stack>
         </Grid.Col>
       </Grid>

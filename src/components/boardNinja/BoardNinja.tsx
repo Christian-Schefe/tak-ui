@@ -22,6 +22,7 @@ export function BoardNinja({
   playerInfo,
   doResign,
   drawProps,
+  undoProps,
   setGame,
 }: BoardProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -171,12 +172,15 @@ export function BoardNinja({
   return (
     <div className="w-full grow flex">
       <GameInfoDrawer
+        gameId={mode.type === 'local' ? undefined : mode.gameId}
         game={game}
         onTimeout={onTimeout}
         playerInfo={playerInfo}
         doResign={doResign}
         hasDrawOffer={drawProps?.hasDrawOffer}
         sendDrawOffer={drawProps?.sendDrawOffer}
+        hasUndoOffer={undoProps?.hasUndoOffer}
+        sendUndoOffer={undoProps?.sendUndoOffer}
         goToPly={(index) => {
           setGame((draft) => {
             ui.setPlyIndex(draft, index);
@@ -191,7 +195,7 @@ export function BoardNinja({
           title="Board Ninja"
         />
       </div>
-      <ChatDrawer />
+      <ChatDrawer gameId={mode.type === 'local' ? undefined : mode.gameId} />
     </div>
   );
 }

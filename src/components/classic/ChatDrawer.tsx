@@ -2,9 +2,9 @@ import { useDisclosure } from '@mantine/hooks';
 import { FaArrowLeft, FaArrowRight, FaPaperPlane } from 'react-icons/fa';
 import { Button, Input, ScrollArea, Select, Transition } from '@mantine/core';
 import { useGameData } from '../../gameDataHooks';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ChatEntry } from '../../gameData';
-import { useWSAPI } from '../../authHooks';
+import { useAuth, useWSAPI } from '../../authHooks';
 
 const mapChatEntries = (entry: ChatEntry[]) =>
   entry.map((e) => ({
@@ -23,54 +23,93 @@ const formatTimestamp = (time: Date) => {
 
 const globalId = '$global';
 
-export function ChatDrawer() {
+export function ChatDrawer({ gameId }: { gameId?: string }) {
   const [isSideOpen, { toggle: toggleSide }] = useDisclosure(true);
-  const { chats } = useGameData();
+  const { chats, games, removedGames } = useGameData();
   const { sendMessage } = useWSAPI();
+  const { user } = useAuth();
 
-  const { tabs, values } = useMemo(() => {
-    const values: Record<
+  const shownTabs = useMemo(() => {
+    const shownTabs: Record<
       string,
-      { message: string; sender: string; timestamp: string }[] | undefined
-    > = { $global: mapChatEntries(chats.global) };
-    const tabs = [{ value: globalId, label: 'Global' }];
-    for (const [key, value] of Object.entries(chats.private)) {
-      const id = `$priv:${key}`;
-      if (value) {
-        values[id] = mapChatEntries(value);
-        tabs.push({ value: id, label: key });
+      | { type: 'global' | 'private' | 'room'; id: string; label: string }
+      | undefined
+    > = {
+      [globalId]: { type: 'global', id: globalId, label: 'Global' },
+    };
+    const entry =
+      games.find((g) => g.id.toString() === gameId) ??
+      removedGames.find((g) => g.id.toString() === gameId);
+    if (entry) {
+      if (user?.username === entry.white) {
+        shownTabs[`$priv:${entry.black}`] = {
+          type: 'private',
+          id: entry.black,
+          label: entry.black,
+        };
+      } else if (user?.username === entry.black) {
+        shownTabs[`$priv:${entry.white}`] = {
+          type: 'private',
+          id: entry.white,
+          label: entry.white,
+        };
+      } else {
+        const sortedPlayers = [entry.white, entry.black].sort();
+        const key = sortedPlayers.join('-');
+        const label = sortedPlayers.join(' vs. ');
+        shownTabs[`$room:${key}`] = { type: 'room', id: key, label };
       }
     }
-    for (const [key, value] of Object.entries(chats.room)) {
-      const id = `$room:${key}`;
-      if (value) {
-        values[id] = mapChatEntries(value);
-        tabs.push({ value: id, label: key });
-      }
-    }
-    return { tabs, values };
-  }, [chats]);
+    return shownTabs;
+  }, [gameId, games, removedGames, user?.username]);
 
-  const [selectedTab, setSelectedTab] = useState<string>(globalId);
+  const getEntries = useCallback(
+    (type: string, id: string) => {
+      switch (type) {
+        case 'global':
+          return chats.global;
+        case 'private':
+          return chats.private[id];
+        case 'room':
+          return chats.room[id];
+        default:
+          return [];
+      }
+    },
+    [chats],
+  );
+
+  const defaultId =
+    Object.keys(shownTabs).find((key) => key !== globalId) ?? globalId;
+
+  const [selectedTab, setSelectedTab] = useState<string>(defaultId);
+  const tabValues = useMemo(() => {
+    return mapChatEntries(
+      getEntries(
+        shownTabs[selectedTab]?.type ?? 'global',
+        shownTabs[selectedTab]?.id ?? globalId,
+      ) ?? [],
+    );
+  }, [getEntries, shownTabs, selectedTab]);
 
   useEffect(() => {
-    if (!values[selectedTab] && selectedTab !== globalId) {
-      setSelectedTab(globalId);
+    const tab = shownTabs[selectedTab];
+    if (!tab && selectedTab !== globalId) {
+      setSelectedTab(defaultId);
     }
-  }, [values, selectedTab]);
+  }, [getEntries, defaultId, shownTabs, selectedTab]);
 
   const [sendValue, setSendValue] = useState<string>('');
 
   const onClickSend = () => {
-    if (sendValue.trim()) {
-      if (selectedTab === globalId) {
-        //sendMessage(`Shout ${sendValue}`);
-      } else if (selectedTab.startsWith('$priv:')) {
-        sendMessage(`Tell ${selectedTab.replace('$priv:', '')} ${sendValue}`);
+    const tab = shownTabs[selectedTab];
+    if (sendValue.trim() && tab) {
+      if (tab.type === 'global') {
+        sendMessage(`Shout ${sendValue}`);
+      } else if (tab.type === 'private') {
+        sendMessage(`Tell ${tab.id} ${sendValue}`);
       } else {
-        sendMessage(
-          `ShoutRoom ${selectedTab.replace('$room:', '')} ${sendValue}`,
-        );
+        sendMessage(`ShoutRoom ${tab.id} ${sendValue}`);
       }
       setSendValue('');
     }
@@ -93,18 +132,28 @@ export function ChatDrawer() {
             style={transitionStyles}
           >
             <Select
-              data={tabs}
+              data={Object.entries(shownTabs)
+                .map(([key, value]) =>
+                  value
+                    ? [
+                        {
+                          value: key,
+                          label: value.label,
+                        },
+                      ]
+                    : [],
+                )
+                .flat()}
               value={selectedTab}
               onChange={(e) => {
                 setSelectedTab(e ?? globalId);
               }}
             />
             <ScrollArea className="grow h-0 w-full pb-16">
-              {values[selectedTab]?.map((msg, index) => (
+              {tabValues.map((msg, index) => (
                 <Fragment key={`${msg.timestamp}-${index.toString()}`}>
                   {index === 0 ||
-                  msg.timestamp !==
-                    values[selectedTab]?.[index - 1].timestamp ? (
+                  msg.timestamp !== tabValues[index - 1].timestamp ? (
                     <p>{msg.timestamp}</p>
                   ) : null}
                   <p>

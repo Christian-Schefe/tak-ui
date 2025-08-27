@@ -19,7 +19,12 @@ export function RemoteGame({
   }, [gameEntry]);
 
   if (!gameEntryRef) {
-    return <div>No game found</div>;
+    return (
+      <div className="text-center font-bold text-lg p-2">
+        You're not observing or playing any game. Create or accept a seek to
+        start playing.
+      </div>
+    );
   }
 
   return <PlayedGame gameEntry={gameEntryRef} observed={observed} />;

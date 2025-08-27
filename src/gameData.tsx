@@ -1,21 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { type TextMessage } from './auth';
 import type { GameState, Player } from './packages/tak-core';
 import { useAuth, useWSListener } from './authHooks';
 import { GameDataContext } from './gameDataHooks';
 import { notifications } from '@mantine/notifications';
 import { useInterval } from 'react-use';
+import { useGameOffer } from './components/classic/remoteActions';
 
 export interface GameDataState {
   seeks: SeekEntry[];
   games: GameListEntry[];
+  removedGames: GameListEntry[];
   gameInfo: Record<string, GameInfoEntry | undefined>;
   chats: ChatData;
-  actions: React.RefObject<GameDataActions>;
-}
-
-export interface GameDataActions {
-  leaveRoom: (roomId: string) => void;
 }
 
 export interface ChatData {
@@ -80,6 +77,7 @@ export interface GameInfoEntry {
   moveMessages: string[];
   timeMessages: TimeMessage[];
   drawOffer: boolean;
+  undoOffer: boolean;
   gameOver: GameState | null;
 }
 
@@ -166,6 +164,13 @@ const gameMoveMessagePattern = /^Game#\d+ [MP]/;
 function isGameMoveMessage(message: string): boolean {
   return gameMoveMessagePattern.test(message);
 }
+
+const gameUndoMessagePattern = /^Game#\d+ Undo/;
+
+function isGameUndoMessage(message: string): boolean {
+  return gameUndoMessagePattern.test(message);
+}
+
 const gameTimeMessagePattern = /^Game#\d+ Timems (\d+) (\d+)/;
 
 function parseGameTimeMessage(message: string): TimeMessage | null {
@@ -185,6 +190,14 @@ function parseGameDrawMessage(message: string): boolean | null {
   const matches = gameDrawMessagePattern.exec(message);
   if (!matches) return null;
   return matches[1] === 'Offer';
+}
+
+const gameUndoOfferMessagePattern = /^Game#\d+ (Request|Remove)Undo/;
+
+function parseGameUndoOfferMessage(message: string): boolean | null {
+  const matches = gameUndoOfferMessagePattern.exec(message);
+  if (!matches) return null;
+  return matches[1] === 'Request';
 }
 
 function parseGameUpdateMessage(message: string): string | null {
@@ -234,11 +247,14 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
 
   const [seeks, setSeeks] = useState<SeekEntry[]>([]);
   const [games, setGames] = useState<GameListEntry[]>([]);
+  const [removedGames, setRemovedGames] = useState<GameListEntry[]>([]);
   const [chats, setChats] = useState<ChatData>({
     private: {},
     room: {},
     global: [],
   });
+
+  const gameOffers = useGameOffer();
 
   const { user } = useAuth();
 
@@ -250,7 +266,10 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
         const newSeek = parseAddSeekMessage(text);
         if (newSeek) {
           setSeeks((prev) =>
-            prev.find((s) => s.id === newSeek.id) ? prev : [...prev, newSeek],
+            (prev.find((s) => s.id === newSeek.id)
+              ? prev
+              : [...prev, newSeek]
+            ).sort((a, b) => a.creator.localeCompare(b.creator)),
           );
         } else {
           console.error('Failed to add seek:', text);
@@ -266,7 +285,10 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
         const newGame = parseGameAddMessage(text);
         if (newGame) {
           setGames((prev) =>
-            prev.find((g) => g.id === newGame.id) ? prev : [...prev, newGame],
+            (prev.find((g) => g.id === newGame.id)
+              ? prev
+              : [...prev, newGame]
+            ).sort((a, b) => a.boardSize - b.boardSize),
           );
         } else {
           console.error('Failed to add game:', text);
@@ -274,6 +296,11 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
       } else if (text.startsWith('GameList Remove')) {
         const removedGame = parseRemoveGameMessage(text);
         if (removedGame) {
+          const removedGameEntry = games.find((g) => g.id === removedGame);
+          setRemovedGames((prev) => [
+            ...prev,
+            ...(removedGameEntry ? [removedGameEntry] : []),
+          ]);
           setGames((prev) => prev.filter((g) => g.id !== removedGame));
         } else {
           console.error('Failed to remove game:', text);
@@ -283,31 +310,43 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
         if (id) {
           const timeMessage = parseGameTimeMessage(text);
           const drawOffer = parseGameDrawMessage(text);
+          const undoOffer = parseGameUndoOfferMessage(text);
           const gameOver = parseGameOverPattern(text);
+          const isUndo = isGameUndoMessage(text);
+          const moveMessage = isGameMoveMessage(text)
+            ? [text]
+            : isUndo
+              ? ['undo']
+              : [];
           setGameInfo((prev) => ({
             ...prev,
             [id]: prev[id]
               ? {
                   messages: [...prev[id].messages, text],
-                  moveMessages: [
-                    ...prev[id].moveMessages,
-                    ...(isGameMoveMessage(text) ? [text] : []),
-                  ],
+                  moveMessages: [...prev[id].moveMessages, ...moveMessage],
                   timeMessages: [
                     ...prev[id].timeMessages,
                     ...(timeMessage ? [timeMessage] : []),
                   ],
                   drawOffer: drawOffer ?? prev[id].drawOffer,
+                  undoOffer: undoOffer ?? (prev[id].undoOffer && !isUndo),
                   gameOver: gameOver ?? prev[id].gameOver,
                 }
               : {
                   messages: [text],
-                  moveMessages: isGameMoveMessage(text) ? [text] : [],
+                  moveMessages: moveMessage,
                   timeMessages: timeMessage ? [timeMessage] : [],
                   drawOffer: drawOffer ?? false,
+                  undoOffer: undoOffer ?? false,
                   gameOver: gameOver ?? null,
                 },
           }));
+          if (isUndo) {
+            gameOffers.setHasOfferedUndo(id, false);
+          }
+          if (gameOver) {
+            gameOffers.removeGameState(id);
+          }
         } else {
           console.error('Failed to update game:', text);
         }
@@ -370,18 +409,9 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
         } else {
           console.error('Failed to parse told message:', text);
         }
-      } else if (text.startsWith('Joined room')) {
-        const roomId = text.replace('Joined room ', '');
-        setChats((prev) => ({
-          ...prev,
-          room: {
-            ...prev.room,
-            [roomId]: [...(prev.room[roomId] ?? [])],
-          },
-        }));
       }
     },
-    [user],
+    [user, gameOffers, games],
   );
 
   const onOpen = useCallback(() => {
@@ -414,26 +444,9 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     sendMessage('PING');
   }, 10000);
 
-  const leaveRoom = useCallback((roomId: string) => {
-    setChats((prev) => ({
-      ...prev,
-      room: { ...prev.room, [roomId]: undefined },
-    }));
-  }, []);
-
-  const actions = useRef<GameDataActions>({
-    leaveRoom,
-  });
-
-  useEffect(() => {
-    actions.current = {
-      leaveRoom,
-    };
-  }, [leaveRoom]);
-
   const gameDataMemo = useMemo<GameDataState>(() => {
-    return { seeks, games, gameInfo, chats, actions };
-  }, [seeks, games, gameInfo, chats]);
+    return { seeks, games, gameInfo, chats, removedGames };
+  }, [seeks, games, gameInfo, chats, removedGames]);
 
   return <GameDataContext value={gameDataMemo}>{children}</GameDataContext>;
 }

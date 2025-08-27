@@ -14,13 +14,14 @@ import {
 } from 'react-icons/fa';
 import { MdWifi, MdWifiOff } from 'react-icons/md';
 
-import { AppShell, Burger, Group } from '@mantine/core';
+import { AppShell, Badge, Burger, Group } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { SeeksDialog } from '../components/SeeksDialog';
 import { SpectateDialog } from '../components/SpectateDialog';
-import { useWSAPI } from '../authHooks';
+import { useAuth, useWSAPI } from '../authHooks';
 import { ReadyState } from 'react-use-websocket';
 import { NewGameDialog } from '../components/NewGameDialog';
+import { useGameData } from '../gameDataHooks';
 
 export const Route = createFileRoute('/_app')({
   component: RouteComponent,
@@ -29,7 +30,7 @@ export const Route = createFileRoute('/_app')({
 const linkClassName =
   'flex gap-[6px] items-center py-2 px-3 [&.active]:font-bold hover:underline';
 const buttonClassName =
-  'flex gap-[6px] items-center py-2 px-3 cursor-pointer hover:underline';
+  'flex gap-[6px] items-center py-2 px-3 cursor-pointer group';
 
 function RouteComponent() {
   const [opened, { toggle, close }] = useDisclosure();
@@ -39,6 +40,9 @@ function RouteComponent() {
   const [isNewGameOpen, setNewGameOpen] = useState(false);
 
   const { readyState } = useWSAPI();
+
+  const { seeks, games } = useGameData();
+  const { user } = useAuth();
 
   const navElements = (
     <>
@@ -54,7 +58,7 @@ function RouteComponent() {
         }}
       >
         <FaPlus size={18} />
-        New Game
+        <p className="group-hover:underline">New Game</p>
       </button>
       <Link to="/play" className={linkClassName} onClick={close}>
         <FaGamepad size={18} />
@@ -68,7 +72,18 @@ function RouteComponent() {
         }}
       >
         <FaSearch size={18} />
-        Seeks
+        <p className="group-hover:underline">Seeks</p>
+        <Badge
+          color={
+            seeks.some(
+              (s) => s.opponent && user && s.opponent === user.username,
+            )
+              ? 'red'
+              : 'gray'
+          }
+        >
+          {seeks.length.toString()}
+        </Badge>
       </button>
       <button
         className={buttonClassName}
@@ -78,7 +93,8 @@ function RouteComponent() {
         }}
       >
         <FaEye size={18} />
-        Games
+        <p className="group-hover:underline">Games</p>
+        <Badge color="gray">{games.length.toString()}</Badge>
       </button>
       <Link to="/account" className={linkClassName} onClick={close}>
         <FaUser size={18} />

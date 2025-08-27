@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { GameUI } from '../packages/tak-core/ui';
 import type { PlayerInfo } from './board';
 import type { Player } from '../packages/tak-core';
-import { Affix, Modal, Button, Transition } from '@mantine/core';
+import { Affix, Modal, Button, Transition, CopyButton } from '@mantine/core';
+import { FaCopy, FaLink } from 'react-icons/fa';
+import { gameToPTN } from '../packages/tak-core/ptn';
 
 export function GameOverDialog({
   game,
+  gameId,
   playerInfo,
 }: {
   game: GameUI;
+  gameId?: string;
   playerInfo: Record<Player, PlayerInfo>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,6 +20,23 @@ export function GameOverDialog({
   useEffect(() => {
     setIsOpen(game.actualGame.gameState.type !== 'ongoing');
   }, [game.actualGame.gameState]);
+
+  const ptn = useMemo(
+    () =>
+      gameToPTN(game.actualGame, {
+        white: playerInfo.white.username,
+        black: playerInfo.black.username,
+      }),
+    [game.actualGame, playerInfo],
+  );
+
+  const onClickOpenInPTNNinja = () => {
+    const ptn = gameToPTN(game.actualGame, {
+      white: playerInfo.white.username,
+      black: playerInfo.black.username,
+    });
+    window.open(`https://ptn.ninja/${encodeURIComponent(ptn)}`, '_blank');
+  };
 
   return (
     <>
@@ -27,18 +48,58 @@ export function GameOverDialog({
         title="Game Over"
         centered
       >
-        <p className="text-center">
-          {(() => {
-            switch (game.actualGame.gameState.type) {
-              case 'win':
-                return `${playerInfo[game.actualGame.gameState.player].username} wins by ${game.actualGame.gameState.reason}`;
-              case 'draw':
-                return `It's a draw by ${game.actualGame.gameState.reason}`;
-              case 'ongoing':
-                return 'Game is ongoing';
-            }
-          })()}
-        </p>
+        <div className="flex flex-col gap-4 items-center">
+          <div className="text-center">
+            {(() => {
+              switch (game.actualGame.gameState.type) {
+                case 'win':
+                  return (
+                    <p>
+                      <span className="font-bold">
+                        {playerInfo[game.actualGame.gameState.player].username}
+                      </span>{' '}
+                      wins by {game.actualGame.gameState.reason}
+                    </p>
+                  );
+                case 'draw':
+                  return (
+                    <p>It's a draw by {game.actualGame.gameState.reason}</p>
+                  );
+                case 'ongoing':
+                  return <p>Game is ongoing</p>;
+              }
+            })()}
+          </div>
+          <div className="flex flex-col gap-4">
+            {gameId && (
+              <CopyButton value={gameId}>
+                {({ copy, copied }) => (
+                  <Button
+                    leftSection={<FaCopy />}
+                    color={copied ? 'green' : undefined}
+                    onClick={copy}
+                  >
+                    {copied ? 'Copied!' : 'Copy Game Id'}
+                  </Button>
+                )}
+              </CopyButton>
+            )}
+            <CopyButton value={ptn}>
+              {({ copy, copied }) => (
+                <Button
+                  leftSection={<FaCopy />}
+                  onClick={copy}
+                  color={copied ? 'green' : undefined}
+                >
+                  {copied ? 'Copied!' : 'Copy PTN'}
+                </Button>
+              )}
+            </CopyButton>
+            <Button leftSection={<FaLink />} onClick={onClickOpenInPTNNinja}>
+              Open in PTN Ninja
+            </Button>
+          </div>
+        </div>
       </Modal>
       <Affix
         position={{ top: 50, left: '50%' }}
