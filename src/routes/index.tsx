@@ -7,11 +7,15 @@ import {
   type TableData,
   Flex,
   Group,
+  Anchor,
+  Chip,
 } from '@mantine/core';
 import { FaArrowRight, FaDiscord, FaGraduationCap } from 'react-icons/fa';
 import bgImage from '../assets/parallax.jpg';
-import headerImage from '../assets/board-top.svg';
 import { useAuth } from '../authHooks';
+import { useEvents } from '../api/events';
+import { Fragment } from 'react/jsx-runtime';
+import { useMemo, useState } from 'react';
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -19,23 +23,59 @@ export const Route = createFileRoute('/')({
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const eventTableData: TableData = {
-    head: ['Event', 'Dates', 'Details'],
-    body: [['Test Event 1', '2023-10-01', 'Details | Standings']],
-  };
+  const { data: events } = useEvents();
+  const categories = ['All'].concat(
+    events?.data
+      .map((e) => e.category)
+      .filter((v, i, a) => a.indexOf(v) === i) ?? [],
+  );
+
+  const [category, setCategory] = useState<string>('All');
+
+  const eventTableData: TableData = useMemo(
+    () => ({
+      head: ['Event', 'Dates', 'Details'],
+      body:
+        events?.data
+          .filter((e) => category === 'All' || e.category === category)
+          .map((e) => {
+            return [
+              e.name,
+              `${e.start_date} - ${e.end_date}`,
+              <div key={e.name} className="flex gap-2">
+                {[
+                  <Anchor href={e.details} key="details">
+                    Details
+                  </Anchor>,
+                  ...(e.registration !== null
+                    ? [
+                        <Fragment key="registration">
+                          <p>|</p>
+                          <Anchor href={e.registration}>Register</Anchor>
+                        </Fragment>,
+                      ]
+                    : []),
+                  ...(e.standings !== null
+                    ? [
+                        <Fragment key="standings">
+                          <p>|</p>
+                          <Anchor href={e.standings}>Standings</Anchor>
+                        </Fragment>,
+                      ]
+                    : []),
+                ]}
+              </div>,
+            ];
+          }) ?? [],
+    }),
+    [events, category],
+  );
   const auth = useAuth();
 
   return (
-    <div className="w-full min-h-screen bg-white flex flex-col">
+    <div className="w-full min-h-screen flex flex-col">
       <Flex direction="column" align="center" style={{ flexGrow: 1 }}>
-        <div
-          className="flex flex-col md:flex-row items-center justify-center w-full md:gap-4"
-          style={{
-            backgroundImage: `url(${headerImage})`,
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-          }}
-        >
+        <div className="flex flex-col md:flex-row items-center justify-center w-full md:gap-4 min-h-80 diagonal-checkerboard">
           <div className="flex items-center justify-center gap-2 my-20">
             <p
               className="font-bold text-5xl"
@@ -79,7 +119,7 @@ function RouteComponent() {
           </Stack>
         </div>
         <div
-          className="w-full px-2 py-30 flex justify-center items-center"
+          className="w-full px-2 py-20 flex justify-center items-center"
           style={{
             backgroundImage: `linear-gradient(#1971c255, #1971c255),url(${bgImage as string})`,
             backgroundSize: 'cover',
@@ -99,11 +139,25 @@ function RouteComponent() {
             </div>
           </a>
         </div>
-        <div className="w-full grow flex flex-col justify-start items-center text-black">
-          <div className="w-full max-w-4xl">
-            <h1 className="text-3xl mt-10 text-black">
+        <div className="w-full grow flex flex-col justify-start items-center">
+          <div className="w-full max-w-4xl flex flex-col gap-2">
+            <h1 className="text-3xl mt-10">
               UPCOMING <span className="font-bold">EVENTS</span>
             </h1>
+            <Chip.Group
+              value={category}
+              onChange={(e) => {
+                setCategory(typeof e === 'string' ? e : 'All');
+              }}
+            >
+              <Group>
+                {categories.map((category) => (
+                  <Chip key={category} value={category}>
+                    {category}
+                  </Chip>
+                ))}
+              </Group>
+            </Chip.Group>
             <Table data={eventTableData} />
           </div>
         </div>
