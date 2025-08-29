@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { GameListEntry } from '../gameData';
 import { PlayedGame } from './PlayedGame';
+import type { GameListEntry } from '../features/gameList';
 
 export function RemoteGame({
   gameEntry,

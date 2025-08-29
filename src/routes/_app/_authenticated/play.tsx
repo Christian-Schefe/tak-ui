@@ -1,26 +1,24 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useGameData } from '../../../gameDataHooks';
 import { useAuth } from '../../../authHooks';
 
 import { RemoteGame } from '../../../components/RemoteGame';
 import { useMemo } from 'react';
+import { useGamesList } from '../../../features/gameList';
 
 export const Route = createFileRoute('/_app/_authenticated/play')({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const gameData = useGameData();
+  const games = useGamesList();
   const auth = useAuth();
   const username = auth.user?.username;
   const gameEntry = useMemo(
     () =>
-      username
-        ? gameData.games.find(
-            (g) => g.white === username || g.black === username,
-          )
+      username !== undefined
+        ? games.find((g) => g.white === username || g.black === username)
         : undefined,
-    [gameData.games, username],
+    [games, username],
   );
   return <RemoteGame gameEntry={gameEntry} observed={false} />;
 }

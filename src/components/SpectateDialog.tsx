@@ -1,8 +1,8 @@
 import { Modal, ScrollArea, Table } from '@mantine/core';
-import { useGameData } from '../gameDataHooks';
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import { useRatings } from '../api/ratings';
+import { useGamesList } from '../features/gameList';
 
 export function SpectateDialog({
   isOpen,
@@ -11,7 +11,7 @@ export function SpectateDialog({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { games } = useGameData();
+  const games = useGamesList();
   const nav = useNavigate();
 
   const players = useMemo(() => {
@@ -20,9 +20,6 @@ export function SpectateDialog({
   }, [games]);
 
   const ratings = useRatings(players);
-  const ratingByName = Object.fromEntries(
-    ratings.data.flatMap((data) => (data ? [[data.name, data.rating]] : [])),
-  );
 
   const onClickSpectate = (gameId: number) => {
     onClose();
@@ -42,11 +39,11 @@ export function SpectateDialog({
     >
       <Table.Td>
         <span className="font-bold">{game.white}</span> (
-        {ratingByName[game.white] ?? '???'})
+        {ratings[game.white]?.rating ?? '???'})
       </Table.Td>
       <Table.Td>
         <span className="font-bold">{game.black}</span> (
-        {ratingByName[game.black] ?? '???'})
+        {ratings[game.black]?.rating ?? '???'})
       </Table.Td>
       <Table.Td>
         {game.boardSize}x{game.boardSize}

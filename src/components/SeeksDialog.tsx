@@ -1,9 +1,9 @@
 import { Modal, ScrollArea, Table, Tooltip } from '@mantine/core';
-import { useGameData } from '../gameDataHooks';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth, useWSAPI } from '../authHooks';
 import { useMemo } from 'react';
 import { useRatings } from '../api/ratings';
+import { useSeekList } from '../features/seeks';
 
 export function SeeksDialog({
   isOpen,
@@ -12,7 +12,7 @@ export function SeeksDialog({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { seeks } = useGameData();
+  const seeks = useSeekList();
   const nav = useNavigate();
   const { sendMessage } = useWSAPI();
   const auth = useAuth();
@@ -23,10 +23,6 @@ export function SeeksDialog({
   }, [seeks]);
 
   const ratings = useRatings(players);
-  const ratingByName = Object.fromEntries(
-    ratings.data.flatMap((data) => (data ? [[data.name, data.rating]] : [])),
-  );
-
   const onClickJoin = (seekId: number) => {
     sendMessage(`Accept ${seekId.toString()}`);
     onClose();
@@ -36,8 +32,10 @@ export function SeeksDialog({
   const rows = seeks
     .filter(
       (seek) =>
-        !seek.opponent ||
-        (auth.user?.username && seek.opponent === auth.user.username),
+        seek.opponent === undefined ||
+        seek.opponent === '' ||
+        (auth.user?.username !== undefined &&
+          seek.opponent === auth.user.username),
     )
     .map((seek) => (
       <Table.Tr
@@ -76,7 +74,7 @@ export function SeeksDialog({
             <p className="font-bold">{seek.creator}</p>
           </Tooltip>
         </Table.Td>
-        <Table.Td>{ratingByName[seek.creator] ?? '???'}</Table.Td>
+        <Table.Td>{ratings[seek.creator]?.rating ?? '???'}</Table.Td>
         <Table.Td>
           {seek.boardSize}x{seek.boardSize}
         </Table.Td>

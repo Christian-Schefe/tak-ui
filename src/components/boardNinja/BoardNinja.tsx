@@ -5,7 +5,6 @@ import { useSettings } from '../../settings';
 import { useEvent, useUpdate } from 'react-use';
 import z from 'zod';
 import { GameInfoDrawer } from '../classic/GameInfoDrawer';
-import { ui } from '../../packages/tak-core';
 import { ChatDrawer } from '../classic/ChatDrawer';
 
 const NinjaMessageSchema = z.object({
@@ -20,10 +19,8 @@ export function BoardNinja({
   mode,
   callbacks,
   playerInfo,
-  doResign,
-  drawProps,
-  undoProps,
-  setGame,
+  hasDrawOffer,
+  hasUndoOffer,
 }: BoardProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
@@ -165,27 +162,16 @@ export function BoardNinja({
     }
   }, [hasLoaded, mode.type, game.plyIndex, sendMessageToIframe]);
 
-  const onTimeout = useCallback(() => {
-    callbacks.current.onTimeout();
-  }, [callbacks]);
-
   return (
     <div className="w-full grow flex">
       <GameInfoDrawer
         gameId={mode.type === 'local' ? undefined : mode.gameId}
         game={game}
-        onTimeout={onTimeout}
         playerInfo={playerInfo}
-        doResign={doResign}
-        hasDrawOffer={drawProps?.hasDrawOffer}
-        sendDrawOffer={drawProps?.sendDrawOffer}
-        hasUndoOffer={undoProps?.hasUndoOffer}
-        sendUndoOffer={undoProps?.sendUndoOffer}
-        goToPly={(index) => {
-          setGame((draft) => {
-            ui.setPlyIndex(draft, index);
-          });
-        }}
+        hasDrawOffer={hasDrawOffer}
+        hasUndoOffer={hasUndoOffer}
+        showResign={mode.type === 'remote'}
+        callbacks={callbacks}
       />
       <div className="grow flex flex-col">
         <iframe

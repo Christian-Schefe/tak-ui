@@ -1,35 +1,17 @@
 import { ScrollArea } from '@mantine/core';
-import type { MoveRecord } from '../../packages/tak-core';
 import { moveToString } from '../../packages/tak-core/move';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useEffect, useRef } from 'react';
 import { gameResultToString } from '../../packages/tak-core/game';
+import { useGameHistory } from '../../features/history';
 export function History({
   game,
-  onClick,
+  onSetPlyIndex,
 }: {
   game: GameUI;
-  onClick: (plyIndex: number) => void;
+  onSetPlyIndex: (plyIndex: number) => void;
 }) {
-  const perChunk = 2; // items per chunk
-
-  const result = game.actualGame.history.reduce<(MoveRecord | undefined)[][]>(
-    (resultArray, item, index) => {
-      const chunkIndex = Math.floor(index / perChunk);
-
-      if (!resultArray[chunkIndex]) {
-        resultArray[chunkIndex] = [];
-      }
-
-      resultArray[chunkIndex].push(item);
-
-      return resultArray;
-    },
-    [],
-  );
-  if (result.length === 0) {
-    result.push([undefined, undefined]);
-  }
+  const result = useGameHistory(game);
 
   const makeHistoryItem = (index: number, move: string) => {
     return (
@@ -46,9 +28,9 @@ export function History({
               (game.plyIndex === null &&
                 game.actualGame.history.length === index)
             ) {
-              onClick(index - 1);
+              onSetPlyIndex(index - 1);
             } else {
-              onClick(index);
+              onSetPlyIndex(index);
             }
           }}
         >
@@ -58,7 +40,7 @@ export function History({
     );
   };
 
-  const rows = result.map(([whiteMove, blackMove], index) => (
+  const rows = result.map(({ white: whiteMove, black: blackMove }, index) => (
     <div key={`move-${index.toString()}`} className="flex gap-2 p-1 font-mono">
       <div className="w-8">{index + 1}.</div>
       {whiteMove

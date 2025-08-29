@@ -5,12 +5,11 @@ import { useAuth, useWSListener } from './authHooks';
 import { GameDataContext } from './gameDataHooks';
 import { notifications } from '@mantine/notifications';
 import { useInterval } from 'react-use';
-import { useGameOffer } from './components/classic/remoteActions';
+import { useGameOfferState } from './features/gameOffers';
+import { removeAllSeeks, useUpdateSeeks } from './features/seeks';
+import { removeAllGames, useUpdateGames } from './features/gameList';
 
 export interface GameDataState {
-  seeks: SeekEntry[];
-  games: GameListEntry[];
-  removedGames: GameListEntry[];
   gameInfo: Record<string, GameInfoEntry | undefined>;
   chats: ChatData;
 }
@@ -27,136 +26,16 @@ export interface ChatEntry {
   timestamp: Date;
 }
 
-export interface SeekEntry {
-  id: number;
-  creator: string;
-  timeContingent: number;
-  timeIncrement: number;
-  halfKomi: number;
-  boardSize: number;
-  capstones: number;
-  pieces: number;
-  unrated: boolean;
-  tournament: boolean;
-  color: string;
-  opponent?: string | undefined;
-  triggerMove?:
-    | {
-        move: number;
-        amount: number;
-      }
-    | undefined;
-}
-
-export interface GameListEntry {
-  id: number;
-  white: string;
-  black: string;
-  boardSize: number;
-  timeContingentSeconds: number;
-  timeIncrementSeconds: number;
-  halfKomi: number;
-  pieces: number;
-  capstones: number;
-  unrated: boolean;
-  tournament: boolean;
-  triggerMove:
-    | {
-        move: number;
-        amountSeconds: number;
-      }
-    | undefined;
-}
-
 export type TimeMessage = {
   timestamp: Date;
 } & Record<Player, number>;
 
 export interface GameInfoEntry {
   messages: string[];
-  moveMessages: string[];
+  moveMessages: (string | GameState)[];
   timeMessages: TimeMessage[];
   drawOffer: boolean;
   undoOffer: boolean;
-  gameOver: GameState | null;
-}
-
-const seekAddRegex =
-  /^Seek new (\d+) ([A-Za-z0-9_]+) (\d+) (\d+) (\d+) ([WBA]) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+) ([A-Za-z0-9_]*)/;
-const seekRemoveRegex = /^Seek remove (\d+)/;
-
-const gameAddRegex =
-  /^GameList Add (\d+) ([A-Za-z0-9_]+) ([A-Za-z0-9_]+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+)/;
-const gameRemoveRegex = /^GameList Remove (\d+)/;
-
-function parseAddSeekMessage(message: string): SeekEntry | null {
-  const matches = seekAddRegex.exec(message);
-  if (!matches) return null;
-
-  const triggerMoveAmount = parseInt(matches[13]);
-  const opponent = matches[14];
-
-  return {
-    id: parseInt(matches[1]),
-    creator: matches[2],
-    boardSize: parseInt(matches[3]),
-    timeContingent: parseInt(matches[4]),
-    timeIncrement: parseInt(matches[5]),
-    color: matches[6] as 'W' | 'B' | 'A',
-    halfKomi: parseInt(matches[7]),
-    pieces: parseInt(matches[8]),
-    capstones: parseInt(matches[9]),
-    unrated: matches[10] === '1',
-    tournament: matches[11] === '1',
-    triggerMove:
-      triggerMoveAmount > 0
-        ? {
-            move: parseInt(matches[12]),
-            amount: triggerMoveAmount,
-          }
-        : undefined,
-    opponent: opponent === '0' ? undefined : opponent,
-  };
-}
-
-function parseRemoveSeekMessage(message: string): number | null {
-  const matches = seekRemoveRegex.exec(message);
-  if (!matches) return null;
-
-  return parseInt(matches[1]);
-}
-
-function parseGameAddMessage(message: string): GameListEntry | null {
-  const matches = gameAddRegex.exec(message);
-  if (!matches) return null;
-
-  return {
-    id: parseInt(matches[1]),
-    white: matches[2],
-    black: matches[3],
-    boardSize: parseInt(matches[4]),
-    timeContingentSeconds: parseInt(matches[5]),
-    timeIncrementSeconds: parseInt(matches[6]),
-    halfKomi: parseInt(matches[7]),
-    pieces: parseInt(matches[8]),
-    capstones: parseInt(matches[9]),
-    unrated: matches[10] === '1',
-    tournament: matches[11] === '1',
-    triggerMove:
-      parseInt(matches[12]) > 0
-        ? {
-            move: parseInt(matches[12]),
-            amountSeconds: parseInt(matches[13]),
-          }
-        : undefined,
-  };
-}
-
-function parseRemoveGameMessage(message: string): number | null {
-  const matches = gameRemoveRegex.exec(message);
-  if (!matches) return null;
-
-  return parseInt(matches[1]);
 }
 
 const gameMoveMessagePattern = /^Game#\d+ [MP]/;
@@ -245,69 +124,26 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     Record<string, GameInfoEntry | undefined>
   >({});
 
-  const [seeks, setSeeks] = useState<SeekEntry[]>([]);
-  const [games, setGames] = useState<GameListEntry[]>([]);
-  const [removedGames, setRemovedGames] = useState<GameListEntry[]>([]);
   const [chats, setChats] = useState<ChatData>({
     private: {},
     room: {},
     global: [],
   });
 
-  const gameOffers = useGameOffer();
+  const gameOffers = useGameOfferState();
 
   const { user } = useAuth();
+
+  useUpdateSeeks();
+  useUpdateGames();
 
   const onMsg = useCallback(
     (msg: TextMessage) => {
       const text = msg.text;
       console.log('Called with message:', text);
-      if (text.startsWith('Seek new')) {
-        const newSeek = parseAddSeekMessage(text);
-        if (newSeek) {
-          setSeeks((prev) =>
-            (prev.find((s) => s.id === newSeek.id)
-              ? prev
-              : [...prev, newSeek]
-            ).sort((a, b) => a.creator.localeCompare(b.creator)),
-          );
-        } else {
-          console.error('Failed to add seek:', text);
-        }
-      } else if (text.startsWith('Seek remove')) {
-        const removedSeek = parseRemoveSeekMessage(text);
-        if (removedSeek) {
-          setSeeks((prev) => prev.filter((s) => s.id !== removedSeek));
-        } else {
-          console.error('Failed to remove seek:', text);
-        }
-      } else if (text.startsWith('GameList Add')) {
-        const newGame = parseGameAddMessage(text);
-        if (newGame) {
-          setGames((prev) =>
-            (prev.find((g) => g.id === newGame.id)
-              ? prev
-              : [...prev, newGame]
-            ).sort((a, b) => a.boardSize - b.boardSize),
-          );
-        } else {
-          console.error('Failed to add game:', text);
-        }
-      } else if (text.startsWith('GameList Remove')) {
-        const removedGame = parseRemoveGameMessage(text);
-        if (removedGame) {
-          const removedGameEntry = games.find((g) => g.id === removedGame);
-          setRemovedGames((prev) => [
-            ...prev,
-            ...(removedGameEntry ? [removedGameEntry] : []),
-          ]);
-          setGames((prev) => prev.filter((g) => g.id !== removedGame));
-        } else {
-          console.error('Failed to remove game:', text);
-        }
-      } else if (text.startsWith('Game#')) {
+      if (text.startsWith('Game#')) {
         const id = parseGameUpdateMessage(text);
-        if (id) {
+        if (id !== null) {
           const timeMessage = parseGameTimeMessage(text);
           const drawOffer = parseGameDrawMessage(text);
           const undoOffer = parseGameUndoOfferMessage(text);
@@ -317,7 +153,9 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
             ? [text]
             : isUndo
               ? ['undo']
-              : [];
+              : gameOver
+                ? [gameOver]
+                : [];
           setGameInfo((prev) => ({
             ...prev,
             [id]: prev[id]
@@ -330,7 +168,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
                   ],
                   drawOffer: drawOffer ?? prev[id].drawOffer,
                   undoOffer: undoOffer ?? (prev[id].undoOffer && !isUndo),
-                  gameOver: gameOver ?? prev[id].gameOver,
                 }
               : {
                   messages: [text],
@@ -338,7 +175,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
                   timeMessages: timeMessage ? [timeMessage] : [],
                   drawOffer: drawOffer ?? false,
                   undoOffer: undoOffer ?? false,
-                  gameOver: gameOver ?? null,
                 },
           }));
           if (isUndo) {
@@ -352,7 +188,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
         }
       } else if (text.startsWith('Observe')) {
         const id = parseObserveMessage(text);
-        if (id) {
+        if (id !== null) {
           console.log('Received observe message for game:', id);
           setGameInfo((prev) => {
             const newGameInfo = { ...prev };
@@ -411,14 +247,16 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
         }
       }
     },
-    [user, gameOffers, games],
+    [user, gameOffers],
   );
 
   const onOpen = useCallback(() => {
     console.warn('Removing data');
     setGameInfo({});
-    setSeeks([]);
-    setGames([]);
+
+    removeAllSeeks();
+    removeAllGames();
+
     notifications.show({
       title: 'Connection opened',
       message: 'Connection opened',
@@ -445,8 +283,8 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   }, 10000);
 
   const gameDataMemo = useMemo<GameDataState>(() => {
-    return { seeks, games, gameInfo, chats, removedGames };
-  }, [seeks, games, gameInfo, chats, removedGames]);
+    return { gameInfo, chats };
+  }, [gameInfo, chats]);
 
   return <GameDataContext value={gameDataMemo}>{children}</GameDataContext>;
 }

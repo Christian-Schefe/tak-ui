@@ -3,6 +3,7 @@ import {
   ui,
   type Coord,
   type GameSettings,
+  type GameState,
   type Move,
   type PieceVariant,
 } from '../packages/tak-core';
@@ -13,7 +14,6 @@ import {
   dirToString,
   offsetCoord,
 } from '../packages/tak-core/coord';
-import { type GameListEntry } from '../gameData';
 import { Board3D } from './board3d/Board3D';
 import { useImmer } from 'use-immer';
 import { useAuth, useWSAPI } from '../authHooks';
@@ -26,6 +26,7 @@ import { ReadyState } from 'react-use-websocket';
 import type { BoardMode } from './board';
 import { BoardNinja } from './boardNinja/BoardNinja';
 import { useRatings } from '../api/ratings';
+import type { GameListEntry } from '../features/gameList';
 
 const placeRegex = /Game#\d+ P ([A-Z])([1-9])(?: ([CW]))?/;
 const parsePlaceMove = (placeMatch: RegExpMatchArray): Move => {
@@ -95,13 +96,11 @@ export function PlayedGame({
   const playerInfo = {
     white: {
       username: gameEntry.white,
-      rating:
-        ratings.data.find((r) => r?.name === gameEntry.white)?.rating ?? 1000,
+      rating: ratings[gameEntry.white]?.rating ?? 1000,
     },
     black: {
       username: gameEntry.black,
-      rating:
-        ratings.data.find((r) => r?.name === gameEntry.black)?.rating ?? 1000,
+      rating: ratings[gameEntry.black]?.rating ?? 1000,
     },
   };
 
@@ -117,7 +116,6 @@ export function PlayedGame({
   const { sendMessage, readyState } = useWSAPI();
 
   const gameData = useGameData();
-  const maybeGameOver = gameData.gameInfo[gameId]?.gameOver;
 
   const { devMode } = useSettings();
   const showNotifications = useRef(devMode.value);
@@ -129,8 +127,6 @@ export function PlayedGame({
     if (observed && readyState === ReadyState.OPEN) {
       console.log('Subscribing to game:', gameId);
       sendMessage(`Observe ${gameId}`);
-      const roomId = [gameEntry.white, gameEntry.black].sort().join('-');
-      sendMessage(`JoinRoom ${roomId}`);
       if (showNotifications.current) {
         notifications.show({
           title: 'Subscribing to game',
@@ -142,7 +138,6 @@ export function PlayedGame({
       return () => {
         console.log('Unsubscribing from game:', gameId);
         sendMessage(`Unobserve ${gameId}`, false);
-        sendMessage(`LeaveRoom ${roomId}`, false);
         if (showNotifications.current) {
           notifications.show({
             title: 'Unsubscribing from game',
@@ -152,44 +147,47 @@ export function PlayedGame({
         }
       };
     }
-  }, [
-    observed,
-    gameEntry.white,
-    gameEntry.black,
-    readyState,
-    gameId,
-    sendMessage,
-  ]);
+  }, [observed, readyState, gameId, sendMessage]);
+
+  useEffect(() => {
+    if (observed && readyState === ReadyState.OPEN) {
+      const roomId = [gameEntry.white, gameEntry.black].sort().join('-');
+      sendMessage(`JoinRoom ${roomId}`);
+
+      return () => {
+        sendMessage(`LeaveRoom ${roomId}`, false);
+      };
+    }
+  }, [observed, gameEntry.white, gameEntry.black, readyState, sendMessage]);
 
   const [game, setGame] = useImmer<ui.GameUI>(() => {
     console.log('Creating new game with settings:', settings);
     return ui.newGameUI(newGame(settings));
   });
 
-  const resetGame = useCallback(() => {
+  const resetGameCallback = useCallback(() => {
     setGame(() => {
       console.log('Resetting game to new game with settings:', settings);
       return ui.newGameUI(newGame(settings));
     });
-    setReadMessageIndex(0);
-  }, [settings, setGame]);
+    setReadMessageIndex((prev) => {
+      const { [gameId]: _, ...rest } = prev;
+      return rest;
+    });
+  }, [settings, gameId, setGame]);
+
+  const resetGame = useRef(resetGameCallback);
+  useEffect(() => {
+    resetGame.current = resetGameCallback;
+  }, [resetGameCallback]);
+
+  const [readMessageIndices, setReadMessageIndex] = useState<
+    Record<string, number | undefined>
+  >({});
 
   useEffect(() => {
-    if (maybeGameOver) {
-      if (game.actualGame.gameState.type !== maybeGameOver.type) {
-        console.log('received game over:', maybeGameOver);
-        setGame((draft) => {
-          draft.actualGame.gameState = maybeGameOver;
-          ui.onGameUpdate(draft);
-        });
-      }
-    }
-  }, [maybeGameOver, game.actualGame.gameState, setGame]);
-
-  const [readMessageIndex, setReadMessageIndex] = useState(0);
-
-  useEffect(() => {
-    resetGame();
+    resetGame.current();
+    console.log('Game Id changed to', gameId);
     if (showNotifications.current) {
       notifications.show({
         title: 'Game Id Changed',
@@ -197,66 +195,86 @@ export function PlayedGame({
         position: 'top-right',
       });
     }
-  }, [gameId, resetGame]);
+  }, [gameId]);
 
-  const gameInfo = gameData.gameInfo[gameId];
-  const hasGameInfo = !!gameInfo;
-
-  useEffect(() => {
-    if (!hasGameInfo) {
-      resetGame();
-      if (showNotifications.current) {
-        notifications.show({
-          title: 'Reset game state',
-          message: 'Reset game as game data was removed',
-          position: 'top-right',
-        });
-      }
-    }
-  }, [hasGameInfo, resetGame]);
-
-  const moveMessages = gameInfo?.moveMessages;
+  const gameInfo = gameData.gameInfo[gameId] ?? {
+    drawOffer: false,
+    gameOver: false,
+    messages: [],
+    moveMessages: [],
+    timeMessages: [],
+    undoOffer: false,
+  };
+  const moveMessages = gameInfo.moveMessages;
+  const timeMessages = gameInfo.timeMessages;
 
   useEffect(() => {
-    if (!moveMessages) return;
-    const toRead = moveMessages.length - readMessageIndex;
+    const readMessageIndex = readMessageIndices[gameId] ?? 0;
+    const toRead = Math.max(0, moveMessages.length - readMessageIndex);
+    if (toRead <= 0) return;
 
     console.log(moveMessages.length, readMessageIndex, toRead);
 
-    const moves: (Move | 'undo')[] = [];
+    const moves: (
+      | { type: 'move'; move: Move }
+      | { type: 'undo' }
+      | { type: 'gameOver'; state: GameState }
+    )[] = [];
 
     for (let i = 0; i < toRead; i++) {
       const message = moveMessages[readMessageIndex + i];
-      console.log(moveMessages.length, readMessageIndex + i, message);
+      if (typeof message === 'string') {
+        console.log(moveMessages.length, readMessageIndex + i, message);
 
-      const placeMatch = placeRegex.exec(message);
-      const moveMatch = moveRegex.exec(message);
+        const placeMatch = placeRegex.exec(message);
+        const moveMatch = moveRegex.exec(message);
 
-      if (placeMatch) {
-        moves.push(parsePlaceMove(placeMatch));
-      } else if (moveMatch) {
-        moves.push(parseMoveMove(moveMatch));
-      } else if (message === 'undo') {
-        moves.push('undo');
+        if (placeMatch) {
+          moves.push({ type: 'move', move: parsePlaceMove(placeMatch) });
+        } else if (moveMatch) {
+          moves.push({ type: 'move', move: parseMoveMove(moveMatch) });
+        } else if (message === 'undo') {
+          moves.push({ type: 'undo' });
+        } else {
+          console.error('Failed to parse move message:', message);
+        }
       } else {
-        console.error('Failed to parse move message:', message);
+        moves.push({ type: 'gameOver', state: message });
       }
     }
-    setReadMessageIndex((prev) => prev + toRead);
+    setReadMessageIndex((prev) => ({
+      ...prev,
+      [gameId]: (prev[gameId] ?? 0) + toRead,
+    }));
     setGame((draft) => {
       try {
         for (const move of moves) {
-          if (move !== 'undo') {
-            ui.doMove(draft, move);
-          } else {
+          if (move.type === 'move') {
+            ui.doMove(draft, move.move);
+          } else if (move.type === 'undo') {
             ui.undoMove(draft);
+          } else {
+            if (game.actualGame.gameState.type !== move.state.type) {
+              console.log('received game over:', move.state);
+              setGame((draft) => {
+                draft.actualGame.gameState = move.state;
+                ui.onGameUpdate(draft);
+              });
+            }
           }
         }
       } catch (err) {
         console.error('desync: ', err);
       }
     });
-  }, [setGame, moveMessages, readMessageIndex, game.actualGame.currentPlayer]);
+  }, [
+    gameId,
+    setGame,
+    moveMessages,
+    readMessageIndices,
+    game.actualGame.currentPlayer,
+    game.actualGame.gameState.type,
+  ]);
 
   const sendMoveMessage = useCallback(
     (move: Move) => {
@@ -285,10 +303,8 @@ export function PlayedGame({
     [gameId, sendMessage],
   );
 
-  const timeMessages = gameInfo?.timeMessages;
-  const lastTimeMessage = timeMessages
-    ? timeMessages[timeMessages.length - 1]
-    : null;
+  const lastTimeMessage =
+    timeMessages.length > 0 ? timeMessages[timeMessages.length - 1] : null;
   useEffect(() => {
     setGame((draft) => {
       if (!lastTimeMessage) return;
@@ -301,28 +317,6 @@ export function PlayedGame({
   }, [setGame, lastTimeMessage]);
 
   const { boardType } = useSettings();
-
-  const drawProps = useMemo(() => {
-    return boardMode.type === 'remote'
-      ? {
-          hasDrawOffer: gameInfo?.drawOffer ?? false,
-          sendDrawOffer: (offer: boolean) => {
-            sendMessage(`Game#${gameId} ${offer ? 'Offer' : 'Remove'}Draw`);
-          },
-        }
-      : undefined;
-  }, [boardMode.type, gameInfo, gameId, sendMessage]);
-
-  const undoProps = useMemo(() => {
-    return boardMode.type === 'remote'
-      ? {
-          hasUndoOffer: gameInfo?.undoOffer ?? false,
-          sendUndoOffer: (offer: boolean) => {
-            sendMessage(`Game#${gameId} ${offer ? 'Request' : 'Remove'}Undo`);
-          },
-        }
-      : undefined;
-  }, [boardMode.type, gameInfo, gameId, sendMessage]);
 
   const gameCallbacks = useMemo(() => {
     const onClickTile = (pos: Coord, variant: PieceVariant) => {
@@ -368,12 +362,36 @@ export function PlayedGame({
         ui.checkTimeout(draft);
       });
     };
-    return { onTimeout, onClickTile, onMakeMove };
+    const goToPly = (index: number) => {
+      setGame((draft) => {
+        ui.setPlyIndex(draft, index);
+      });
+    };
+    const sendDrawOffer = (offer: boolean) => {
+      sendMessage(`Game#${gameId} ${offer ? 'Offer' : 'Remove'}Draw`);
+    };
+    const sendUndoOffer = (offer: boolean) => {
+      sendMessage(`Game#${gameId} ${offer ? 'Request' : 'Remove'}Undo`);
+    };
+    const doResign = () => {
+      sendMessage(`Game#${gameId} Resign`);
+    };
+    return {
+      onTimeout,
+      onClickTile,
+      onMakeMove,
+      goToPly,
+      sendDrawOffer,
+      sendUndoOffer,
+      doResign,
+    };
   }, [
     setGame,
     boardMode,
     game.actualGame.currentPlayer,
     game.actualGame.gameState.type,
+    gameId,
+    sendMessage,
     observed,
     sendMoveMessage,
   ]);
@@ -386,25 +404,19 @@ export function PlayedGame({
   const BoardComponent =
     boardType === '2d' ? Board2D : boardType === '3d' ? Board3D : BoardNinja;
 
-  const doResign = useMemo(() => {
-    return boardMode.type === 'remote'
-      ? () => {
-          sendMessage(`Game#${gameId} Resign`);
-        }
-      : undefined;
-  }, [gameId, sendMessage, boardMode.type]);
-
   return (
     <div className="w-full grow flex flex-col">
       <BoardComponent
         game={game}
-        setGame={setGame}
         playerInfo={playerInfo}
         mode={boardMode}
         callbacks={currentCallbacks}
-        drawProps={drawProps}
-        undoProps={undoProps}
-        doResign={doResign}
+        hasUndoOffer={
+          boardMode.type === 'remote' ? gameInfo.undoOffer : undefined
+        }
+        hasDrawOffer={
+          boardMode.type === 'remote' ? gameInfo.drawOffer : undefined
+        }
       />
       <GameOverDialog game={game} playerInfo={playerInfo} gameId={gameId} />
     </div>

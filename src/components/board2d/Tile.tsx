@@ -48,7 +48,8 @@ export function Tile({
     game.plyIndex === null &&
     game.actualGame.gameState.type === 'win' &&
     game.actualGame.gameState.reason === 'road' &&
-    !!game.actualGame.gameState.road?.some((coord) => coordEquals(coord, pos));
+    game.actualGame.gameState.road?.some((coord) => coordEquals(coord, pos)) ===
+      true;
 
   const isHover = interactive && data.hoverable;
 

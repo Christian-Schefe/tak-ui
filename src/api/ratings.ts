@@ -11,6 +11,8 @@ const RatingSchema = z.object({
   participation_rating: z.number().nullable(),
 });
 
+type RatingResponse = z.infer<typeof RatingSchema>;
+
 export function useRatings(playerNames: string[]) {
   return useQueries({
     queries: playerNames.map((playerName) => ({
@@ -42,9 +44,13 @@ export function useRatings(playerNames: string[]) {
       },
     })),
     combine: (results) => {
-      return {
-        data: results.map((result) => result.data),
-      };
+      const result: Record<string, RatingResponse | undefined> = {};
+      results.forEach((res) => {
+        if (res.data) {
+          result[res.data.name] = res.data;
+        }
+      });
+      return result;
     },
   });
 }

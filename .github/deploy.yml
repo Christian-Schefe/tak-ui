@@ -1,0 +1,49 @@
+name: Deploy Vite App
+
+on:
+  push:
+    branches:
+      - main # change if needed
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Install Bun
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+
+      # Install deps & build
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Vite app
+        run: bun run build
+
+      # Copy build to server
+      - name: Deploy via SSH
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: 'dist/*'
+          target: '/app/dist'
+
+      # Run remote shell commands
+      - name: Run remote commands
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /app
+            docker compose down
+            docker compose up -d

@@ -168,7 +168,7 @@ export function doMove(game: Game, move: Move, now?: Date) {
   now ??= new Date();
   const timeRemaining = checkTimeout(game, now);
   const err = canDoMove(game, move, now);
-  if (err) {
+  if (err !== null) {
     throw new Error(`Invalid move: ${err}`);
   }
 
@@ -197,7 +197,7 @@ export function doMove(game: Game, move: Move, now?: Date) {
     );
   }
 
-  if (game.clock && game.settings.clock && timeRemaining) {
+  if (game.clock && game.settings.clock && timeRemaining !== null) {
     const move = Math.floor(game.history.length / 2) + 1;
     const extraGain =
       game.settings.clock.extra && move === game.settings.clock.extra.move

@@ -39,7 +39,7 @@ export function placePiece(
   variant: PieceVariant,
 ): MoveRecord {
   const err = canPlacePiece(board, pos);
-  if (err) {
+  if (err !== null) {
     throw new Error(`Cannot place: ${err}`);
   }
 
@@ -107,7 +107,7 @@ export function movePiece(
   player: Player,
 ): MoveRecord {
   const err = canMovePiece(board, from, dir, drops, player);
-  if (err) {
+  if (err !== null) {
     throw new Error(`Cannot move: ${err}`);
   }
   const take = drops.reduce((acc, drop) => acc + drop, 0);

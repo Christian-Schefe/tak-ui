@@ -70,7 +70,7 @@ export function checkTimeout(ui: GameUI) {
 
 export function canDoMove(ui: GameUI, move: Move): boolean {
   const err = game.canDoMove(ui.actualGame, move);
-  if (err) {
+  if (err !== null) {
     return false;
   }
   return true;
@@ -150,7 +150,7 @@ export function addToPartialMove(ui: GameUI, pos: Coord): Move | null {
   addToPartialMoveHelper(ui, pos);
   const partialMove = partialMoveToMove(ui.partialMove);
 
-  if (partialMove?.complete) {
+  if (partialMove?.complete === true) {
     doMove(ui, partialMove.move);
     return partialMove.move;
   }
@@ -381,7 +381,9 @@ export function onGameUpdate(ui: GameUI) {
   if ((ui.plyIndex ?? ui.actualGame.history.length) >= 1) {
     const lastMove =
       ui.actualGame.history[
-        ui.plyIndex ? ui.plyIndex - 1 : ui.actualGame.history.length - 1
+        ui.plyIndex !== null
+          ? ui.plyIndex - 1
+          : ui.actualGame.history.length - 1
       ];
     if (lastMove.type === 'place') {
       ui.tiles[lastMove.pos.y][lastMove.pos.x].lastMove = true;

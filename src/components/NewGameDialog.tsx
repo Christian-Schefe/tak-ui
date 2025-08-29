@@ -58,7 +58,7 @@ export function NewGameDialog({
 
   const defaultPieces = defaultReserve(boardSize);
 
-  const valid = !!time;
+  const valid = time !== null && time > 0;
 
   const onClickCreate = () => {
     if (!valid) return;
@@ -90,7 +90,7 @@ export function NewGameDialog({
               data={colorData}
               value={color}
               onChange={(v) => {
-                if (!v) return;
+                if (v === null) return;
                 setColor(v as 'W' | 'B' | 'A');
               }}
             />
@@ -99,7 +99,7 @@ export function NewGameDialog({
               data={boardSizeData}
               value={boardSize.toString()}
               onChange={(v) => {
-                if (!v) return;
+                if (v === null) return;
                 setBoardSize(parseInt(v));
               }}
             />
@@ -162,10 +162,7 @@ export function NewGameDialog({
               data={gameType}
               value={gameTypeValue}
               onChange={(v) => {
-                if (
-                  !v ||
-                  (v !== 'normal' && v !== 'unrated' && v !== 'tournament')
-                )
+                if (v !== 'normal' && v !== 'unrated' && v !== 'tournament')
                   return;
                 setGameTypeValue(v);
               }}
@@ -175,7 +172,7 @@ export function NewGameDialog({
               data={komiData}
               value={halfKomi.toString()}
               onChange={(v) => {
-                if (!v) return;
+                if (v === null) return;
                 setHalfKomi(parseInt(v));
               }}
             />

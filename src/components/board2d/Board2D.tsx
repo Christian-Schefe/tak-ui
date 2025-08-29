@@ -11,12 +11,11 @@ import { History } from './History';
 
 export function Board2D({
   game,
-  setGame,
   playerInfo,
   callbacks,
   mode,
-  drawProps,
-  doResign,
+  hasDrawOffer,
+  hasUndoOffer,
 }: BoardProps) {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const { themeParams } = useSettings();
@@ -105,14 +104,10 @@ export function Board2D({
         </div>
         <History
           game={game}
-          onClick={(plyIndex) => {
-            setGame((draft) => {
-              ui.setPlyIndex(draft, plyIndex);
-            });
-          }}
-          hasDrawOffer={drawProps?.hasDrawOffer}
-          sendDrawOffer={drawProps?.sendDrawOffer}
-          doResign={doResign}
+          hasDrawOffer={hasDrawOffer}
+          hasUndoOffer={hasUndoOffer}
+          callbacks={callbacks}
+          mode={mode}
         />
       </div>
     </div>

@@ -21,7 +21,8 @@ import { SpectateDialog } from '../components/SpectateDialog';
 import { useAuth, useWSAPI } from '../authHooks';
 import { ReadyState } from 'react-use-websocket';
 import { NewGameDialog } from '../components/NewGameDialog';
-import { useGameData } from '../gameDataHooks';
+import { useSeekList } from '../features/seeks';
+import { useGamesList } from '../features/gameList';
 
 export const Route = createFileRoute('/_app')({
   component: RouteComponent,
@@ -41,7 +42,9 @@ function RouteComponent() {
 
   const { readyState } = useWSAPI();
 
-  const { seeks, games } = useGameData();
+  const seeks = useSeekList();
+  const games = useGamesList();
+
   const { user } = useAuth();
 
   const navElements = (
@@ -75,14 +78,17 @@ function RouteComponent() {
         <p className="group-hover:underline">Seeks</p>
         <Badge
           color={
-            seeks.some(
-              (s) => s.opponent && user && s.opponent === user.username,
+            Object.values(seeks).some(
+              (s) =>
+                s.opponent !== undefined &&
+                user !== null &&
+                s.opponent === user.username,
             )
               ? 'red'
               : 'gray'
           }
         >
-          {seeks.length.toString()}
+          {Object.values(seeks).length.toString()}
         </Badge>
       </button>
       <button

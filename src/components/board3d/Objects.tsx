@@ -227,6 +227,9 @@ export const Piece: FC<{
   useBeforeRender(() => {
     const targetPos = computeTargetPos(curData.current);
     const targetRot = computeTargetRotation(curData.current);
+    const targetScale = curData.current.deleted
+      ? new Vector3(0, 0, 0)
+      : new Vector3(1, 1, 1);
     setActualTransform((prev) => ({
       pos: Vector3.Lerp(prev.pos, targetPos, 0.15).add(
         targetPos
@@ -235,7 +238,7 @@ export const Piece: FC<{
           .scale(Math.min(Vector3.Distance(targetPos, prev.pos), 0.03)),
       ),
       rot: Quaternion.Slerp(prev.rot, targetRot, 0.15),
-      scale: Vector3.Lerp(prev.scale, new Vector3(1, 1, 1), 0.25),
+      scale: Vector3.Lerp(prev.scale, targetScale, 0.25),
     }));
   });
 

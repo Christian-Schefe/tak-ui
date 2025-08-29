@@ -14,6 +14,7 @@ import { Board3D } from '../../../components/board3d/Board3D';
 import { GameOverDialog } from '../../../components/GameOverDialog';
 import { BoardNinja } from '../../../components/boardNinja/BoardNinja';
 import { useMemo, useRef } from 'react';
+import type { GameCallbacks } from '../../../components/board';
 
 export const Route = createFileRoute('/_app/_authenticated/scratch')({
   component: RouteComponent,
@@ -57,7 +58,27 @@ function RouteComponent() {
         ui.checkTimeout(draft);
       });
     };
-    return { onTimeout, onClickTile, onMakeMove };
+    const goToPly = (index: number) => {
+      setGame((draft) => {
+        ui.setPlyIndex(draft, index);
+      });
+    };
+    const callbacks: GameCallbacks = {
+      onTimeout,
+      onClickTile,
+      onMakeMove,
+      goToPly,
+      sendDrawOffer: () => {
+        void 0;
+      },
+      sendUndoOffer: () => {
+        void 0;
+      },
+      doResign: () => {
+        void 0;
+      },
+    };
+    return callbacks;
   }, [setGame]);
 
   const currentCallbacks = useRef(gameCallbacks);
@@ -72,7 +93,6 @@ function RouteComponent() {
     <div className="w-full grow flex flex-col">
       <BoardComponent
         game={game}
-        setGame={setGame}
         playerInfo={playerInfo}
         callbacks={currentCallbacks}
         mode={{ type: 'local' }}

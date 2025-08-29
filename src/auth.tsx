@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendToken = useCallback(() => {
     const token = localStorage.getItem('auth-token');
-    if (token) {
+    if (token !== null) {
       console.log('Found auth token:', token);
       sendMessage(`Login ${token}`);
       console.log('Sent login message');
@@ -165,10 +165,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [sendMessage]);
 
   useEffect(() => {
-    if (!lastMessage?.data) return;
+    if (lastMessage === null) return;
     msgToString(lastMessage)
       .then((msg) => {
-        if (!msg) return;
+        if (msg === null) return;
         console.log('Received WebSocket message:', msg);
         const userMatch = /Welcome (.+)!/.exec(msg);
         if (msg === 'NOK') {

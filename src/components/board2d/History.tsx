@@ -4,54 +4,35 @@ import { moveToString } from '../../packages/tak-core/move';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useSettings } from '../../settings';
 import { useEffect, useRef } from 'react';
-import { FaFlag, FaHandshake, FaHandshakeSlash } from 'react-icons/fa';
-import { useUpdate } from 'react-use';
+import { FaFlag, FaHandshake, FaUndo } from 'react-icons/fa';
 import { gameResultToString } from '../../packages/tak-core/game';
+import { useGameHistory } from '../../features/history';
+import { useGameOffer } from '../../features/gameOffers';
+import type { BoardMode, GameCallbacks } from '../board';
 
 export function History({
   game,
+  mode,
   hasDrawOffer,
-  onClick,
-  sendDrawOffer,
-  doResign,
+  hasUndoOffer,
+  callbacks,
 }: {
   game: GameUI;
+  mode: BoardMode;
   hasDrawOffer?: boolean;
-  onClick: (plyIndex: number) => void;
-  sendDrawOffer?: (offer: boolean) => void;
-  doResign?: () => void;
+  hasUndoOffer?: boolean;
+  callbacks: React.RefObject<GameCallbacks>;
 }) {
   const { themeParams } = useSettings();
 
-  const hasOfferedDraw = useRef(false);
-  const update = useUpdate();
+  const {
+    hasOfferedDraw,
+    hasOfferedUndo,
+    setHasOfferedDraw,
+    setHasOfferedUndo,
+  } = useGameOffer(mode.type === 'local' ? '' : mode.gameId, callbacks);
 
-  const setHasOfferedDraw = (value: boolean) => {
-    hasOfferedDraw.current = value;
-    sendDrawOffer?.(value);
-    update();
-    console.log('Set draw offer to', value);
-  };
-
-  const perChunk = 2; // items per chunk
-
-  const result = game.actualGame.history.reduce<(MoveRecord | undefined)[][]>(
-    (resultArray, item, index) => {
-      const chunkIndex = Math.floor(index / perChunk);
-
-      if (!resultArray[chunkIndex]) {
-        resultArray[chunkIndex] = [];
-      }
-
-      resultArray[chunkIndex].push(item);
-
-      return resultArray;
-    },
-    [],
-  );
-  if (result.length === 0) {
-    result.push([undefined, undefined]);
-  }
+  const result = useGameHistory(game);
 
   const makeHistoryItem = (index: number, player: Player, move: MoveRecord) => {
     const colors =
@@ -75,9 +56,9 @@ export function History({
               (game.plyIndex === null &&
                 game.actualGame.history.length === index)
             ) {
-              onClick(index - 1);
+              callbacks.current.goToPly(index - 1);
             } else {
-              onClick(index);
+              callbacks.current.goToPly(index);
             }
           }}
         >
@@ -87,7 +68,7 @@ export function History({
     );
   };
 
-  const rows = result.map(([whiteMove, blackMove], index) => (
+  const rows = result.map(({ white: whiteMove, black: blackMove }, index) => (
     <div key={`move-${index.toString()}`} className="flex gap-2 p-1 font-mono">
       <div className="w-8">{index + 1}.</div>
       {whiteMove ? makeHistoryItem(index * 2 + 1, 'white', whiteMove) : null}
@@ -126,50 +107,49 @@ export function History({
       className="flex flex-col rounded-md p-2 m-2 justify-center lg:ml-4 lg:w-72 lg:h-128"
       style={{ color: themeParams.text, backgroundColor: themeParams.board1 }}
     >
-      <div className="flex gap-2">
-        {sendDrawOffer &&
-          (!hasOfferedDraw.current || hasDrawOffer ? (
-            <FaHandshake
-              className={`m-2 ${hasDrawOffer ? 'hover:outline-3 outline-2' : 'hover:outline-2'} rounded-md p-1 cursor-pointer`}
-              size={32}
-              style={{
-                color: themeParams.text,
-                outlineColor: themeParams.text,
-                backgroundColor: hasDrawOffer
-                  ? themeParams.highlight
-                  : undefined,
-              }}
-              onClick={() => {
-                setHasOfferedDraw(true);
-              }}
-            />
-          ) : (
-            <FaHandshakeSlash
+      {mode.type === 'remote' && (
+        <div className="flex gap-2">
+          {hasUndoOffer !== undefined && (
+            <FaUndo
               className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
-              size={32}
               style={{
-                color: themeParams.text,
-                outlineColor: themeParams.text,
+                color: hasUndoOffer
+                  ? themeParams.piece1.background
+                  : hasOfferedUndo
+                    ? themeParams.piece2.background
+                    : themeParams.text,
               }}
+              size={32}
               onClick={() => {
-                setHasOfferedDraw(false);
+                setHasOfferedUndo(!hasOfferedUndo);
               }}
             />
-          ))}
-        {doResign && (
+          )}
+          {hasDrawOffer !== undefined && (
+            <FaHandshake
+              className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
+              style={{
+                color: hasDrawOffer
+                  ? themeParams.piece1.background
+                  : hasOfferedDraw
+                    ? themeParams.piece2.background
+                    : themeParams.text,
+              }}
+              size={32}
+              onClick={() => {
+                setHasOfferedDraw(!hasOfferedDraw);
+              }}
+            />
+          )}
           <FaFlag
             className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
             size={32}
-            style={{
-              color: themeParams.text,
-              outlineColor: themeParams.text,
-            }}
             onClick={() => {
-              doResign();
+              callbacks.current.doResign();
             }}
           />
-        )}
-      </div>
+        </div>
+      )}
       <ScrollArea
         viewportRef={viewport}
         className="grow"

@@ -12,7 +12,8 @@ import { Table, Board, Tile, Piece, VariantButton } from './Objects';
 import type { BoardProps } from '../board';
 import { coordToString } from '../../packages/tak-core/coord';
 import envTexture from '../../assets/766-hdri-skies-com.env';
-import { Clock, PlayerInfoPanel } from './Clock';
+import { GameInfoDrawer } from '../classic/GameInfoDrawer';
+import { ChatDrawer } from '../classic/ChatDrawer';
 
 export interface EnvConfig {
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
@@ -24,6 +25,8 @@ export const Board3D: FC<BoardProps> = ({
   playerInfo,
   callbacks,
   mode,
+  hasDrawOffer,
+  hasUndoOffer,
 }) => {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const canvasContainer = useRef<HTMLDivElement | null>(null);
@@ -76,10 +79,6 @@ export const Board3D: FC<BoardProps> = ({
     }
   }, []);
 
-  const onTimeout = useCallback(() => {
-    callbacks.current.onTimeout();
-  }, [callbacks]);
-
   const onClickTile = useCallback(
     (pos: Coord) => {
       callbacks.current.onClickTile(pos, variant);
@@ -93,129 +92,121 @@ export const Board3D: FC<BoardProps> = ({
     mode.type === 'local';
 
   return (
-    <div className="fixed top-0 bottom-0 left-0 right-0" ref={canvasContainer}>
-      <Engine
-        antialias
-        canvasId="babylon-js"
-        width={dimensions.width}
-        height={dimensions.height}
-        style={{
-          width: dimensions.width,
-          height: dimensions.height,
-        }}
-        adaptToDeviceRatio
-        renderOptions={{
-          whenVisibleOnly: true,
-        }}
-      >
-        <Scene environmentIntensity={1}>
-          <cubeTexture
-            ref={cubeTextureCallback}
-            name="cubeTexture"
-            rootUrl={envTexture as string}
-            createPolynomials={true}
-            format={undefined}
-            prefiltered={true}
-          />
-
-          <Skybox rootUrl={'/Standard-Cube-Map/skies'} size={1000} />
-
-          <arcRotateCamera
-            name="camera1"
-            alpha={-Math.PI / 2}
-            beta={Math.PI / 4}
-            radius={10}
-            target={target}
-            lockedTarget={target}
-            allowUpsideDown={false}
-            upperBetaLimit={Math.PI / 2 - 0.01}
-            lowerRadiusLimit={5}
-            upperRadiusLimit={100}
-          />
-          <hemisphericLight
-            name="light1"
-            intensity={1}
-            direction={new Vector3(0, 1, 0)}
-          />
-
-          {tileCoords.map((pos) => (
-            <Tile
-              key={coordToString(pos)}
-              tile={game.tiles[pos.y][pos.x]}
-              pos={pos}
-              cubeTextureRef={cubeTextureRef}
-              interactive={areTilesInteractive}
-              onClick={onClickTile}
+    <>
+      <div className="fixed inset-0" ref={canvasContainer}>
+        <Engine
+          antialias
+          canvasId="babylon-js"
+          width={dimensions.width}
+          height={dimensions.height}
+          style={{
+            width: dimensions.width,
+            height: dimensions.height,
+          }}
+          adaptToDeviceRatio
+          renderOptions={{
+            whenVisibleOnly: true,
+          }}
+        >
+          <Scene environmentIntensity={1}>
+            <cubeTexture
+              ref={cubeTextureCallback}
+              name="cubeTexture"
+              rootUrl={envTexture as string}
+              createPolynomials={true}
+              format={undefined}
+              prefiltered={true}
             />
-          ))}
-          {pieceIds.map((id) => (
-            <Piece
-              key={id}
-              game={game}
-              id={id}
-              cubeTextureRef={cubeTextureRef}
-            />
-          ))}
-          <Clock
-            game={game}
-            pos={new Vector3(size / 2 - size, 0, size / 2)}
-            cubeTextureRef={cubeTextureRef}
-            onTimeout={onTimeout}
-            player="white"
-          />
-          <PlayerInfoPanel
-            position={new Vector3(size / 2 - size, 0.3, size / 2 + 0.5)}
-            username={playerInfo.white.username}
-            rating={playerInfo.white.rating}
-          />
-          <Clock
-            game={game}
-            pos={new Vector3(size / 2 + size, 0, size / 2)}
-            cubeTextureRef={cubeTextureRef}
-            onTimeout={onTimeout}
-            player="black"
-          />
-          <PlayerInfoPanel
-            position={new Vector3(size / 2 + size, 0.3, size / 2 + 0.5)}
-            username={playerInfo.black.username}
-            rating={playerInfo.black.rating}
-          />
-          <Board size={size} cubeTextureRef={cubeTextureRef} />
-          <Table size={size} cubeTextureRef={cubeTextureRef} />
 
-          {mode.type !== 'spectator' && (
-            <>
-              <VariantButton
-                variant="flat"
-                currentVariant={variant}
-                position={new Vector3(-1 + size / 2, -0.2, -1)}
+            <Skybox rootUrl={'/Standard-Cube-Map/skies'} size={1000} />
+
+            <arcRotateCamera
+              name="camera1"
+              alpha={-Math.PI / 2}
+              beta={Math.PI / 4}
+              radius={10}
+              target={target}
+              lockedTarget={target}
+              allowUpsideDown={false}
+              upperBetaLimit={Math.PI / 2 - 0.01}
+              lowerRadiusLimit={5}
+              upperRadiusLimit={100}
+            />
+            <hemisphericLight
+              name="light1"
+              intensity={1}
+              direction={new Vector3(0, 1, 0)}
+            />
+
+            {tileCoords.map((pos) => (
+              <Tile
+                key={coordToString(pos)}
+                tile={game.tiles[pos.y][pos.x]}
+                pos={pos}
                 cubeTextureRef={cubeTextureRef}
-                onClick={() => {
-                  setVariant('flat');
-                }}
+                interactive={areTilesInteractive}
+                onClick={onClickTile}
               />
-              <VariantButton
-                variant="standing"
-                currentVariant={variant}
-                position={new Vector3(0 + size / 2, -0.2, -1)}
+            ))}
+            {pieceIds.map((id) => (
+              <Piece
+                key={id}
+                game={game}
+                id={id}
                 cubeTextureRef={cubeTextureRef}
-                onClick={() => {
-                  setVariant('standing');
-                }}
               />
-              <VariantButton
-                variant="capstone"
-                currentVariant={variant}
-                cubeTextureRef={cubeTextureRef}
-                position={new Vector3(1 + size / 2, -0.2, -1)}
-                onClick={() => {
-                  setVariant('capstone');
-                }}
-              />
-            </>
-          )}
-        </Scene>
-      </Engine>
-    </div>
+            ))}
+
+            <Board size={size} cubeTextureRef={cubeTextureRef} />
+            <Table size={size} cubeTextureRef={cubeTextureRef} />
+
+            {mode.type !== 'spectator' && (
+              <>
+                <VariantButton
+                  variant="flat"
+                  currentVariant={variant}
+                  position={new Vector3(-1 + size / 2, -0.2, -1)}
+                  cubeTextureRef={cubeTextureRef}
+                  onClick={() => {
+                    setVariant('flat');
+                  }}
+                />
+                <VariantButton
+                  variant="standing"
+                  currentVariant={variant}
+                  position={new Vector3(0 + size / 2, -0.2, -1)}
+                  cubeTextureRef={cubeTextureRef}
+                  onClick={() => {
+                    setVariant('standing');
+                  }}
+                />
+                <VariantButton
+                  variant="capstone"
+                  currentVariant={variant}
+                  cubeTextureRef={cubeTextureRef}
+                  position={new Vector3(1 + size / 2, -0.2, -1)}
+                  onClick={() => {
+                    setVariant('capstone');
+                  }}
+                />
+              </>
+            )}
+          </Scene>
+        </Engine>
+      </div>
+      <div className="w-full grow flex">
+        <GameInfoDrawer
+          gameId={mode.type === 'local' ? undefined : mode.gameId}
+          game={game}
+          playerInfo={playerInfo}
+          hasDrawOffer={hasDrawOffer}
+          hasUndoOffer={hasUndoOffer}
+          showResign={mode.type === 'remote'}
+          callbacks={callbacks}
+        />
+        <div className="w-0 grow pointer-events-none"></div>
+        <ChatDrawer gameId={mode.type === 'local' ? undefined : mode.gameId} />
+      </div>
+    </>
   );
 };

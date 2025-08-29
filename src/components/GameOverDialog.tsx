@@ -71,7 +71,7 @@ export function GameOverDialog({
             })()}
           </div>
           <div className="flex flex-col gap-4">
-            {gameId && (
+            {gameId !== undefined && (
               <CopyButton value={gameId}>
                 {({ copy, copied }) => (
                   <Button

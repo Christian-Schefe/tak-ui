@@ -5,6 +5,7 @@ import { useGameData } from '../../gameDataHooks';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ChatEntry } from '../../gameData';
 import { useAuth, useWSAPI } from '../../authHooks';
+import { useGameListState } from '../../features/gameList';
 
 const mapChatEntries = (entry: ChatEntry[]) =>
   entry.map((e) => ({
@@ -25,7 +26,9 @@ const globalId = '$global';
 
 export function ChatDrawer({ gameId }: { gameId?: string }) {
   const [isSideOpen, { toggle: toggleSide }] = useDisclosure(true);
-  const { chats, games, removedGames } = useGameData();
+  const { chats } = useGameData();
+  const games = useGameListState((state) => state.games);
+  const removedGames = useGameListState((state) => state.removedGames);
   const { sendMessage } = useWSAPI();
   const { user } = useAuth();
 
@@ -38,8 +41,9 @@ export function ChatDrawer({ gameId }: { gameId?: string }) {
       [globalId]: { type: 'global', id: globalId, label: 'Global' },
     };
     const entry =
-      games.find((g) => g.id.toString() === gameId) ??
-      removedGames.find((g) => g.id.toString() === gameId);
+      gameId !== undefined
+        ? (games[gameId] ?? removedGames[gameId])
+        : undefined;
     if (entry) {
       if (user?.username === entry.white) {
         shownTabs[`$priv:${entry.black}`] = {
@@ -118,7 +122,11 @@ export function ChatDrawer({ gameId }: { gameId?: string }) {
   return (
     <div
       className="flex flex-col relative"
-      style={{ width: isSideOpen ? '16rem' : '0', transition: 'width 0.2s' }}
+      style={{
+        width: isSideOpen ? '16rem' : '0',
+        transition: 'width 0.2s',
+        backgroundColor: 'var(--mantine-color-body)',
+      }}
     >
       <Transition
         mounted={isSideOpen}

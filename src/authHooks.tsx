@@ -65,7 +65,7 @@ export function useWSListener(
     addOnMessageListener(id, (msg) => {
       msgToString(msg)
         .then((text) => {
-          if (!text) return;
+          if (text === null) return;
           onMessageRef.current?.({ text, timestamp: new Date() });
         })
         .catch((err: unknown) => {
