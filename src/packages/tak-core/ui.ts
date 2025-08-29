@@ -1,4 +1,12 @@
-import type { Coord, Direction, Game, Move, PieceVariant, Player } from '.';
+import type {
+  Coord,
+  Direction,
+  Game,
+  Move,
+  PieceId,
+  PieceVariant,
+  Player,
+} from '.';
 import { isValidCoord } from './board';
 import { coordEquals, dirFromAdjacent, offsetCoord } from './coord';
 import { current, isDraft } from 'immer';
@@ -27,8 +35,8 @@ export interface UITile {
 export interface GameUI {
   actualGame: Game;
   plyIndex: number | null;
-  pieces: UIPiece[];
-  priorityPieces: number[];
+  pieces: Record<PieceId, UIPiece | undefined>;
+  priorityPieces: string[];
   tiles: UITile[][];
   partialMove: {
     take: number;
@@ -45,7 +53,7 @@ export function boardSize(ui: GameUI): number {
 export function newGameUI(game: Game): GameUI {
   const gameUI: GameUI = {
     actualGame: game,
-    pieces: [],
+    pieces: {},
     tiles: [],
     partialMove: null,
     priorityPieces: [],
@@ -237,7 +245,7 @@ function addToPartialMoveHelper(ui: GameUI, pos: Coord) {
   }
 }
 
-function getLastMovePiecesInOrder(game: Game): number[] {
+function getLastMovePiecesInOrder(game: Game): string[] {
   if (game.history.length === 0) return [];
   const lastMove = game.history[game.history.length - 1];
   if (lastMove.type === 'place') {
@@ -317,13 +325,17 @@ export function onGameUpdate(ui: GameUI) {
     }
   }
 
-  ui.pieces = ui.pieces
-    .filter((piece) => !piece.deleted)
-    .map((piece) => ({
-      ...piece,
-      deleted: true,
-    }));
+  const oldPieces = ui.pieces;
+  ui.pieces = {};
   ui.tiles = [];
+  for (const piece of Object.keys(oldPieces) as PieceId[]) {
+    if (oldPieces[piece]?.deleted === false) {
+      ui.pieces[piece] = {
+        ...oldPieces[piece],
+        deleted: true,
+      };
+    }
+  }
 
   const isOngoing = ui.actualGame.gameState.type === 'ongoing';
   const isNotHistoric = ui.plyIndex === null;

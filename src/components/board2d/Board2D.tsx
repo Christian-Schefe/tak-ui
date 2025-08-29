@@ -8,6 +8,7 @@ import { useSettings } from '../../settings';
 import { VariantSelector } from './VariantSelector';
 import { PlayerInfoBar } from './PlayerInfoBar';
 import { History } from './History';
+import { usePieceIds } from '../../packages/tak-core/hooks';
 
 export function Board2D({
   game,
@@ -22,8 +23,7 @@ export function Board2D({
 
   const size = ui.boardSize(game);
   const tileCoords = [];
-  const pieceIds = Array.from(game.pieces.keys());
-  pieceIds.sort((a, b) => a - b);
+  const pieceIds = usePieceIds(game);
 
   for (let y = size - 1; y >= 0; y--) {
     for (let x = 0; x < size; x++) {

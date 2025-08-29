@@ -7,7 +7,6 @@ import {
   type PieceVariant,
 } from '../../../packages/tak-core';
 import { newGame } from '../../../packages/tak-core/game';
-import { defaultReserve } from '../../../packages/tak-core/piece';
 import { useSettings } from '../../../settings';
 import { Board2D } from '../../../components/board2d/Board2D';
 import { Board3D } from '../../../components/board3d/Board3D';
@@ -26,7 +25,7 @@ function RouteComponent() {
       newGame({
         boardSize: 6,
         halfKomi: 4,
-        reserve: defaultReserve(7),
+        reserve: { capstones: 6, pieces: 27 },
       }),
     ),
   );

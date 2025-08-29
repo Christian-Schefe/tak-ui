@@ -43,8 +43,10 @@ export type MoveRecord =
       smash: boolean;
     };
 
+export type PieceId = `${'W' | 'B'}/${'P' | 'C'}/${string}`;
+
 export interface TrackedPiece {
-  id: number;
+  id: PieceId;
   player: Player;
 }
 
@@ -56,7 +58,7 @@ export interface Stack {
 export interface Board {
   size: number;
   pieces: (Stack | null)[][];
-  _idCounter: number;
+  _idCounter: Record<Player, { pieces: number; capstones: number }>;
 }
 
 export interface Reserve {

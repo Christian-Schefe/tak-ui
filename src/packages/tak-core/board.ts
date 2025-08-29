@@ -6,6 +6,7 @@ import type {
   PieceVariant,
   Player,
   Stack,
+  TrackedPiece,
 } from '.';
 import { coordEquals, coordToString, newCoord, offsetCoord } from './coord';
 
@@ -20,7 +21,10 @@ export function newBoard(size: number): Board {
       { length: size },
       () => Array(size).fill(null) as (Stack | null)[],
     ),
-    _idCounter: 0,
+    _idCounter: {
+      white: { pieces: 0, capstones: 0 },
+      black: { pieces: 0, capstones: 0 },
+    },
   };
 }
 
@@ -43,12 +47,19 @@ export function placePiece(
     throw new Error(`Cannot place: ${err}`);
   }
 
-  const trackedPiece = {
-    id: board._idCounter,
+  const idCounter = board._idCounter[player];
+
+  const trackedPiece: TrackedPiece = {
+    id: `${player === 'white' ? 'W' : 'B'}/${variant === 'capstone' ? 'C' : 'P'}/${(variant ===
+    'capstone'
+      ? idCounter.capstones
+      : idCounter.pieces
+    ).toString()}`,
     player,
   };
 
-  board._idCounter++;
+  if (variant === 'capstone') idCounter.capstones++;
+  else idCounter.pieces++;
 
   const stack: Stack = {
     variant,

@@ -14,6 +14,7 @@ import { coordToString } from '../../packages/tak-core/coord';
 import envTexture from '../../assets/766-hdri-skies-com.env';
 import { GameInfoDrawer } from '../classic/GameInfoDrawer';
 import { ChatDrawer } from '../classic/ChatDrawer';
+import { usePieceIdsWithReserve } from '../../packages/tak-core/hooks';
 
 export interface EnvConfig {
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
@@ -54,8 +55,7 @@ export const Board3D: FC<BoardProps> = ({
   }, [canvasContainer]);
 
   const tileCoords = [];
-  const pieceIds = Array.from(game.pieces.keys());
-  pieceIds.sort((a, b) => a - b);
+  const pieceIds = usePieceIdsWithReserve(game);
 
   for (let y = size - 1; y >= 0; y--) {
     for (let x = 0; x < size; x++) {
@@ -128,7 +128,7 @@ export const Board3D: FC<BoardProps> = ({
               target={target}
               lockedTarget={target}
               allowUpsideDown={false}
-              upperBetaLimit={Math.PI / 2 - 0.01}
+              upperBetaLimit={Math.PI / 2 + 0.3}
               lowerRadiusLimit={5}
               upperRadiusLimit={100}
             />

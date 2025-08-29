@@ -6,7 +6,7 @@ import {
   Vector3,
 } from '@babylonjs/core';
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
-import type { Coord, PieceVariant } from '../../packages/tak-core';
+import type { Coord, PieceId, PieceVariant } from '../../packages/tak-core';
 import type { GameUI, UIPiece, UITile } from '../../packages/tak-core/ui';
 import { useBeforeRender, useClick, useHover } from 'react-babylonjs';
 import woodColor from '../../assets/textures/wood_0066/wood_0066_color_1k.jpg';
@@ -62,7 +62,9 @@ export const Board: FC<{
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
 }> = ({ size, cubeTextureRef }) => {
   return (
+    // Key hack to recreate mesh when size changes
     <PBRBox
+      key={size}
       name="board"
       width={size + 0.5}
       height={0.2}
@@ -183,10 +185,53 @@ export const Tile: FC<{
 
 export const Piece: FC<{
   game: GameUI;
-  id: number;
+  id: PieceId;
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
 }> = ({ game, id, cubeTextureRef }) => {
-  const data = game.pieces[id];
+  const pieceData = game.pieces[id];
+  const data = useMemo(() => {
+    if (pieceData && !pieceData.deleted) return pieceData;
+    const [idPlayer, idVariant, idNum] = id.split('/');
+    const player = idPlayer === 'W' ? 'white' : 'black';
+    const variant = idVariant === 'C' ? 'capstone' : 'flat';
+    const num = parseInt(idNum);
+    const boardSize = game.actualGame.settings.boardSize;
+    const reserve = game.actualGame.settings.reserve;
+    const revNum =
+      (variant === 'capstone'
+        ? reserve.capstones - num
+        : reserve.pieces - num) - 1;
+    const pieceStackSlots =
+      variant === 'capstone'
+        ? reserve.capstones
+        : Math.max(1, boardSize - reserve.capstones);
+    const piecesPerStack = Math.ceil(
+      (variant === 'capstone' ? reserve.capstones : reserve.pieces) /
+        pieceStackSlots,
+    );
+    const stack = pieceStackSlots - 1 - Math.floor(revNum / piecesPerStack);
+    const height = revNum % piecesPerStack;
+    const defaultPiece: UIPiece = {
+      buriedPieceCount: 0,
+      canBePicked: false,
+      deleted: false,
+      height,
+      isFloating: false,
+      player,
+      pos: {
+        x: player === 'white' ? -1.5 : boardSize + 0.5,
+        y: stack + (variant === 'capstone' ? 0 : reserve.capstones),
+      },
+      variant,
+      zPriority: null,
+    };
+    return defaultPiece;
+  }, [
+    pieceData,
+    id,
+    game.actualGame.settings.boardSize,
+    game.actualGame.settings.reserve,
+  ]);
 
   const curData = useRef(data);
   useEffect(() => {
@@ -205,6 +250,7 @@ export const Piece: FC<{
     } else {
       height += pieceSize * 0.5;
     }
+    if (!pieceData) height -= 0.35;
     return new Vector3(data.pos.x + 0.5, height, data.pos.y + 0.5);
   };
 
@@ -227,9 +273,7 @@ export const Piece: FC<{
   useBeforeRender(() => {
     const targetPos = computeTargetPos(curData.current);
     const targetRot = computeTargetRotation(curData.current);
-    const targetScale = curData.current.deleted
-      ? new Vector3(0, 0, 0)
-      : new Vector3(1, 1, 1);
+    const targetScale = new Vector3(1, 1, 1);
     setActualTransform((prev) => ({
       pos: Vector3.Lerp(prev.pos, targetPos, 0.15).add(
         targetPos
