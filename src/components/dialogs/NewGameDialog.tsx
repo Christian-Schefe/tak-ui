@@ -7,9 +7,9 @@ import {
   Stack,
   TextInput,
 } from '@mantine/core';
-import { useWSAPI } from '../authHooks';
+import { useWSAPI } from '../../authHooks';
 import { useState } from 'react';
-import { defaultReserve } from '../packages/tak-core/piece';
+import { defaultReserve } from '../../packages/tak-core/piece';
 
 export function NewGameDialog({
   isOpen,

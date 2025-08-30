@@ -5,8 +5,13 @@ import {
   Switch,
   useMantineColorScheme,
 } from '@mantine/core';
-import { themes, type ColorTheme } from '../assets/2d-themes';
-import { useSettings, type BoardType, type Ninja2DThemes } from '../settings';
+import { themes, type ColorTheme } from '../../assets/2d-themes';
+import {
+  useSettings,
+  type BoardType,
+  type Ninja2DThemes,
+} from '../../settings';
+import { FaCog } from 'react-icons/fa';
 
 interface ThemeOption {
   value: ColorTheme;
@@ -60,7 +65,17 @@ export function SettingsDialog({
   }));
 
   return (
-    <Modal opened={isOpen} onClose={onClose} centered title="Settings">
+    <Modal
+      opened={isOpen}
+      onClose={onClose}
+      centered
+      title={
+        <div className="flex gap-2 items-center font-bold text-lg">
+          <FaCog size={20} />
+          Settings
+        </div>
+      }
+    >
       <p className="mt-4">Color Scheme</p>
       <Select
         value={colorScheme}

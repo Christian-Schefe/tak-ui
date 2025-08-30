@@ -8,6 +8,7 @@ import { useInterval } from 'react-use';
 import { useGameOfferState } from './features/gameOffers';
 import { removeAllSeeks, useUpdateSeeks } from './features/seeks';
 import { removeAllGames, useUpdateGames } from './features/gameList';
+import { useUpdatePlayers } from './features/players';
 
 export interface GameDataState {
   gameInfo: Record<string, GameInfoEntry | undefined>;
@@ -136,6 +137,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
 
   useUpdateSeeks();
   useUpdateGames();
+  useUpdatePlayers();
 
   const onMsg = useCallback(
     (msg: TextMessage) => {

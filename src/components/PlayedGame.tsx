@@ -19,7 +19,7 @@ import { useImmer } from 'use-immer';
 import { useAuth, useWSAPI } from '../authHooks';
 import { useSettings } from '../settings';
 import { Board2D } from './board2d/Board2D';
-import { GameOverDialog } from './GameOverDialog';
+import { GameOverDialog } from './dialogs/GameOverDialog';
 import { notifications } from '@mantine/notifications';
 import { useGameData } from '../gameDataHooks';
 import { ReadyState } from 'react-use-websocket';

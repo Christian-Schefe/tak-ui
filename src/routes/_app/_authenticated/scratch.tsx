@@ -10,7 +10,7 @@ import { newGame } from '../../../packages/tak-core/game';
 import { useSettings } from '../../../settings';
 import { Board2D } from '../../../components/board2d/Board2D';
 import { Board3D } from '../../../components/board3d/Board3D';
-import { GameOverDialog } from '../../../components/GameOverDialog';
+import { GameOverDialog } from '../../../components/dialogs/GameOverDialog';
 import { BoardNinja } from '../../../components/boardNinja/BoardNinja';
 import { useMemo, useRef } from 'react';
 import type { GameCallbacks } from '../../../components/board';

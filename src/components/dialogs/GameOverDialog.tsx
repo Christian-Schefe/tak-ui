@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { GameUI } from '../packages/tak-core/ui';
-import type { PlayerInfo } from './board';
-import type { Player } from '../packages/tak-core';
+import type { GameUI } from '../../packages/tak-core/ui';
+import type { PlayerInfo } from '../board';
+import type { Player } from '../../packages/tak-core';
 import { Affix, Modal, Button, Transition, CopyButton } from '@mantine/core';
 import { FaCopy, FaLink } from 'react-icons/fa';
-import { gameToPTN } from '../packages/tak-core/ptn';
+import { gameToPTN } from '../../packages/tak-core/ptn';
 
 export function GameOverDialog({
   game,

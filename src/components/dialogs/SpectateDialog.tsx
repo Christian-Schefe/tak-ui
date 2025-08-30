@@ -1,8 +1,9 @@
 import { Modal, ScrollArea, Table } from '@mantine/core';
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
-import { useRatings } from '../api/ratings';
-import { useGamesList } from '../features/gameList';
+import { useRatings } from '../../api/ratings';
+import { useGamesList } from '../../features/gameList';
+import { FaEye } from 'react-icons/fa';
 
 export function SpectateDialog({
   isOpen,
@@ -59,7 +60,18 @@ export function SpectateDialog({
   ));
 
   return (
-    <Modal opened={isOpen} onClose={onClose} title="Games" size="lg" centered>
+    <Modal
+      opened={isOpen}
+      onClose={onClose}
+      title={
+        <div className="flex gap-2 items-center font-bold text-lg">
+          <FaEye size={20} />
+          Watch Game
+        </div>
+      }
+      size="lg"
+      centered
+    >
       <ScrollArea>
         <Table highlightOnHover>
           <Table.Thead>

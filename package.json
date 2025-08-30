@@ -13,6 +13,7 @@
     "@babylonjs/core": "^8.22.2",
     "@babylonjs/gui": "^8.22.2",
     "@mantine/core": "^8.2.5",
+    "@mantine/form": "^8.2.7",
     "@mantine/hooks": "^8.2.5",
     "@mantine/notifications": "^8.2.5",
     "@tailwindcss/vite": "^4.1.11",

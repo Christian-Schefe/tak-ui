@@ -1,7 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
-import { useAuth } from '../authHooks';
-import { router } from '../router';
+import { MainPage } from '.';
 
 export const Route = createFileRoute('/login')({
   validateSearch: (search) => ({
@@ -18,90 +16,7 @@ export const Route = createFileRoute('/login')({
 });
 
 function LoginComponent() {
-  const { isAuthenticated, login } = useAuth();
   const { redirect } = Route.useSearch();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    console.log('Checking authentication status...', isAuthenticated);
-    if (isAuthenticated) {
-      void router.navigate({ to: redirect });
-    }
-  }, [isAuthenticated, redirect]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    try {
-      login(username, password);
-    } catch {
-      setError('Invalid username or password');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-md w-full space-y-4 p-6 border rounded-lg"
-      >
-        <h1 className="text-2xl font-bold text-center">Sign In</h1>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-
-        <div>
-          <label htmlFor="username" className="block text-sm font-medium mb-1">
-            Username
-          </label>
-          <input
-            id="username"
-            autoComplete="username"
-            type="text"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium mb-1">
-            Password
-          </label>
-          <input
-            id="password"
-            autoComplete="current-password"
-            type="password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? 'Signing in...' : 'Sign In'}
-        </button>
-      </form>
-    </div>
-  );
+  return <MainPage loginRedirect={redirect} />;
 }

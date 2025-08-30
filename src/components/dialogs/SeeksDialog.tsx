@@ -1,9 +1,10 @@
 import { Modal, ScrollArea, Table, Tooltip } from '@mantine/core';
 import { useNavigate } from '@tanstack/react-router';
-import { useAuth, useWSAPI } from '../authHooks';
+import { useAuth, useWSAPI } from '../../authHooks';
 import { useMemo } from 'react';
-import { useRatings } from '../api/ratings';
-import { useSeekList } from '../features/seeks';
+import { useRatings } from '../../api/ratings';
+import { useSeekList } from '../../features/seeks';
+import { LuSwords } from 'react-icons/lu';
 
 export function SeeksDialog({
   isOpen,
@@ -89,7 +90,18 @@ export function SeeksDialog({
     ));
 
   return (
-    <Modal opened={isOpen} onClose={onClose} title="Seeks" size="lg" centered>
+    <Modal
+      opened={isOpen}
+      onClose={onClose}
+      title={
+        <div className="flex gap-2 items-center font-bold text-lg">
+          <LuSwords size={20} />
+          Join Game
+        </div>
+      }
+      size="lg"
+      centered
+    >
       <ScrollArea>
         <Table highlightOnHover>
           <Table.Thead>

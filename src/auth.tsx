@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const triggerClose = useCallback(() => {
     const ws = getWebSocket();
     if (ws) {
-      ws.close();
+      ws.close(1000, 'logout');
     }
   }, [getWebSocket]);
 
@@ -160,6 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sendMessage(`Login ${token}`);
       console.log('Sent login message');
     } else {
+      console.log('No auth token found');
       setIsLoading(false);
     }
   }, [sendMessage]);
@@ -193,11 +194,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(
     (username: string, password: string) => {
-      console.log('Logging in as:', username);
+      console.log('Logging in as:', username, password);
       localStorage.setItem('auth-token', `${username} ${password}`);
-      sendMessage(`Login ${username} ${password}`);
+      sendToken();
     },
-    [sendMessage],
+    [sendToken],
   );
 
   const logout = useCallback(() => {
@@ -206,7 +207,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(false);
     localStorage.removeItem('auth-token');
     void router.navigate({ to: '/' });
-  }, []);
+    triggerClose();
+  }, [triggerClose]);
 
   const authContextMemo = useMemo<AuthState>(() => {
     return { isAuthenticated, user, login, logout };

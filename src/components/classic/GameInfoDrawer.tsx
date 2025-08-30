@@ -50,14 +50,15 @@ export function GameInfoDrawer({
       className="flex flex-col relative"
       style={{
         width: isSideOpen ? '16rem' : '0',
-        transition: 'width 0.2s',
+        transition: 'width 0.25s',
         backgroundColor: 'var(--mantine-color-body)',
       }}
     >
       <Transition
         mounted={isSideOpen}
         transition="fade"
-        duration={200}
+        duration={150}
+        enterDelay={100}
         timingFunction="ease"
       >
         {(transitionStyles) => (

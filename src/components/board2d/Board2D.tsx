@@ -9,6 +9,7 @@ import { VariantSelector } from './VariantSelector';
 import { PlayerInfoBar } from './PlayerInfoBar';
 import { History } from './History';
 import { usePieceIds } from '../../packages/tak-core/hooks';
+import { ChatDrawer } from '../classic/ChatDrawer';
 
 export function Board2D({
   game,
@@ -50,10 +51,17 @@ export function Board2D({
 
   return (
     <div
-      className="w-full grow flex flex-col lg:justify-center"
+      className="w-full grow flex lg:justify-center"
       style={{ backgroundColor: themeParams.background }}
     >
-      <div className="w-full flex flex-col max-w-4xl lg:max-w-6xl mx-auto lg:flex-row lg:items-center">
+      <div className="w-full flex flex-col max-w-4xl lg:max-w-6xl mx-auto lg:flex-row lg:items-center mt-12 lg:mt-0">
+        <History
+          game={game}
+          hasDrawOffer={hasDrawOffer}
+          hasUndoOffer={hasUndoOffer}
+          callbacks={callbacks}
+          mode={mode}
+        />
         <div className="grow">
           <PlayerInfoBar
             player="white"
@@ -102,14 +110,8 @@ export function Board2D({
             onTimeout={onTimeout}
           />
         </div>
-        <History
-          game={game}
-          hasDrawOffer={hasDrawOffer}
-          hasUndoOffer={hasUndoOffer}
-          callbacks={callbacks}
-          mode={mode}
-        />
       </div>
+      <ChatDrawer gameId={mode.type === 'local' ? undefined : mode.gameId} />
     </div>
   );
 }
