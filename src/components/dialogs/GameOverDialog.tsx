@@ -3,7 +3,7 @@ import type { GameUI } from '../../packages/tak-core/ui';
 import type { PlayerInfo } from '../board';
 import type { Player } from '../../packages/tak-core';
 import { Affix, Modal, Button, Transition, CopyButton } from '@mantine/core';
-import { FaCopy, FaLink } from 'react-icons/fa';
+import { FaCopy, FaLink, FaTrophy } from 'react-icons/fa6';
 import { gameToPTN } from '../../packages/tak-core/ptn';
 
 export function GameOverDialog({
@@ -45,7 +45,12 @@ export function GameOverDialog({
         onClose={() => {
           setIsOpen(false);
         }}
-        title="Game Over"
+        title={
+          <div className="flex gap-2 items-center font-bold text-lg">
+            <FaTrophy size={20} />
+            Game Over
+          </div>
+        }
         centered
       >
         <div className="flex flex-col gap-4 items-center">

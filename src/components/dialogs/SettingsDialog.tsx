@@ -11,7 +11,7 @@ import {
   type BoardType,
   type Ninja2DThemes,
 } from '../../settings';
-import { FaCog } from 'react-icons/fa';
+import { FaGear } from 'react-icons/fa6';
 
 interface ThemeOption {
   value: ColorTheme;
@@ -71,7 +71,7 @@ export function SettingsDialog({
       centered
       title={
         <div className="flex gap-2 items-center font-bold text-lg">
-          <FaCog size={20} />
+          <FaGear size={20} />
           Settings
         </div>
       }

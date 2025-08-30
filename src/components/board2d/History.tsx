@@ -4,7 +4,7 @@ import { moveToString } from '../../packages/tak-core/move';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useSettings } from '../../settings';
 import { useEffect, useRef } from 'react';
-import { FaFlag, FaHandshake, FaUndo } from 'react-icons/fa';
+import { FaArrowRotateLeft, FaFlag, FaHandshake } from 'react-icons/fa6';
 import { gameResultToString } from '../../packages/tak-core/game';
 import { useGameHistory } from '../../features/history';
 import { useGameOffer } from '../../features/gameOffers';
@@ -110,7 +110,7 @@ export function History({
       {mode.type === 'remote' && (
         <div className="flex gap-2">
           {hasUndoOffer !== undefined && (
-            <FaUndo
+            <FaArrowRotateLeft
               className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
               style={{
                 color: hasUndoOffer

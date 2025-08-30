@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import { useRatings } from '../../api/ratings';
 import { useGamesList } from '../../features/gameList';
-import { FaEye } from 'react-icons/fa';
+import { FaEye } from 'react-icons/fa6';
 
 export function SpectateDialog({
   isOpen,

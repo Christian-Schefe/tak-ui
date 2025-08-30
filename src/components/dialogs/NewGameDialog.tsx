@@ -10,6 +10,7 @@ import {
 import { useWSAPI } from '../../authHooks';
 import { useState } from 'react';
 import { defaultReserve } from '../../packages/tak-core/piece';
+import { FaPlus } from 'react-icons/fa6';
 
 export function NewGameDialog({
   isOpen,
@@ -70,7 +71,12 @@ export function NewGameDialog({
     <Modal
       opened={isOpen}
       onClose={onClose}
-      title="New Game"
+      title={
+        <div className="flex gap-2 items-center font-bold text-lg">
+          <FaPlus size={20} />
+          New Game
+        </div>
+      }
       size="lg"
       centered
     >

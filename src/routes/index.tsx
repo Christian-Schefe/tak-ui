@@ -12,7 +12,7 @@ import {
   TextInput,
   PasswordInput,
 } from '@mantine/core';
-import { FaArrowRight, FaDiscord, FaGraduationCap } from 'react-icons/fa';
+import { FaArrowRight, FaDiscord, FaGraduationCap } from 'react-icons/fa6';
 import bgImage from '../assets/parallax.jpg';
 import { useAuth } from '../authHooks';
 import { useEvents } from '../api/events';
@@ -158,12 +158,14 @@ export function MainPage({ loginRedirect }: { loginRedirect?: string }) {
                   placeholder="Username"
                   label="Username"
                   key="username"
+                  autoComplete="username"
                   {...form.getInputProps('username')}
                 />
                 <PasswordInput
                   placeholder="Password"
                   label="Password"
                   key="password"
+                  autoComplete="current-password"
                   {...form.getInputProps('password')}
                 />
                 <Group justify="end">

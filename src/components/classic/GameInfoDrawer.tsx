@@ -8,8 +8,8 @@ import {
   FaArrowRight,
   FaFlag,
   FaHandshake,
-  FaUndo,
-} from 'react-icons/fa';
+  FaArrowRotateLeft,
+} from 'react-icons/fa6';
 import { Button, Transition, useMantineTheme } from '@mantine/core';
 import { History } from './History';
 import { useGameOffer } from '../../features/gameOffers';
@@ -86,7 +86,7 @@ export function GameInfoDrawer({
             />
             <div className="flex justify-center">
               {hasUndoOffer !== undefined && (
-                <FaUndo
+                <FaArrowRotateLeft
                   className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
                   style={{
                     color: hasUndoOffer

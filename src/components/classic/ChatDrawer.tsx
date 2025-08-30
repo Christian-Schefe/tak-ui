@@ -1,5 +1,5 @@
 import { useDisclosure } from '@mantine/hooks';
-import { FaArrowLeft, FaArrowRight, FaPaperPlane } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaPaperPlane } from 'react-icons/fa6';
 import { Button, Input, ScrollArea, Select, Transition } from '@mantine/core';
 import { useGameData } from '../../gameDataHooks';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';

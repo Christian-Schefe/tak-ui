@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAuthenticatedRouteImport } from './routes/_app/_authenticated'
 import { Route as AppAuthenticatedScratchRouteImport } from './routes/_app/_authenticated/scratch'
 import { Route as AppAuthenticatedPlayRouteImport } from './routes/_app/_authenticated/play'
+import { Route as AppAuthenticatedHistoryRouteImport } from './routes/_app/_authenticated/history'
 import { Route as AppAuthenticatedSpectateGameIdRouteImport } from './routes/_app/_authenticated/spectate.$gameId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -45,6 +46,11 @@ const AppAuthenticatedPlayRoute = AppAuthenticatedPlayRouteImport.update({
   path: '/play',
   getParentRoute: () => AppAuthenticatedRoute,
 } as any)
+const AppAuthenticatedHistoryRoute = AppAuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppAuthenticatedRoute,
+} as any)
 const AppAuthenticatedSpectateGameIdRoute =
   AppAuthenticatedSpectateGameIdRouteImport.update({
     id: '/spectate/$gameId',
@@ -55,6 +61,7 @@ const AppAuthenticatedSpectateGameIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/history': typeof AppAuthenticatedHistoryRoute
   '/play': typeof AppAuthenticatedPlayRoute
   '/scratch': typeof AppAuthenticatedScratchRoute
   '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/history': typeof AppAuthenticatedHistoryRoute
   '/play': typeof AppAuthenticatedPlayRoute
   '/scratch': typeof AppAuthenticatedScratchRoute
   '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
@@ -72,21 +80,29 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/_authenticated': typeof AppAuthenticatedRouteWithChildren
+  '/_app/_authenticated/history': typeof AppAuthenticatedHistoryRoute
   '/_app/_authenticated/play': typeof AppAuthenticatedPlayRoute
   '/_app/_authenticated/scratch': typeof AppAuthenticatedScratchRoute
   '/_app/_authenticated/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/play' | '/scratch' | '/spectate/$gameId'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/history'
+    | '/play'
+    | '/scratch'
+    | '/spectate/$gameId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/play' | '/scratch' | '/spectate/$gameId'
+  to: '/' | '/login' | '/history' | '/play' | '/scratch' | '/spectate/$gameId'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/login'
     | '/_app/_authenticated'
+    | '/_app/_authenticated/history'
     | '/_app/_authenticated/play'
     | '/_app/_authenticated/scratch'
     | '/_app/_authenticated/spectate/$gameId'
@@ -142,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthenticatedPlayRouteImport
       parentRoute: typeof AppAuthenticatedRoute
     }
+    '/_app/_authenticated/history': {
+      id: '/_app/_authenticated/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AppAuthenticatedHistoryRouteImport
+      parentRoute: typeof AppAuthenticatedRoute
+    }
     '/_app/_authenticated/spectate/$gameId': {
       id: '/_app/_authenticated/spectate/$gameId'
       path: '/spectate/$gameId'
@@ -153,12 +176,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAuthenticatedRouteChildren {
+  AppAuthenticatedHistoryRoute: typeof AppAuthenticatedHistoryRoute
   AppAuthenticatedPlayRoute: typeof AppAuthenticatedPlayRoute
   AppAuthenticatedScratchRoute: typeof AppAuthenticatedScratchRoute
   AppAuthenticatedSpectateGameIdRoute: typeof AppAuthenticatedSpectateGameIdRoute
 }
 
 const AppAuthenticatedRouteChildren: AppAuthenticatedRouteChildren = {
+  AppAuthenticatedHistoryRoute: AppAuthenticatedHistoryRoute,
   AppAuthenticatedPlayRoute: AppAuthenticatedPlayRoute,
   AppAuthenticatedScratchRoute: AppAuthenticatedScratchRoute,
   AppAuthenticatedSpectateGameIdRoute: AppAuthenticatedSpectateGameIdRoute,

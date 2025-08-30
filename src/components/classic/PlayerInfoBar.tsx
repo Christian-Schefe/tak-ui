@@ -1,4 +1,4 @@
-import { FaRegUser, FaUser } from 'react-icons/fa';
+import { FaRegUser, FaUser } from 'react-icons/fa6';
 import type { Player } from '../../packages/tak-core';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { Clock } from './Clock';

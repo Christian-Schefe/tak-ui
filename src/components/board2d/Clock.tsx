@@ -4,7 +4,7 @@ import { getTimeRemaining, isClockActive } from '../../packages/tak-core/game';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useMemo, useState } from 'react';
 import { useSettings } from '../../settings';
-import { FaClock } from 'react-icons/fa';
+import { FaClock } from 'react-icons/fa6';
 
 export function Clock({
   game,

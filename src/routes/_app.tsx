@@ -1,18 +1,19 @@
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { SettingsDialog } from '../components/dialogs/SettingsDialog';
 import {
-  FaCog,
+  FaChessBoard,
   FaEye,
   FaGamepad,
-  FaHome,
   FaPlus,
   FaUsers,
-} from 'react-icons/fa';
-import { LuLogOut, LuSwords } from 'react-icons/lu';
-import { MdWifi, MdWifiOff } from 'react-icons/md';
+  FaGear,
+  FaHouse,
+  FaDatabase,
+} from 'react-icons/fa6';
+import { LuLogOut, LuSwords, LuWifi, LuWifiOff } from 'react-icons/lu';
 
 import { AppShell, Badge, Burger, Group } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
@@ -25,15 +26,16 @@ import { useSeekList } from '../features/seeks';
 import { useGamesList } from '../features/gameList';
 import { usePlayerList } from '../features/players';
 import { PlayersDialog } from '../components/dialogs/PlayersDialog';
+import { useRatings } from '../api/ratings';
 
 export const Route = createFileRoute('/_app')({
   component: RouteComponent,
 });
 
 const linkClassName =
-  'flex gap-[6px] items-center py-2 px-3 [&.active]:font-bold hover:underline';
+  'flex gap-[6px] items-center py-2 px-3 hover:underline text-nowrap';
 const buttonClassName =
-  'flex gap-[6px] items-center py-2 px-3 cursor-pointer group';
+  'flex gap-[6px] items-center py-2 px-3 cursor-pointer group text-nowrap';
 
 function RouteComponent() {
   const [opened, { toggle, close }] = useDisclosure();
@@ -50,73 +52,143 @@ function RouteComponent() {
   const players = usePlayerList();
 
   const { user, logout } = useAuth();
+  const ratings = useRatings(
+    user?.username !== undefined ? [user.username] : [],
+  );
+  const rating =
+    user?.username !== undefined ? ratings[user.username] : undefined;
+
+  const linkHome = (
+    <Link to="/" className={linkClassName} onClick={close}>
+      <FaHouse size={18} />
+      Home
+    </Link>
+  );
+
+  const linkScratch = (
+    <Link to="/scratch" className={linkClassName} onClick={close}>
+      <FaChessBoard size={18} />
+      Scratch Board
+    </Link>
+  );
+
+  const buttonNewGame = (
+    <button
+      className={buttonClassName}
+      onClick={() => {
+        setNewGameOpen(true);
+        close();
+      }}
+    >
+      <FaPlus size={18} />
+      <p className="group-hover:underline">New Game</p>
+    </button>
+  );
+
+  const linkPlay = (
+    <Link to="/play" className={linkClassName} onClick={close}>
+      <FaGamepad size={18} />
+      Play
+    </Link>
+  );
+
+  const buttonSeeks = (
+    <button
+      className={buttonClassName}
+      onClick={() => {
+        setSeeksOpen(true);
+        close();
+      }}
+    >
+      <LuSwords size={18} />
+      <p className="group-hover:underline">Join Game</p>
+      <Badge
+        color={
+          Object.values(seeks).some(
+            (s) =>
+              s.opponent !== undefined &&
+              user !== null &&
+              s.opponent === user.username,
+          )
+            ? 'red'
+            : 'gray'
+        }
+      >
+        {Object.values(seeks).length.toString()}
+      </Badge>
+    </button>
+  );
+
+  const buttonGames = (
+    <button
+      className={buttonClassName}
+      onClick={() => {
+        setSpectateOpen(true);
+        close();
+      }}
+    >
+      <FaEye size={18} />
+      <p className="group-hover:underline">Watch</p>
+      <Badge color="gray">{games.length.toString()}</Badge>
+    </button>
+  );
+
+  const buttonPlayers = (
+    <button
+      className={buttonClassName}
+      onClick={() => {
+        setPlayersOpen(true);
+        close();
+      }}
+    >
+      <FaUsers size={18} />
+      <p className="group-hover:underline">Online</p>
+      <Badge color="gray">{players.length.toString()}</Badge>
+    </button>
+  );
+
+  const linkGameDatabase = (
+    <Link to="/history" className={linkClassName} onClick={close}>
+      <FaDatabase size={18} />
+      Games Database
+    </Link>
+  );
+
+  const elements = [
+    { key: 'home', el: linkHome, important: false },
+    { key: 'scratch', el: linkScratch, important: false },
+    { key: 'newGame', el: buttonNewGame, important: true },
+    { key: 'play', el: linkPlay, important: true },
+    { key: 'seeks', el: buttonSeeks, important: true },
+    { key: 'games', el: buttonGames, important: true },
+    { key: 'players', el: buttonPlayers, important: false },
+    { key: 'history', el: linkGameDatabase, important: false },
+  ];
 
   const navElements = (
     <>
-      <Link to="/" className={linkClassName} onClick={close}>
-        <FaHome size={18} />
-        Home
-      </Link>
-      <button
-        className={buttonClassName}
-        onClick={() => {
-          setNewGameOpen(true);
-          close();
-        }}
-      >
-        <FaPlus size={18} />
-        <p className="group-hover:underline">New Game</p>
-      </button>
-      <Link to="/play" className={linkClassName} onClick={close}>
-        <FaGamepad size={18} />
-        Play
-      </Link>
-      <button
-        className={buttonClassName}
-        onClick={() => {
-          setSeeksOpen(true);
-          close();
-        }}
-      >
-        <LuSwords size={18} />
-        <p className="group-hover:underline">Join Game</p>
-        <Badge
-          color={
-            Object.values(seeks).some(
-              (s) =>
-                s.opponent !== undefined &&
-                user !== null &&
-                s.opponent === user.username,
-            )
-              ? 'red'
-              : 'gray'
-          }
-        >
-          {Object.values(seeks).length.toString()}
-        </Badge>
-      </button>
-      <button
-        className={buttonClassName}
-        onClick={() => {
-          setSpectateOpen(true);
-          close();
-        }}
-      >
-        <FaEye size={18} />
-        <p className="group-hover:underline">Watch</p>
-        <Badge color="gray">{games.length.toString()}</Badge>
-      </button>
-      <button
-        className={buttonClassName}
-        onClick={() => {
-          setPlayersOpen(true);
-          close();
-        }}
-      >
-        <FaUsers size={18} />
-        <p className="group-hover:underline">Online</p>
-        <Badge color="gray">{players.length.toString()}</Badge>
-      </button>
+      {elements.map(({ el, key }) => (
+        <Fragment key={key}>{el}</Fragment>
+      ))}
+    </>
+  );
+
+  const importantNavElements = (
+    <>
+      {elements
+        .filter(({ important }) => important)
+        .map(({ el, key }) => (
+          <Fragment key={key}>{el}</Fragment>
+        ))}
+    </>
+  );
+  const notImportantNavElements = (
+    <>
+      {elements
+        .filter(({ important }) => !important)
+        .map(({ el, key }) => (
+          <Fragment key={key}>{el}</Fragment>
+        ))}
     </>
   );
 
@@ -160,7 +232,7 @@ function RouteComponent() {
       header={{ height: 40 }}
       navbar={{
         width: 0,
-        breakpoint: 'md',
+        breakpoint: 'xl',
         collapsed: { mobile: !opened },
       }}
     >
@@ -169,15 +241,21 @@ function RouteComponent() {
           className="flex items-center justify-start"
           style={{ height: '40px' }}
         >
-          <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" />
-          <Group visibleFrom="md" gap={'xs'}>
+          <Burger opened={opened} onClick={toggle} hiddenFrom="xl" size="sm" />
+          <Group visibleFrom="xl" gap={'xs'} wrap="nowrap">
             {navElements}
           </Group>
-          <div className="grow flex justify-end items-center pr-2">
+          <Group visibleFrom="md" hiddenFrom="xl" gap={'xs'} wrap="nowrap">
+            {importantNavElements}
+          </Group>
+          <div className="grow flex flex-nowrap justify-end items-center pr-2">
+            <p>
+              {user?.username} ({rating?.rating ?? '???'})
+            </p>
             {readyState === ReadyState.OPEN ? (
-              <MdWifi className="mx-2" size={18} />
+              <LuWifi className="mx-2" size={18} />
             ) : (
-              <MdWifiOff className="mx-2" size={18} />
+              <LuWifiOff className="mx-2" size={18} />
             )}
             <button
               className="flex items-center p-2 cursor-pointer"
@@ -185,7 +263,7 @@ function RouteComponent() {
                 setSettingsOpen(true);
               }}
             >
-              <FaCog size={18} />
+              <FaGear size={18} />
             </button>
             <button
               className="flex items-center p-2 cursor-pointer"
@@ -198,6 +276,9 @@ function RouteComponent() {
           </div>
         </div>
       </AppShell.Header>
+      <AppShell.Navbar visibleFrom="md" hiddenFrom="xl">
+        {notImportantNavElements}
+      </AppShell.Navbar>
       <AppShell.Navbar hiddenFrom="md">{navElements}</AppShell.Navbar>
       <AppShell.Main className="flex flex-col">
         <Outlet />
