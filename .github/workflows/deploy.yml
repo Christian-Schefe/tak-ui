@@ -34,8 +34,18 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           rm: true
-          source: 'dist/*'
-          target: '/root/app/dist'
+          source: 'dist'
+          target: '/root/app'
+
+      # Copy config to server
+      - name: Deploy via SSH
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: 'deploy/Caddyfile,deploy/docker-compose.yml'
+          target: '/root/app'
 
       # Run remote shell commands
       - name: Run remote commands
