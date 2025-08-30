@@ -35,7 +35,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           rm: true
           source: 'dist'
-          target: '/root/app'
+          target: '/root/app/dist'
 
       # Copy config to server
       - name: Deploy via SSH
@@ -56,5 +56,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /root/app
-            docker compose down
-            docker compose up -d
+            docker compose -f deploy/docker-compose.yml down
+            docker compose -f deploy/docker-compose.yml up -d

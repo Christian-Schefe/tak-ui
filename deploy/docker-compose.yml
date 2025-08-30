@@ -6,8 +6,8 @@ services:
       - '443:443'
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./dist:/srv/www/dist
-      - ./certs:/certs
+      - ../dist/dist:/srv/www/dist
+      - ../certs:/certs
       - caddy_data:/data
       - caddy_config:/config
     environment:
