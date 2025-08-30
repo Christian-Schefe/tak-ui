@@ -33,8 +33,9 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          rm: true
           source: 'dist/*'
-          target: '/app/dist'
+          target: '/root/app/dist'
 
       # Run remote shell commands
       - name: Run remote commands
@@ -44,6 +45,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /app
+            cd /root/app
             docker compose down
             docker compose up -d
