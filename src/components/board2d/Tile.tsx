@@ -61,6 +61,8 @@ export function Tile({
     colorIndex,
   );
 
+  const opacityTransition = `opacity ${board2dSettings.animationSpeed.toString()}ms ease-in-out`;
+
   return (
     <div
       className={'relative flex items-center justify-center h-full w-full'}
@@ -72,7 +74,7 @@ export function Tile({
       <div
         className="absolute inset-0"
         style={{
-          transition: 'background-color 150ms ease-in-out',
+          transition: `background-color ${board2dSettings.animationSpeed.toString()}ms ease-in-out`,
           backgroundColor: backgroundColor.toString(),
           margin: themeParams.board.spacing,
           borderRadius: themeParams.board.rounded,
@@ -83,7 +85,7 @@ export function Tile({
         style={{
           backgroundColor: themeParams.highlight,
           opacity: data.lastMove ? 1 : 0,
-          transition: 'opacity 150ms ease-in-out',
+          transition: opacityTransition,
           margin: themeParams.board.spacing,
           borderRadius: themeParams.board.rounded,
         }}
@@ -93,7 +95,7 @@ export function Tile({
         style={{
           backgroundColor: themeParams.hover,
           opacity: data.selectable ? 0.8 : 0,
-          transition: 'opacity 150ms ease-in-out',
+          transition: opacityTransition,
           margin: themeParams.board.spacing,
           borderRadius: themeParams.board.rounded,
         }}
@@ -102,7 +104,7 @@ export function Tile({
         className={`absolute inset-0 opacity-0 ${isHover ? 'hover:opacity-100' : ''} ${isRoad ? 'opacity-100' : ''}`}
         style={{
           backgroundColor: themeParams.hover,
-          transition: 'opacity 150ms ease-in-out',
+          transition: opacityTransition,
           margin: themeParams.board.spacing,
           borderRadius: themeParams.board.rounded,
         }}

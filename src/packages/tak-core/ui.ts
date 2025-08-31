@@ -6,6 +6,7 @@ import type {
   PieceId,
   PieceVariant,
   Player,
+  Reserve,
 } from '.';
 import { isValidCoord } from './board';
 import { coordEquals, dirFromAdjacent, offsetCoord } from './coord';
@@ -44,6 +45,7 @@ export interface GameUI {
     pos: Coord;
     dir: Direction | null;
   } | null;
+  shownReserves: Record<Player, Reserve> | null;
 }
 
 export function boardSize(ui: GameUI): number {
@@ -58,6 +60,7 @@ export function newGameUI(game: Game): GameUI {
     partialMove: null,
     priorityPieces: [],
     plyIndex: null,
+    shownReserves: null,
   };
   onGameUpdate(gameUI);
   return gameUI;
@@ -285,6 +288,11 @@ export function onGameUpdate(ui: GameUI) {
     game.doMove(shownGame, partialMove.move);
     ui.priorityPieces = getLastMovePiecesInOrder(shownGame);
   }
+
+  ui.shownReserves = {
+    white: { ...shownGame.reserves.white },
+    black: { ...shownGame.reserves.black },
+  };
 
   const floatingData = ui.partialMove && {
     pos: ui.partialMove.dir

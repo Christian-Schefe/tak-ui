@@ -89,7 +89,7 @@ export const Board3D: FC<BoardProps> = ({
   const areTilesInteractive =
     (mode.type === 'remote' &&
       game.actualGame.currentPlayer === mode.localPlayer) ||
-    mode.type === 'local';
+    (mode.type === 'local' && !mode.review);
 
   return (
     <>

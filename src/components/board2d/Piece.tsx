@@ -3,7 +3,12 @@ import type { GameUI } from '../../packages/tak-core/ui';
 import { useSettings } from '../../settings';
 
 export function Piece({ id, game }: { id: PieceId; game: GameUI }) {
-  const { themeParams } = useSettings();
+  const {
+    themeParams,
+    boardSettings: {
+      board2d: { animationSpeed },
+    },
+  } = useSettings();
 
   const size = ui.boardSize(game);
   const data = game.pieces[id];
@@ -19,7 +24,7 @@ export function Piece({ id, game }: { id: PieceId; game: GameUI }) {
   const height = data.isFloating ? effectiveHeight + 2 : effectiveHeight;
   const isWhite = data.player === 'white';
 
-  const animationSetting = '150ms ease-in-out';
+  const animationSetting = `${animationSpeed.toString()}ms ease-in-out`;
 
   const colors = isWhite ? themeParams.piece1 : themeParams.piece2;
 
@@ -74,8 +79,8 @@ export function Piece({ id, game }: { id: PieceId; game: GameUI }) {
         className="w-full h-full flex items-center justify-center"
         style={{
           animation: data.deleted
-            ? 'scaleOut 150ms ease-out forwards'
-            : 'scaleIn 150ms ease-out forwards',
+            ? `scaleOut ${animationSpeed.toString()}ms ease-out forwards`
+            : `scaleIn ${animationSpeed.toString()}ms ease-out forwards`,
         }}
       >
         <div

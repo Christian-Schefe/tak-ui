@@ -16,7 +16,12 @@ export function VariantSelector({
   player: Player;
   setVariant: (variant: PieceVariant) => void;
 }) {
-  const { themeParams } = useSettings();
+  const {
+    themeParams,
+    boardSettings: {
+      board2d: { animationSpeed },
+    },
+  } = useSettings();
 
   const remaining = game.actualGame.reserves[player];
 
@@ -42,6 +47,8 @@ export function VariantSelector({
     }
   }, [remaining, setVariant, variant, disabledVariants]);
 
+  const opacityTransition = `opacity ${animationSpeed.toString()}ms ease-in-out`;
+
   return (
     <div className="w-full flex p-2 gap-2" style={{ color: themeParams.text }}>
       {pieceVariants.map((v) => {
@@ -61,13 +68,13 @@ export function VariantSelector({
             style={{
               backgroundColor: themeParams.board1,
               opacity: isDisabled ? 0.5 : 1,
-              transition: 'opacity 150ms ease-in-out',
+              transition: opacityTransition,
             }}
           >
             <div
               style={{
                 backgroundColor: themeParams.hover,
-                transition: 'opacity 150ms ease-in-out',
+                transition: opacityTransition,
               }}
               className={`absolute inset-0 rounded-md opacity-0 ${!isDisabled ? 'hover:opacity-100' : ''}`}
             ></div>
@@ -76,7 +83,7 @@ export function VariantSelector({
               style={{
                 backgroundColor: themeParams.highlight,
                 opacity: !isDisabled && variant === v ? 1 : 0,
-                transition: 'opacity 150ms ease-in-out',
+                transition: opacityTransition,
               }}
             ></div>
             <p

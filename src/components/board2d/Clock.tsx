@@ -15,7 +15,12 @@ export function Clock({
   onTimeout: () => void;
   player: Player;
 }) {
-  const { themeParams } = useSettings();
+  const {
+    themeParams,
+    boardSettings: {
+      board2d: { animationSpeed },
+    },
+  } = useSettings();
 
   const [timeRemaining, setTimeRemaining] = useState(
     getTimeRemaining(game.actualGame, player, new Date()),
@@ -55,14 +60,14 @@ export function Clock({
             ? (themeParams.piece1.text ?? themeParams.piece1.border)
             : (themeParams.piece2.text ?? themeParams.piece2.border),
         opacity: isActive ? 1 : 0.5,
-        transition: 'opacity 150ms ease-in-out',
+        transition: `opacity ${animationSpeed.toString()}ms ease-in-out`,
       }}
     >
       <FaClock
         className="w-4 h-4"
         style={{
           opacity: isActive ? 1 : 0.5,
-          transition: 'opacity 150ms ease-in-out',
+          transition: `opacity ${animationSpeed.toString()}ms ease-in-out`,
         }}
       />
       <p className="font-bold font-mono">

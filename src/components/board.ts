@@ -26,6 +26,6 @@ export interface PlayerInfo {
 }
 
 export type BoardMode =
-  | { type: 'local' }
+  | { type: 'local'; review: boolean }
   | { type: 'remote'; localPlayer: Player; gameId: string }
   | { type: 'spectator'; gameId: string };

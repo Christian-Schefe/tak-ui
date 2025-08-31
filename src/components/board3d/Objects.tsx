@@ -44,7 +44,7 @@ export const Table: FC<{
       width={size + 10}
       height={2}
       depth={size + 5}
-      position={new Vector3(size / 2, -1 - 0.2, size / 2)}
+      position={new Vector3(size / 2, -1 - 0.2 - 0.1, size / 2)}
       cubeTextureRef={cubeTextureRef}
       normalTextureUrl={woodNormal as string}
       colorTextureUrl={woodColor as string}
@@ -69,7 +69,7 @@ export const Board: FC<{
       width={size + 0.5}
       height={0.2}
       depth={size + 0.5}
-      position={new Vector3(size / 2, -0.1, size / 2)}
+      position={new Vector3(size / 2, -0.1 - 0.1, size / 2)}
       cubeTextureRef={cubeTextureRef}
       normalTextureUrl={tileNormal as string}
       colorTextureUrl={tileColor as string}
@@ -93,8 +93,13 @@ export const Tile: FC<{
   const isEven = (pos.x + pos.y) % 2 === 0;
   const [isHover, setIsHover] = useState(false);
   const boxRef = useRef<Mesh>(null);
+  const supportsHover = useMemo(
+    () => window.matchMedia('(hover: hover)').matches,
+    [],
+  );
   useHover(
     () => {
+      if (!supportsHover) return;
       setIsHover(true);
     },
     () => {
@@ -102,7 +107,8 @@ export const Tile: FC<{
     },
     boxRef,
   );
-  const isBeingHovered = interactive && isHover && tile.hoverable;
+  const isBeingHovered =
+    supportsHover && interactive && isHover && tile.hoverable;
   const normalColor = isEven
     ? Color3.FromHexString('#888888')
     : Color3.FromHexString('#666666');
@@ -162,7 +168,7 @@ export const Tile: FC<{
       position={
         new Vector3(
           pos.x + 0.5,
-          0.05 + actualAnimationState.height,
+          -0.05 + actualAnimationState.height,
           pos.y + 0.5,
         )
       }
@@ -214,7 +220,7 @@ export const Piece: FC<{
     const defaultPiece: UIPiece = {
       buriedPieceCount: 0,
       canBePicked: false,
-      deleted: false,
+      deleted: true,
       height,
       isFloating: false,
       player,
@@ -242,15 +248,8 @@ export const Piece: FC<{
   const pieceHeight = pieceSize * 0.2;
 
   const computeTargetPos = (data: UIPiece) => {
-    let height = (data.height + 1 + (data.isFloating ? 2 : 0)) * pieceHeight;
-    if (data.variant === 'flat') {
-      height += pieceHeight * 0.5;
-    } else if (data.variant === 'standing') {
-      height += pieceSize * 0.5;
-    } else {
-      height += pieceSize * 0.5;
-    }
-    if (!pieceData) height -= 0.35;
+    let height = (data.height + (data.isFloating ? 2 : 0)) * pieceHeight;
+    if (curData.current.deleted) height -= 0.35;
     return new Vector3(data.pos.x + 0.5, height, data.pos.y + 0.5);
   };
 
@@ -308,7 +307,7 @@ export const Piece: FC<{
       name="piece"
       height={pieceSize}
       diameter={pieceSize * 0.8}
-      position={actualTransform.pos}
+      position={actualTransform.pos.add(new Vector3(0, pieceSize / 2, 0))}
       rotationQuaternion={actualTransform.rot}
       scaling={actualTransform.scale}
       isPickable={false}
@@ -329,7 +328,7 @@ export const Piece: FC<{
       width={pieceSize}
       height={pieceHeight}
       depth={pieceSize}
-      position={actualTransform.pos}
+      position={actualTransform.pos.add(new Vector3(0, pieceHeight / 2, 0))}
       rotationQuaternion={actualTransform.rot}
       scaling={actualTransform.scale}
       isPickable={false}

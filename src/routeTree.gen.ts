@@ -8,94 +8,112 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AppRouteImport } from './routes/_app'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppAuthenticatedRouteImport } from './routes/_app/_authenticated'
-import { Route as AppAuthenticatedScratchRouteImport } from './routes/_app/_authenticated/scratch'
-import { Route as AppAuthenticatedPlayRouteImport } from './routes/_app/_authenticated/play'
-import { Route as AppAuthenticatedHistoryRouteImport } from './routes/_app/_authenticated/history'
-import { Route as AppAuthenticatedSpectateGameIdRouteImport } from './routes/_app/_authenticated/spectate.$gameId'
+import { Route as rootRouteImport } from './routes/__root';
+import { Route as LoginRouteImport } from './routes/login';
+import { Route as AppRouteImport } from './routes/_app';
+import { Route as IndexRouteImport } from './routes/index';
+import { Route as AppAuthenticatedRouteImport } from './routes/_app/_authenticated';
+import { Route as AppAuthenticatedScratchRouteImport } from './routes/_app/_authenticated/scratch';
+import { Route as AppAuthenticatedPlayRouteImport } from './routes/_app/_authenticated/play';
+import { Route as AppAuthenticatedHistoryRouteImport } from './routes/_app/_authenticated/history';
+import { Route as AppAuthenticatedSpectateGameIdRouteImport } from './routes/_app/_authenticated/spectate.$gameId';
+import { Route as AppAuthenticatedGamesGameIdRouteImport } from './routes/_app/_authenticated/games.$gameId';
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AppAuthenticatedRoute = AppAuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 const AppAuthenticatedScratchRoute = AppAuthenticatedScratchRouteImport.update({
   id: '/scratch',
   path: '/scratch',
   getParentRoute: () => AppAuthenticatedRoute,
-} as any)
+} as any);
 const AppAuthenticatedPlayRoute = AppAuthenticatedPlayRouteImport.update({
   id: '/play',
   path: '/play',
   getParentRoute: () => AppAuthenticatedRoute,
-} as any)
+} as any);
 const AppAuthenticatedHistoryRoute = AppAuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
   getParentRoute: () => AppAuthenticatedRoute,
-} as any)
+} as any);
 const AppAuthenticatedSpectateGameIdRoute =
   AppAuthenticatedSpectateGameIdRouteImport.update({
     id: '/spectate/$gameId',
     path: '/spectate/$gameId',
     getParentRoute: () => AppAuthenticatedRoute,
-  } as any)
+  } as any);
+const AppAuthenticatedGamesGameIdRoute =
+  AppAuthenticatedGamesGameIdRouteImport.update({
+    id: '/games/$gameId',
+    path: '/games/$gameId',
+    getParentRoute: () => AppAuthenticatedRoute,
+  } as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/login': typeof LoginRoute
-  '/history': typeof AppAuthenticatedHistoryRoute
-  '/play': typeof AppAuthenticatedPlayRoute
-  '/scratch': typeof AppAuthenticatedScratchRoute
-  '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
+  '/': typeof IndexRoute;
+  '/login': typeof LoginRoute;
+  '/history': typeof AppAuthenticatedHistoryRoute;
+  '/play': typeof AppAuthenticatedPlayRoute;
+  '/scratch': typeof AppAuthenticatedScratchRoute;
+  '/games/$gameId': typeof AppAuthenticatedGamesGameIdRoute;
+  '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/login': typeof LoginRoute
-  '/history': typeof AppAuthenticatedHistoryRoute
-  '/play': typeof AppAuthenticatedPlayRoute
-  '/scratch': typeof AppAuthenticatedScratchRoute
-  '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
+  '/': typeof IndexRoute;
+  '/login': typeof LoginRoute;
+  '/history': typeof AppAuthenticatedHistoryRoute;
+  '/play': typeof AppAuthenticatedPlayRoute;
+  '/scratch': typeof AppAuthenticatedScratchRoute;
+  '/games/$gameId': typeof AppAuthenticatedGamesGameIdRoute;
+  '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/_app': typeof AppRouteWithChildren
-  '/login': typeof LoginRoute
-  '/_app/_authenticated': typeof AppAuthenticatedRouteWithChildren
-  '/_app/_authenticated/history': typeof AppAuthenticatedHistoryRoute
-  '/_app/_authenticated/play': typeof AppAuthenticatedPlayRoute
-  '/_app/_authenticated/scratch': typeof AppAuthenticatedScratchRoute
-  '/_app/_authenticated/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
+  __root__: typeof rootRouteImport;
+  '/': typeof IndexRoute;
+  '/_app': typeof AppRouteWithChildren;
+  '/login': typeof LoginRoute;
+  '/_app/_authenticated': typeof AppAuthenticatedRouteWithChildren;
+  '/_app/_authenticated/history': typeof AppAuthenticatedHistoryRoute;
+  '/_app/_authenticated/play': typeof AppAuthenticatedPlayRoute;
+  '/_app/_authenticated/scratch': typeof AppAuthenticatedScratchRoute;
+  '/_app/_authenticated/games/$gameId': typeof AppAuthenticatedGamesGameIdRoute;
+  '/_app/_authenticated/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
     | '/login'
     | '/history'
     | '/play'
     | '/scratch'
-    | '/spectate/$gameId'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/history' | '/play' | '/scratch' | '/spectate/$gameId'
+    | '/games/$gameId'
+    | '/spectate/$gameId';
+  fileRoutesByTo: FileRoutesByTo;
+  to:
+    | '/'
+    | '/login'
+    | '/history'
+    | '/play'
+    | '/scratch'
+    | '/games/$gameId'
+    | '/spectate/$gameId';
   id:
     | '__root__'
     | '/'
@@ -105,108 +123,118 @@ export interface FileRouteTypes {
     | '/_app/_authenticated/history'
     | '/_app/_authenticated/play'
     | '/_app/_authenticated/scratch'
-    | '/_app/_authenticated/spectate/$gameId'
-  fileRoutesById: FileRoutesById
+    | '/_app/_authenticated/games/$gameId'
+    | '/_app/_authenticated/spectate/$gameId';
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRouteWithChildren
-  LoginRoute: typeof LoginRoute
+  IndexRoute: typeof IndexRoute;
+  AppRoute: typeof AppRouteWithChildren;
+  LoginRoute: typeof LoginRoute;
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/login';
+      path: '/login';
+      fullPath: '/login';
+      preLoaderRoute: typeof LoginRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/_app';
+      path: '';
+      fullPath: '';
+      preLoaderRoute: typeof AppRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/';
+      path: '/';
+      fullPath: '/';
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/_app/_authenticated': {
-      id: '/_app/_authenticated'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AppAuthenticatedRouteImport
-      parentRoute: typeof AppRoute
-    }
+      id: '/_app/_authenticated';
+      path: '';
+      fullPath: '';
+      preLoaderRoute: typeof AppAuthenticatedRouteImport;
+      parentRoute: typeof AppRoute;
+    };
     '/_app/_authenticated/scratch': {
-      id: '/_app/_authenticated/scratch'
-      path: '/scratch'
-      fullPath: '/scratch'
-      preLoaderRoute: typeof AppAuthenticatedScratchRouteImport
-      parentRoute: typeof AppAuthenticatedRoute
-    }
+      id: '/_app/_authenticated/scratch';
+      path: '/scratch';
+      fullPath: '/scratch';
+      preLoaderRoute: typeof AppAuthenticatedScratchRouteImport;
+      parentRoute: typeof AppAuthenticatedRoute;
+    };
     '/_app/_authenticated/play': {
-      id: '/_app/_authenticated/play'
-      path: '/play'
-      fullPath: '/play'
-      preLoaderRoute: typeof AppAuthenticatedPlayRouteImport
-      parentRoute: typeof AppAuthenticatedRoute
-    }
+      id: '/_app/_authenticated/play';
+      path: '/play';
+      fullPath: '/play';
+      preLoaderRoute: typeof AppAuthenticatedPlayRouteImport;
+      parentRoute: typeof AppAuthenticatedRoute;
+    };
     '/_app/_authenticated/history': {
-      id: '/_app/_authenticated/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof AppAuthenticatedHistoryRouteImport
-      parentRoute: typeof AppAuthenticatedRoute
-    }
+      id: '/_app/_authenticated/history';
+      path: '/history';
+      fullPath: '/history';
+      preLoaderRoute: typeof AppAuthenticatedHistoryRouteImport;
+      parentRoute: typeof AppAuthenticatedRoute;
+    };
     '/_app/_authenticated/spectate/$gameId': {
-      id: '/_app/_authenticated/spectate/$gameId'
-      path: '/spectate/$gameId'
-      fullPath: '/spectate/$gameId'
-      preLoaderRoute: typeof AppAuthenticatedSpectateGameIdRouteImport
-      parentRoute: typeof AppAuthenticatedRoute
-    }
+      id: '/_app/_authenticated/spectate/$gameId';
+      path: '/spectate/$gameId';
+      fullPath: '/spectate/$gameId';
+      preLoaderRoute: typeof AppAuthenticatedSpectateGameIdRouteImport;
+      parentRoute: typeof AppAuthenticatedRoute;
+    };
+    '/_app/_authenticated/games/$gameId': {
+      id: '/_app/_authenticated/games/$gameId';
+      path: '/games/$gameId';
+      fullPath: '/games/$gameId';
+      preLoaderRoute: typeof AppAuthenticatedGamesGameIdRouteImport;
+      parentRoute: typeof AppAuthenticatedRoute;
+    };
   }
 }
 
 interface AppAuthenticatedRouteChildren {
-  AppAuthenticatedHistoryRoute: typeof AppAuthenticatedHistoryRoute
-  AppAuthenticatedPlayRoute: typeof AppAuthenticatedPlayRoute
-  AppAuthenticatedScratchRoute: typeof AppAuthenticatedScratchRoute
-  AppAuthenticatedSpectateGameIdRoute: typeof AppAuthenticatedSpectateGameIdRoute
+  AppAuthenticatedHistoryRoute: typeof AppAuthenticatedHistoryRoute;
+  AppAuthenticatedPlayRoute: typeof AppAuthenticatedPlayRoute;
+  AppAuthenticatedScratchRoute: typeof AppAuthenticatedScratchRoute;
+  AppAuthenticatedGamesGameIdRoute: typeof AppAuthenticatedGamesGameIdRoute;
+  AppAuthenticatedSpectateGameIdRoute: typeof AppAuthenticatedSpectateGameIdRoute;
 }
 
 const AppAuthenticatedRouteChildren: AppAuthenticatedRouteChildren = {
   AppAuthenticatedHistoryRoute: AppAuthenticatedHistoryRoute,
   AppAuthenticatedPlayRoute: AppAuthenticatedPlayRoute,
   AppAuthenticatedScratchRoute: AppAuthenticatedScratchRoute,
+  AppAuthenticatedGamesGameIdRoute: AppAuthenticatedGamesGameIdRoute,
   AppAuthenticatedSpectateGameIdRoute: AppAuthenticatedSpectateGameIdRoute,
-}
+};
 
 const AppAuthenticatedRouteWithChildren =
-  AppAuthenticatedRoute._addFileChildren(AppAuthenticatedRouteChildren)
+  AppAuthenticatedRoute._addFileChildren(AppAuthenticatedRouteChildren);
 
 interface AppRouteChildren {
-  AppAuthenticatedRoute: typeof AppAuthenticatedRouteWithChildren
+  AppAuthenticatedRoute: typeof AppAuthenticatedRouteWithChildren;
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAuthenticatedRoute: AppAuthenticatedRouteWithChildren,
-}
+};
 
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();

@@ -57,7 +57,7 @@ export function GameInfoDrawer({
       <Transition
         mounted={isSideOpen}
         transition="fade"
-        duration={150}
+        duration={100}
         enterDelay={100}
         timingFunction="ease"
       >

@@ -1,6 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useGameDatabase } from '../../../api/gameDatabase';
 import {
+  Anchor,
   Loader,
   Pagination,
   ScrollArea,
@@ -24,10 +25,21 @@ function RouteComponent() {
     );
 
   const data: TableData = {
-    head: ['Id', 'Size', 'Komi', 'White', 'Black', 'Result', 'Type'],
+    head: [
+      'Id',
+      'Date',
+      'Size',
+      'Komi',
+      'White',
+      'Black',
+      'Result',
+      'Type',
+      'Game',
+    ],
     body: games.items.map((game) => [
       game.id,
-      game.size,
+      new Date(game.date).toUTCString(),
+      `${game.size.toString()}x${game.size.toString()}`,
       game.komi / 2,
       game.player_white,
       game.player_black,
@@ -37,13 +49,18 @@ function RouteComponent() {
         : game.unrated === 1
           ? 'Unrated'
           : 'Normal',
+      <Anchor key="game" component="div">
+        <Link to="/games/$gameId" params={{ gameId: game.id.toString() }}>
+          View
+        </Link>
+      </Anchor>,
     ]),
   };
   return (
     <div className="w-full flex grow flex-col items-center p-2 gap-2">
       <div className="w-full h-0 grow relative overflow-hidden">
         <ScrollArea className="absolute h-full w-full max-w-5xl mx-auto">
-          <Table data={data} stickyHeader />
+          <Table data={data} stickyHeader highlightOnHover />
         </ScrollArea>
       </div>
       <Pagination

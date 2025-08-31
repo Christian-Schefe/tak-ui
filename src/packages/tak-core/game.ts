@@ -229,7 +229,6 @@ export function doMove(game: Game, move: Move, now?: Date) {
       reason: 'road',
       road,
     };
-    console.log('Road: ', road);
   } else if (isReserveEmpty(game) || isFilled(game.board)) {
     const flatCounts = countFlats(game.board);
     const whiteScore = flatCounts.white * 2;

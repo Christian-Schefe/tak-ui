@@ -14,6 +14,7 @@ import { GameOverDialog } from '../../../components/dialogs/GameOverDialog';
 import { BoardNinja } from '../../../components/boardNinja/BoardNinja';
 import { useMemo, useRef } from 'react';
 import type { GameCallbacks } from '../../../components/board';
+import { getDefaultReserve } from '../../../packages/tak-core/piece';
 
 export const Route = createFileRoute('/_app/_authenticated/scratch')({
   component: RouteComponent,
@@ -25,7 +26,7 @@ function RouteComponent() {
       newGame({
         boardSize: 6,
         halfKomi: 4,
-        reserve: { capstones: 6, pieces: 27 },
+        reserve: getDefaultReserve(6),
       }),
     ),
   );
@@ -94,7 +95,7 @@ function RouteComponent() {
         game={game}
         playerInfo={playerInfo}
         callbacks={currentCallbacks}
-        mode={{ type: 'local' }}
+        mode={{ type: 'local', review: false }}
       />
       <GameOverDialog game={game} playerInfo={playerInfo} />
     </div>

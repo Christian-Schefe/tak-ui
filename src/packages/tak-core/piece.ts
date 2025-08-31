@@ -1,6 +1,6 @@
 import type { Reserve } from '.';
 
-export function defaultReserve(size: number): Reserve {
+export function getDefaultReserve(size: number): Reserve {
   if (size === 3) return { pieces: 10, capstones: 0 };
   if (size === 4) return { pieces: 15, capstones: 0 };
   if (size === 5) return { pieces: 21, capstones: 1 };

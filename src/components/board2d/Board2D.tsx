@@ -9,7 +9,7 @@ import { VariantSelector } from './VariantSelector';
 import { PlayerInfoBar } from './PlayerInfoBar';
 import { History } from './History';
 import { usePieceIds } from '../../packages/tak-core/hooks';
-import { ChatDrawer } from '../classic/ChatDrawer';
+import { Chat } from './Chat';
 
 export function Board2D({
   game,
@@ -35,7 +35,7 @@ export function Board2D({
   const areTilesInteractive =
     ((mode.type === 'remote' &&
       game.actualGame.currentPlayer === mode.localPlayer) ||
-      mode.type === 'local') &&
+      (mode.type === 'local' && !mode.review)) &&
     game.actualGame.gameState.type === 'ongoing';
 
   const onTimeout = useCallback(() => {
@@ -54,15 +54,20 @@ export function Board2D({
       className="w-full grow flex lg:justify-center"
       style={{ backgroundColor: themeParams.background }}
     >
-      <div className="w-full flex flex-col max-w-4xl lg:max-w-6xl mx-auto lg:flex-row lg:items-center mt-12 lg:mt-0">
-        <History
-          game={game}
-          hasDrawOffer={hasDrawOffer}
-          hasUndoOffer={hasUndoOffer}
-          callbacks={callbacks}
-          mode={mode}
-        />
-        <div className="grow">
+      <div className="w-full flex flex-col mx-auto lg:flex-row items-center mt-12 lg:mt-0 justify-center lg:p-2">
+        <div className="w-full lg:w-fit h-full flex flex-col justify-center">
+          <History
+            game={game}
+            hasDrawOffer={hasDrawOffer}
+            hasUndoOffer={hasUndoOffer}
+            callbacks={callbacks}
+            mode={mode}
+          />
+        </div>
+        <div
+          className="w-full lg:grow lg:w-0"
+          style={{ maxWidth: 'calc(100dvh - 250px)' }}
+        >
           <PlayerInfoBar
             player="white"
             username={playerInfo.white.username}
@@ -90,18 +95,19 @@ export function Board2D({
               <Piece key={id} id={id} game={game} />
             ))}
           </div>
-          {mode.type !== 'spectator' && (
-            <VariantSelector
-              variant={variant}
-              setVariant={setVariant}
-              game={game}
-              player={
-                mode.type === 'local'
-                  ? game.actualGame.currentPlayer
-                  : mode.localPlayer
-              }
-            />
-          )}
+          {mode.type !== 'spectator' &&
+            (mode.type !== 'local' || !mode.review) && (
+              <VariantSelector
+                variant={variant}
+                setVariant={setVariant}
+                game={game}
+                player={
+                  mode.type === 'local'
+                    ? game.actualGame.currentPlayer
+                    : mode.localPlayer
+                }
+              />
+            )}
           <PlayerInfoBar
             player="black"
             username={playerInfo.black.username}
@@ -110,8 +116,8 @@ export function Board2D({
             onTimeout={onTimeout}
           />
         </div>
+        <Chat gameId={mode.type === 'local' ? undefined : mode.gameId} />
       </div>
-      <ChatDrawer gameId={mode.type === 'local' ? undefined : mode.gameId} />
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
 } from '@mantine/core';
 import { useWSAPI } from '../../authHooks';
 import { useState } from 'react';
-import { defaultReserve } from '../../packages/tak-core/piece';
+import { getDefaultReserve } from '../../packages/tak-core/piece';
 import { FaPlus } from 'react-icons/fa6';
 
 export function NewGameDialog({
@@ -57,7 +57,7 @@ export function NewGameDialog({
   const [stones, setStones] = useState<number | null>(null);
   const [capstones, setCapstones] = useState<number | null>(null);
 
-  const defaultPieces = defaultReserve(boardSize);
+  const defaultPieces = getDefaultReserve(boardSize);
 
   const valid = time !== null && time > 0;
 

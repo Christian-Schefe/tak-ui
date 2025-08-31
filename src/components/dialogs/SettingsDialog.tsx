@@ -95,9 +95,9 @@ export function SettingsDialog({
           setBoardType(value as BoardType);
         }}
         data={[
-          { value: '2d', label: '2D' },
+          { value: '2d', label: '2D (Native)' },
+          { value: 'ninja', label: '2D (PTN Ninja)' },
           { value: '3d', label: '3D' },
-          { value: 'ninja', label: 'Ninja' },
         ]}
       />
       {boardType === '2d' && (
@@ -112,6 +112,19 @@ export function SettingsDialog({
               });
             }}
             data={themeOptions}
+          />
+          <p className="mt-4">Animation Speed</p>
+          <Slider
+            value={board2dSettings.animationSpeed}
+            onChange={(value) => {
+              setBoard2dSettings({
+                ...board2dSettings,
+                animationSpeed: value,
+              });
+            }}
+            min={10}
+            max={500}
+            step={10}
           />
           <p className="mt-4">Axis Labels</p>
           <Switch

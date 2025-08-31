@@ -155,42 +155,36 @@ function RouteComponent() {
   );
 
   const elements = [
-    { key: 'home', el: linkHome, important: false },
-    { key: 'scratch', el: linkScratch, important: false },
-    { key: 'newGame', el: buttonNewGame, important: true },
-    { key: 'play', el: linkPlay, important: true },
-    { key: 'seeks', el: buttonSeeks, important: true },
-    { key: 'games', el: buttonGames, important: true },
-    { key: 'players', el: buttonPlayers, important: false },
-    { key: 'history', el: linkGameDatabase, important: false },
+    { key: 'home', el: linkHome, visibleFrom: 1 },
+    { key: 'scratch', el: linkScratch, visibleFrom: 1 },
+    { key: 'newGame', el: buttonNewGame, visibleFrom: 2 },
+    { key: 'play', el: linkPlay, visibleFrom: 0 },
+    { key: 'seeks', el: buttonSeeks, visibleFrom: 2 },
+    { key: 'games', el: buttonGames, visibleFrom: 2 },
+    { key: 'players', el: buttonPlayers, visibleFrom: 1 },
+    { key: 'history', el: linkGameDatabase, visibleFrom: 0 },
   ];
 
-  const navElements = (
-    <>
-      {elements.map(({ el, key }) => (
-        <Fragment key={key}>{el}</Fragment>
-      ))}
-    </>
-  );
-
-  const importantNavElements = (
-    <>
-      {elements
-        .filter(({ important }) => important)
-        .map(({ el, key }) => (
-          <Fragment key={key}>{el}</Fragment>
-        ))}
-    </>
-  );
-  const notImportantNavElements = (
-    <>
-      {elements
-        .filter(({ important }) => !important)
-        .map(({ el, key }) => (
-          <Fragment key={key}>{el}</Fragment>
-        ))}
-    </>
-  );
+  const navElementsSplitByVisible = [0, 1, 2].map((x) => {
+    const visible = elements.filter((el) => el.visibleFrom > x);
+    const hidden = elements.filter((el) => el.visibleFrom <= x);
+    return {
+      visible: (
+        <>
+          {visible.map((el) => (
+            <Fragment key={el.key}>{el.el}</Fragment>
+          ))}
+        </>
+      ),
+      hidden: (
+        <>
+          {hidden.map((el) => (
+            <Fragment key={el.key}>{el.el}</Fragment>
+          ))}
+        </>
+      ),
+    };
+  });
 
   const modals = (
     <>
@@ -231,9 +225,9 @@ function RouteComponent() {
     <AppShell
       header={{ height: 40 }}
       navbar={{
-        width: 0,
+        width: 300,
         breakpoint: 'xl',
-        collapsed: { mobile: !opened },
+        collapsed: { mobile: !opened, desktop: !opened },
       }}
     >
       <AppShell.Header>
@@ -241,22 +235,17 @@ function RouteComponent() {
           className="flex items-center justify-start"
           style={{ height: '40px' }}
         >
-          <Burger opened={opened} onClick={toggle} hiddenFrom="xl" size="sm" />
+          <Burger opened={opened} onClick={toggle} size="sm" />
           <Group visibleFrom="xl" gap={'xs'} wrap="nowrap">
-            {navElements}
+            {navElementsSplitByVisible[0].visible}
           </Group>
           <Group visibleFrom="md" hiddenFrom="xl" gap={'xs'} wrap="nowrap">
-            {importantNavElements}
+            {navElementsSplitByVisible[1].visible}
           </Group>
           <div className="grow flex flex-nowrap justify-end items-center pr-2">
             <p>
               {user?.username} ({rating?.rating ?? '???'})
             </p>
-            {readyState === ReadyState.OPEN ? (
-              <LuWifi className="mx-2" size={18} />
-            ) : (
-              <LuWifiOff className="mx-2" size={18} />
-            )}
             <button
               className="flex items-center p-2 cursor-pointer"
               onClick={() => {
@@ -265,6 +254,11 @@ function RouteComponent() {
             >
               <FaGear size={18} />
             </button>
+            {readyState === ReadyState.OPEN ? (
+              <LuWifi className="mx-2" size={18} />
+            ) : (
+              <LuWifiOff className="mx-2" size={18} />
+            )}
             <button
               className="flex items-center p-2 cursor-pointer"
               onClick={() => {
@@ -276,10 +270,15 @@ function RouteComponent() {
           </div>
         </div>
       </AppShell.Header>
-      <AppShell.Navbar visibleFrom="md" hiddenFrom="xl">
-        {notImportantNavElements}
+      <AppShell.Navbar visibleFrom="xl">
+        {navElementsSplitByVisible[0].hidden}
       </AppShell.Navbar>
-      <AppShell.Navbar hiddenFrom="md">{navElements}</AppShell.Navbar>
+      <AppShell.Navbar visibleFrom="md" hiddenFrom="xl">
+        {navElementsSplitByVisible[1].hidden}
+      </AppShell.Navbar>
+      <AppShell.Navbar hiddenFrom="md">
+        {navElementsSplitByVisible[2].hidden}
+      </AppShell.Navbar>
       <AppShell.Main className="flex flex-col">
         <Outlet />
         {modals}

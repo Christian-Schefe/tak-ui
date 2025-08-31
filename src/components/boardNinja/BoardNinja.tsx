@@ -177,7 +177,7 @@ export function BoardNinja({
         <iframe
           ref={setRef}
           className="w-full grow"
-          src={`https://ptn.ninja/${params}${mode.type === 'spectator' ? '&disableBoard=true' : ''}`}
+          src={`https://ptn.ninja/${params}${mode.type === 'spectator' || (mode.type === 'local' && mode.review) ? '&disableBoard=true' : ''}`}
           title="Board Ninja"
         />
       </div>

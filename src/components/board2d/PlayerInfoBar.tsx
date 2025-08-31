@@ -16,8 +16,14 @@ export function PlayerInfoBar({
   game: GameUI;
   onTimeout: () => void;
 }) {
-  const { themeParams } = useSettings();
-  const reserve = game.actualGame.reserves[player];
+  const {
+    themeParams,
+    boardSettings: {
+      board2d: { animationSpeed },
+    },
+  } = useSettings();
+  const reserve =
+    game.shownReserves?.[player] ?? game.actualGame.reserves[player];
   const colors = player === 'white' ? themeParams.piece1 : themeParams.piece2;
   const isCurrent =
     game.actualGame.currentPlayer === player &&
@@ -38,7 +44,7 @@ export function PlayerInfoBar({
             color: themeParams.text,
             backgroundColor: themeParams.board1,
             opacity: isCurrent ? 1 : 0.75,
-            transition: 'opacity 150ms ease-in-out',
+            transition: `opacity ${animationSpeed.toString()}ms ease-in-out`,
           }}
         >
           {reserve.pieces}

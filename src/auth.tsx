@@ -46,7 +46,6 @@ export type OpenEventListener = () => void;
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const onCloseListeners = useRef<
     { key: string; callback: CloseEventListener }[]
   >([]);
@@ -161,7 +160,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Sent login message');
     } else {
       console.log('No auth token found');
-      setIsLoading(false);
     }
   }, [sendMessage]);
 
@@ -186,9 +184,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         localStorage.removeItem('auth-token');
-      })
-      .finally(() => {
-        setIsLoading(false);
       });
   }, [lastMessage, sendToken, isAuthenticated]);
 
@@ -215,15 +210,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, user, login, logout]);
 
   const { devMode } = useSettings();
-
-  // Show loading state while checking auth
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
-      </div>
-    );
-  }
 
   return (
     <AuthContext value={authContextMemo}>

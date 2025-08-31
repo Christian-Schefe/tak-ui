@@ -104,7 +104,7 @@ export function History({
 
   return (
     <div
-      className="flex flex-col rounded-md p-2 m-2 justify-center lg:ml-4 lg:w-72 lg:h-128"
+      className="flex flex-col rounded-md p-2 m-2 justify-center lg:w-72 lg:max-h-200 h-full"
       style={{ color: themeParams.text, backgroundColor: themeParams.board1 }}
     >
       {mode.type === 'remote' && (
