@@ -5,7 +5,7 @@ import type { Player } from '../../packages/tak-core';
 import { Affix, Modal, Button, Transition, CopyButton } from '@mantine/core';
 import { FaCopy, FaLink, FaTrophy } from 'react-icons/fa6';
 import { gameToPTN } from '../../packages/tak-core/ptn';
-import { Link } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { LuExternalLink } from 'react-icons/lu';
 
 export function GameOverDialog({
@@ -22,6 +22,8 @@ export function GameOverDialog({
   useEffect(() => {
     setIsOpen(game.actualGame.gameState.type !== 'ongoing');
   }, [game.actualGame.gameState]);
+
+  const navigate = useNavigate();
 
   const ptn = useMemo(
     () =>
@@ -109,10 +111,13 @@ export function GameOverDialog({
               Open in PTN Ninja
             </Button>
             {gameId !== undefined && (
-              <Button leftSection={<FaLink />}>
-                <Link to="/games/$gameId" params={{ gameId }}>
-                  Open in Review Board
-                </Link>
+              <Button
+                leftSection={<FaLink />}
+                onClick={() => {
+                  void navigate({ to: '/games/$gameId', params: { gameId } });
+                }}
+              >
+                Open in Review Board
               </Button>
             )}
           </div>

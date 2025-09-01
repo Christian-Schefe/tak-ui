@@ -1,69 +1,55 @@
-# React + TypeScript + Vite
+# Tak UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An alternative implementation of https://github.com/USTakAssociation/playtak-ui/.
+This is a full rewrite of the ui functionality built on top of modern web technologies such as:
 
-Currently, two official plugins are available:
+- React
+- TypeScript
+- Tailwindcss
+- Bun
+- TanStack Router + Query
+- Vite
+- BabylonJS
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This client is currently hosted on https://tak.meeshroom.xyz.
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Clone the repository
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```sh
+git clone https://github.com/Christian-Schefe/tak-ui.git
+cd tak-ui
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Install Bun (https://bun.sh)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
+Install dependencies
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```sh
+bun i
 ```
+
+Start the dev server
+
+```sh
+bun run dev
+```
+
+Then go to http://localhost:5173. Note that calls to https://api.playtak.com won't work without the proxy running due to CORS.
+
+### With playtak proxy and local https
+
+To run the playtak api proxy, start the docker container
+
+```sh
+docker compose -f ./deploy/docker-compose.dev.yml up
+```
+
+In another shell instance, start the dev server
+
+```sh
+bun run dev -- --host 0.0.0.0
+```
+
+Then go to https://localhost (note the presence of https and the absence of a port)

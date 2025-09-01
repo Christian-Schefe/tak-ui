@@ -12,6 +12,7 @@ import {
   FaGear,
   FaHouse,
   FaDatabase,
+  FaUser,
 } from 'react-icons/fa6';
 import { LuLogOut, LuSwords, LuWifi, LuWifiOff } from 'react-icons/lu';
 
@@ -154,6 +155,13 @@ function RouteComponent() {
     </Link>
   );
 
+  const linkToAccount = (
+    <Link to="/account" className={linkClassName} onClick={close}>
+      <FaUser size={18} />
+      Account
+    </Link>
+  );
+
   const elements = [
     { key: 'home', el: linkHome, visibleFrom: 1 },
     { key: 'scratch', el: linkScratch, visibleFrom: 1 },
@@ -163,6 +171,7 @@ function RouteComponent() {
     { key: 'games', el: buttonGames, visibleFrom: 2 },
     { key: 'players', el: buttonPlayers, visibleFrom: 1 },
     { key: 'history', el: linkGameDatabase, visibleFrom: 0 },
+    { key: 'account', el: linkToAccount, visibleFrom: 0 },
   ];
 
   const navElementsSplitByVisible = [0, 1, 2].map((x) => {

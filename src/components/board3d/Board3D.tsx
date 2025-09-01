@@ -131,6 +131,11 @@ export const Board3D: FC<BoardProps> = ({
               upperBetaLimit={Math.PI / 2 + 0.3}
               lowerRadiusLimit={5}
               upperRadiusLimit={100}
+              onCreated={(cam) => {
+                cam.inputs.clear();
+                cam.inputs.addPointers();
+                cam.inputs.addMouseWheel();
+              }}
             />
             <hemisphericLight
               name="light1"

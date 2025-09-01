@@ -6,6 +6,11 @@
       
       header_up Origin https://playtak.com
       header_up Referer https://playtak.com/
+
+      header_down -Access-Control-Allow-Origin
+      header_down -Access-Control-Allow-Methods
+      header_down -Access-Control-Allow-Headers
+      header_down -Access-Control-Allow-Credentials
     }
     header {
       Access-Control-Allow-Origin  *

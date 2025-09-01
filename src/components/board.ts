@@ -14,7 +14,7 @@ export interface GameCallbacks {
   onTimeout: () => void;
   onClickTile: (pos: Coord, variant: PieceVariant) => void;
   onMakeMove: (move: Move) => void;
-  goToPly: (index: number) => void;
+  goToPly: (index: number | null) => void;
   sendDrawOffer: (offer: boolean) => void;
   sendUndoOffer: (offer: boolean) => void;
   doResign: () => void;

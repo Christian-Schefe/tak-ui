@@ -58,7 +58,7 @@ function RouteComponent() {
         ui.checkTimeout(draft);
       });
     };
-    const goToPly = (index: number) => {
+    const goToPly = (index: number | null) => {
       setGame((draft) => {
         ui.setPlyIndex(draft, index);
       });

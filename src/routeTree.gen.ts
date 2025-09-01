@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -16,9 +17,15 @@ import { Route as AppAuthenticatedRouteImport } from './routes/_app/_authenticat
 import { Route as AppAuthenticatedScratchRouteImport } from './routes/_app/_authenticated/scratch'
 import { Route as AppAuthenticatedPlayRouteImport } from './routes/_app/_authenticated/play'
 import { Route as AppAuthenticatedHistoryRouteImport } from './routes/_app/_authenticated/history'
+import { Route as AppAuthenticatedAccountRouteImport } from './routes/_app/_authenticated/account'
 import { Route as AppAuthenticatedSpectateGameIdRouteImport } from './routes/_app/_authenticated/spectate.$gameId'
 import { Route as AppAuthenticatedGamesGameIdRouteImport } from './routes/_app/_authenticated/games.$gameId'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -52,6 +59,11 @@ const AppAuthenticatedHistoryRoute = AppAuthenticatedHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => AppAuthenticatedRoute,
 } as any)
+const AppAuthenticatedAccountRoute = AppAuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AppAuthenticatedRoute,
+} as any)
 const AppAuthenticatedSpectateGameIdRoute =
   AppAuthenticatedSpectateGameIdRouteImport.update({
     id: '/spectate/$gameId',
@@ -68,6 +80,8 @@ const AppAuthenticatedGamesGameIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/account': typeof AppAuthenticatedAccountRoute
   '/history': typeof AppAuthenticatedHistoryRoute
   '/play': typeof AppAuthenticatedPlayRoute
   '/scratch': typeof AppAuthenticatedScratchRoute
@@ -77,6 +91,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/account': typeof AppAuthenticatedAccountRoute
   '/history': typeof AppAuthenticatedHistoryRoute
   '/play': typeof AppAuthenticatedPlayRoute
   '/scratch': typeof AppAuthenticatedScratchRoute
@@ -88,7 +104,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/_app/_authenticated': typeof AppAuthenticatedRouteWithChildren
+  '/_app/_authenticated/account': typeof AppAuthenticatedAccountRoute
   '/_app/_authenticated/history': typeof AppAuthenticatedHistoryRoute
   '/_app/_authenticated/play': typeof AppAuthenticatedPlayRoute
   '/_app/_authenticated/scratch': typeof AppAuthenticatedScratchRoute
@@ -100,6 +118,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/register'
+    | '/account'
     | '/history'
     | '/play'
     | '/scratch'
@@ -109,6 +129,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/register'
+    | '/account'
     | '/history'
     | '/play'
     | '/scratch'
@@ -119,7 +141,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/register'
     | '/_app/_authenticated'
+    | '/_app/_authenticated/account'
     | '/_app/_authenticated/history'
     | '/_app/_authenticated/play'
     | '/_app/_authenticated/scratch'
@@ -131,10 +155,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -184,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthenticatedHistoryRouteImport
       parentRoute: typeof AppAuthenticatedRoute
     }
+    '/_app/_authenticated/account': {
+      id: '/_app/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AppAuthenticatedAccountRouteImport
+      parentRoute: typeof AppAuthenticatedRoute
+    }
     '/_app/_authenticated/spectate/$gameId': {
       id: '/_app/_authenticated/spectate/$gameId'
       path: '/spectate/$gameId'
@@ -202,6 +241,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAuthenticatedRouteChildren {
+  AppAuthenticatedAccountRoute: typeof AppAuthenticatedAccountRoute
   AppAuthenticatedHistoryRoute: typeof AppAuthenticatedHistoryRoute
   AppAuthenticatedPlayRoute: typeof AppAuthenticatedPlayRoute
   AppAuthenticatedScratchRoute: typeof AppAuthenticatedScratchRoute
@@ -210,6 +250,7 @@ interface AppAuthenticatedRouteChildren {
 }
 
 const AppAuthenticatedRouteChildren: AppAuthenticatedRouteChildren = {
+  AppAuthenticatedAccountRoute: AppAuthenticatedAccountRoute,
   AppAuthenticatedHistoryRoute: AppAuthenticatedHistoryRoute,
   AppAuthenticatedPlayRoute: AppAuthenticatedPlayRoute,
   AppAuthenticatedScratchRoute: AppAuthenticatedScratchRoute,
@@ -234,6 +275,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

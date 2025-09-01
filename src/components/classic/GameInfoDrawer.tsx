@@ -9,10 +9,16 @@ import {
   FaFlag,
   FaHandshake,
   FaArrowRotateLeft,
+  FaAnglesLeft,
+  FaAnglesRight,
+  FaAngleLeft,
+  FaAngleRight,
 } from 'react-icons/fa6';
-import { Button, Transition, useMantineTheme } from '@mantine/core';
+import { ActionIcon, Button, Transition, useMantineTheme } from '@mantine/core';
 import { History } from './History';
 import { useGameOffer } from '../../features/gameOffers';
+import { useEvent } from 'react-use';
+import { useCallback } from 'react';
 
 export function GameInfoDrawer({
   gameId,
@@ -44,6 +50,41 @@ export function GameInfoDrawer({
 
   const sentColor = theme.colors.red[6];
   const receivedColor = theme.colors.blue[6];
+
+  const decreasePlyIndex = useCallback(() => {
+    const newPlyIndex =
+      game.plyIndex !== null
+        ? Math.max(0, game.plyIndex - 1)
+        : game.actualGame.history.length - 1;
+    callbacks.current.goToPly(newPlyIndex);
+  }, [game.plyIndex, game.actualGame.history.length, callbacks]);
+
+  const increasePlyIndex = useCallback(() => {
+    const newPlyIndex = game.plyIndex !== null ? game.plyIndex + 1 : null;
+    callbacks.current.goToPly(newPlyIndex);
+  }, [game.plyIndex, callbacks]);
+
+  const onKeyUp = useCallback(
+    (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isTyping =
+        target !== null &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+
+      if (isTyping) return;
+
+      if (e.key === 'ArrowLeft') {
+        decreasePlyIndex();
+      } else if (e.key === 'ArrowRight') {
+        increasePlyIndex();
+      }
+    },
+    [decreasePlyIndex, increasePlyIndex],
+  );
+
+  useEvent('keydown', onKeyUp);
 
   return (
     <div
@@ -133,6 +174,36 @@ export function GameInfoDrawer({
                 callbacks.current.goToPly(index);
               }}
             />
+            <div className="flex justify-center p-2 mb-16 gap-2">
+              <ActionIcon
+                onClick={() => {
+                  callbacks.current.goToPly(0);
+                }}
+              >
+                <FaAnglesLeft />
+              </ActionIcon>
+              <ActionIcon
+                onClick={() => {
+                  decreasePlyIndex();
+                }}
+              >
+                <FaAngleLeft />
+              </ActionIcon>
+              <ActionIcon
+                onClick={() => {
+                  increasePlyIndex();
+                }}
+              >
+                <FaAngleRight />
+              </ActionIcon>
+              <ActionIcon
+                onClick={() => {
+                  callbacks.current.goToPly(null);
+                }}
+              >
+                <FaAnglesRight />
+              </ActionIcon>
+            </div>
           </div>
         )}
       </Transition>

@@ -21,6 +21,8 @@ export interface AuthState {
   user: User | null;
   login: (username: string, password: string) => void;
   logout: () => void;
+  signUp: (username: string, email: string) => void;
+  changePassword: (oldPassword: string, newPassword: string) => void;
 }
 
 export interface WebSocketAPIState {
@@ -205,9 +207,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     triggerClose();
   }, [triggerClose]);
 
+  const signUp = useCallback(
+    (username: string, email: string) => {
+      sendMessage(`Register ${username} ${email}`);
+    },
+    [sendMessage],
+  );
+
+  const changePassword = useCallback(
+    (oldPassword: string, newPassword: string) => {
+      sendMessage(`ChangePassword ${oldPassword} ${newPassword}`);
+    },
+    [sendMessage],
+  );
+
   const authContextMemo = useMemo<AuthState>(() => {
-    return { isAuthenticated, user, login, logout };
-  }, [isAuthenticated, user, login, logout]);
+    return { isAuthenticated, user, login, logout, signUp, changePassword };
+  }, [isAuthenticated, user, login, logout, signUp, changePassword]);
 
   const { devMode } = useSettings();
 

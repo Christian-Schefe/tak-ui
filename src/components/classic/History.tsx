@@ -79,7 +79,7 @@ export function History({
   }, [game.actualGame.history.length]);
 
   return (
-    <div className="flex flex-col rounded-md p-2 justify-center w-full h-0 grow pb-16">
+    <div className="flex flex-col rounded-md p-2 justify-center w-full h-0 grow">
       <ScrollArea
         viewportRef={viewport}
         className="grow"

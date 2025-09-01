@@ -45,7 +45,7 @@ function RouteComponent() {
     const onTimeout = () => {
       void 0;
     };
-    const goToPly = (index: number) => {
+    const goToPly = (index: number | null) => {
       setGame((draft) => {
         if (!draft) return;
         ui.setPlyIndex(draft, index);

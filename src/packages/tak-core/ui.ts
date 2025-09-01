@@ -68,7 +68,9 @@ export function newGameUI(game: Game): GameUI {
 
 export function setPlyIndex(ui: GameUI, index: number | null) {
   ui.plyIndex =
-    index !== null && index >= ui.actualGame.history.length ? null : index;
+    index === null || index >= ui.actualGame.history.length
+      ? null
+      : Math.max(0, index);
   ui.priorityPieces = [];
   ui.partialMove = null;
   onGameUpdate(ui);
