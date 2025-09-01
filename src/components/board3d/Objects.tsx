@@ -6,7 +6,12 @@ import {
   Vector3,
 } from '@babylonjs/core';
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
-import type { Coord, PieceId, PieceVariant } from '../../packages/tak-core';
+import {
+  playerOpposite,
+  type Coord,
+  type PieceId,
+  type PieceVariant,
+} from '../../packages/tak-core';
 import type { GameUI, UIPiece, UITile } from '../../packages/tak-core/ui';
 import { useBeforeRender, useClick, useHover } from 'react-babylonjs';
 import woodColor from '../../assets/textures/wood_0066/wood_0066_color_1k.jpg';
@@ -29,6 +34,7 @@ import marbleWhiteNormal from '../../assets/textures/marble_white/marble_0008_no
 import marbleWhiteAO from '../../assets/textures/marble_white/marble_0008_ao_1k.jpg';
 import marbleWhiteRoughness from '../../assets/textures/marble_white/marble_0008_roughness_1k.jpg';
 import { PBRBox, PBRCylinder } from './Box';
+import type { BoardMode } from '../board';
 
 export function Lerp(start: number, end: number, amount: number): number {
   return start + (end - start) * amount;
@@ -192,15 +198,41 @@ export const Tile: FC<{
 export const Piece: FC<{
   game: GameUI;
   id: PieceId;
+  currentVariant: PieceVariant;
+  mode: BoardMode;
+  onClick: (isCapstone: boolean) => void;
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
-}> = ({ game, id, cubeTextureRef }) => {
+}> = ({ game, id, mode, currentVariant, cubeTextureRef, onClick }) => {
   const pieceData = game.pieces[id];
+
+  const boxRef = useRef<Mesh | null>(null);
+
   const data = useMemo(() => {
     if (pieceData && !pieceData.deleted) return pieceData;
     const [idPlayer, idVariant, idNum] = id.split('/');
     const player = idPlayer === 'W' ? 'white' : 'black';
     const variant = idVariant === 'C' ? 'capstone' : 'flat';
     const num = parseInt(idNum);
+    const prevPieceId: PieceId | null =
+      num >= 1
+        ? `${idPlayer as 'W' | 'B'}/${idVariant as 'P' | 'C'}/${(num - 1).toString()}`
+        : null;
+    const prevPiece = prevPieceId !== null ? game.pieces[prevPieceId] : null;
+    const isFirstPieceInReserve = num === 0 || prevPiece?.deleted === false;
+
+    const effectivePlayer =
+      game.actualGame.history.length < 2 ? playerOpposite(player) : player;
+    const isFloating =
+      isFirstPieceInReserve &&
+      (variant === 'capstone') === (currentVariant === 'capstone') &&
+      game.actualGame.gameState.type === 'ongoing' &&
+      ((mode.type === 'remote' && mode.localPlayer === effectivePlayer) ||
+        (mode.type === 'local' &&
+          !mode.review &&
+          game.actualGame.currentPlayer === effectivePlayer));
+    const actualVariant =
+      isFloating && currentVariant === 'standing' ? 'standing' : variant;
+
     const boardSize = game.actualGame.settings.boardSize;
     const reserve = game.actualGame.settings.reserve;
     const revNum =
@@ -222,13 +254,13 @@ export const Piece: FC<{
       canBePicked: false,
       deleted: true,
       height,
-      isFloating: false,
+      isFloating,
       player,
       pos: {
         x: player === 'white' ? -1.5 : boardSize + 0.5,
         y: stack + (variant === 'capstone' ? 0 : reserve.capstones),
       },
-      variant,
+      variant: actualVariant,
       zPriority: null,
     };
     return defaultPiece;
@@ -237,6 +269,12 @@ export const Piece: FC<{
     id,
     game.actualGame.settings.boardSize,
     game.actualGame.settings.reserve,
+    game.pieces,
+    game.actualGame.gameState,
+    game.actualGame.currentPlayer,
+    game.actualGame.history.length,
+    currentVariant,
+    mode,
   ]);
 
   const curData = useRef(data);
@@ -249,7 +287,7 @@ export const Piece: FC<{
 
   const computeTargetPos = (data: UIPiece) => {
     let height = (data.height + (data.isFloating ? 2 : 0)) * pieceHeight;
-    if (curData.current.deleted) height -= 0.35;
+    if (curData.current.deleted) height -= 0.3;
     return new Vector3(data.pos.x + 0.5, height, data.pos.y + 0.5);
   };
 
@@ -280,7 +318,7 @@ export const Piece: FC<{
           .normalize()
           .scale(Math.min(Vector3.Distance(targetPos, prev.pos), 0.03)),
       ),
-      rot: Quaternion.Slerp(prev.rot, targetRot, 0.15),
+      rot: Quaternion.Slerp(prev.rot, targetRot, 0.25),
       scale: Vector3.Lerp(prev.scale, targetScale, 0.25),
     }));
   });
@@ -302,15 +340,49 @@ export const Piece: FC<{
       ? (marbleWhiteRoughness as string)
       : (marbleBlackRoughness as string);
 
+  const curOnClick = useRef<() => void>(() => {
+    void 0;
+  });
+  useEffect(() => {
+    curOnClick.current = () => {
+      const effectivePlayer =
+        game.actualGame.history.length < 2
+          ? playerOpposite(data.player)
+          : data.player;
+      if (mode.type === 'spectator' || (mode.type === 'local' && mode.review))
+        return;
+      if (mode.type === 'remote' && effectivePlayer !== mode.localPlayer)
+        return;
+      if (
+        mode.type === 'local' &&
+        game.actualGame.currentPlayer !== effectivePlayer
+      )
+        return;
+      onClick(data.variant === 'capstone');
+    };
+  }, [
+    onClick,
+    data.variant,
+    game.actualGame.currentPlayer,
+    game.actualGame.history.length,
+    mode,
+    data.player,
+  ]);
+
+  useClick(() => {
+    curOnClick.current();
+  }, boxRef);
+
   return data.variant === 'capstone' ? (
     <PBRCylinder
+      ref={boxRef}
       name="piece"
       height={pieceSize}
       diameter={pieceSize * 0.8}
       position={actualTransform.pos.add(new Vector3(0, pieceSize / 2, 0))}
       rotationQuaternion={actualTransform.rot}
       scaling={actualTransform.scale}
-      isPickable={false}
+      isPickable={data.deleted}
       aoTextureUrl={aoTextureUrl}
       colorTextureUrl={colorTextureUrl}
       cubeTextureRef={cubeTextureRef}
@@ -325,13 +397,20 @@ export const Piece: FC<{
   ) : (
     <PBRBox
       name="piece"
+      ref={boxRef}
       width={pieceSize}
       height={pieceHeight}
       depth={pieceSize}
-      position={actualTransform.pos.add(new Vector3(0, pieceHeight / 2, 0))}
+      position={actualTransform.pos.add(
+        new Vector3(
+          0,
+          data.variant === 'flat' ? pieceHeight / 2 : pieceSize / 2,
+          0,
+        ),
+      )}
       rotationQuaternion={actualTransform.rot}
       scaling={actualTransform.scale}
-      isPickable={false}
+      isPickable={data.deleted}
       cubeTextureRef={cubeTextureRef}
       colorTextureUrl={colorTextureUrl}
       normalTextureUrl={normalTextureUrl}
@@ -342,70 +421,6 @@ export const Piece: FC<{
       albedoColor={Color3.White()}
       specularIntensity={0.05}
       textureScale={1 / 12}
-    />
-  );
-};
-
-export const VariantButton: FC<{
-  variant: PieceVariant;
-  currentVariant: PieceVariant;
-  position: Vector3;
-  cubeTextureRef: React.RefObject<BaseTexture | undefined>;
-  onClick: () => void;
-}> = ({ variant, position, currentVariant, cubeTextureRef, onClick }) => {
-  const boxRef = useRef<Mesh | null>(null);
-
-  const currentAnimationState = useMemo(
-    () => ({
-      emissive: variant === currentVariant ? 0.2 : 0,
-    }),
-    [variant, currentVariant],
-  );
-
-  const targetAnimationState = useRef(currentAnimationState);
-  useEffect(() => {
-    targetAnimationState.current = currentAnimationState;
-  }, [currentAnimationState]);
-
-  const [actualAnimationState, setActualAnimationState] = useState(
-    targetAnimationState.current,
-  );
-
-  useBeforeRender(() => {
-    setActualAnimationState((prev) => ({
-      emissive: Lerp(prev.emissive, targetAnimationState.current.emissive, 0.2),
-    }));
-  });
-
-  const curOnClick = useRef<() => void>(onClick);
-  useEffect(() => {
-    curOnClick.current = onClick;
-  }, [onClick]);
-
-  useClick(() => {
-    curOnClick.current();
-  }, boxRef);
-
-  return (
-    <PBRBox
-      name="tile"
-      width={0.8}
-      height={0.1}
-      depth={0.8}
-      position={position}
-      cubeTextureRef={cubeTextureRef}
-      normalTextureUrl={marbleWhiteNormal as string}
-      colorTextureUrl={marbleWhiteColor as string}
-      aoTextureUrl={marbleWhiteAO as string}
-      roughnessTextureUrl={marbleWhiteRoughness as string}
-      metallic={0.5}
-      roughness={0.5}
-      specularIntensity={0.05}
-      albedoColor={Color3.White()}
-      textureScale={1 / 10}
-      emissiveColor={Color3.Blue()}
-      emissiveIntensity={actualAnimationState.emissive}
-      ref={boxRef}
     />
   );
 };

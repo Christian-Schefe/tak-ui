@@ -42,7 +42,7 @@ export function History({
     return (
       <div className="min-w-12">
         <button
-          className="text-left rounded-md px-1 hover:outline-2 text-nowrap"
+          className="text-left rounded-md px-1 hover:outline-2"
           style={{
             width: '100%',
             backgroundColor: colors.background,
@@ -69,7 +69,10 @@ export function History({
   };
 
   const rows = result.map(({ white: whiteMove, black: blackMove }, index) => (
-    <div key={`move-${index.toString()}`} className="flex gap-2 p-1 font-mono">
+    <div
+      key={`move-${index.toString()}`}
+      className="flex gap-2 p-1 font-mono text-nowrap"
+    >
       <div className="w-8">{index + 1}.</div>
       {whiteMove ? makeHistoryItem(index * 2 + 1, 'white', whiteMove) : null}
       {blackMove ? makeHistoryItem(index * 2 + 2, 'black', blackMove) : null}
@@ -78,7 +81,7 @@ export function History({
 
   if (game.actualGame.gameState.type !== 'ongoing') {
     rows.push(
-      <div key={'move-end'} className="flex gap-2 p-1 font-mono">
+      <div key={'move-end'} className="flex gap-2 p-1 font-mono text-nowrap">
         <div className="w-8" />
         <div className="min-w-12 font-bold">
           {gameResultToString(game.actualGame.gameState)}

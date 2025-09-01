@@ -8,7 +8,7 @@ import {
 import { useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { Engine, Scene, Skybox } from 'react-babylonjs';
 import { ui, type Coord, type PieceVariant } from '../../packages/tak-core';
-import { Table, Board, Tile, Piece, VariantButton } from './Objects';
+import { Table, Board, Tile, Piece } from './Objects';
 import type { BoardProps } from '../board';
 import { coordToString } from '../../packages/tak-core/coord';
 import envTexture from '../../assets/766-hdri-skies-com.env';
@@ -151,46 +151,25 @@ export const Board3D: FC<BoardProps> = ({
             {pieceIds.map((id) => (
               <Piece
                 key={id}
+                mode={mode}
                 game={game}
                 id={id}
+                currentVariant={variant}
                 cubeTextureRef={cubeTextureRef}
+                onClick={(isCapstone) => {
+                  if (variant === 'capstone') {
+                    setVariant('flat');
+                  } else if (variant === 'flat') {
+                    setVariant(isCapstone ? 'capstone' : 'standing');
+                  } else {
+                    setVariant(isCapstone ? 'capstone' : 'flat');
+                  }
+                }}
               />
             ))}
 
             <Board size={size} cubeTextureRef={cubeTextureRef} />
             <Table size={size} cubeTextureRef={cubeTextureRef} />
-
-            {mode.type !== 'spectator' && (
-              <>
-                <VariantButton
-                  variant="flat"
-                  currentVariant={variant}
-                  position={new Vector3(-1 + size / 2, -0.2, -1)}
-                  cubeTextureRef={cubeTextureRef}
-                  onClick={() => {
-                    setVariant('flat');
-                  }}
-                />
-                <VariantButton
-                  variant="standing"
-                  currentVariant={variant}
-                  position={new Vector3(0 + size / 2, -0.2, -1)}
-                  cubeTextureRef={cubeTextureRef}
-                  onClick={() => {
-                    setVariant('standing');
-                  }}
-                />
-                <VariantButton
-                  variant="capstone"
-                  currentVariant={variant}
-                  cubeTextureRef={cubeTextureRef}
-                  position={new Vector3(1 + size / 2, -0.2, -1)}
-                  onClick={() => {
-                    setVariant('capstone');
-                  }}
-                />
-              </>
-            )}
           </Scene>
         </Engine>
       </div>

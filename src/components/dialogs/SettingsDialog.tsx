@@ -113,8 +113,9 @@ export function SettingsDialog({
             }}
             data={themeOptions}
           />
-          <p className="mt-4">Animation Speed</p>
+          <p className="mt-4">Animation Duration</p>
           <Slider
+            label={`${board2dSettings.animationSpeed.toString()} ms`}
             value={board2dSettings.animationSpeed}
             onChange={(value) => {
               setBoard2dSettings({

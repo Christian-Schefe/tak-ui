@@ -113,6 +113,7 @@ export const PBRCylinder: FC<{
   textureScale?: number;
   scaling?: Vector3;
   isPickable?: boolean;
+  ref?: React.RefObject<Mesh | null>;
 }> = ({
   name,
   height,
@@ -131,9 +132,11 @@ export const PBRCylinder: FC<{
   textureScale,
   scaling,
   isPickable,
+  ref,
 }) => {
   return (
     <cylinder
+      ref={ref}
       name={name}
       height={height}
       diameter={diameter}

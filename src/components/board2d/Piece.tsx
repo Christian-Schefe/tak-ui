@@ -40,23 +40,25 @@ export function Piece({ id, game }: { id: PieceId; game: GameUI }) {
         ? '100%'
         : `${roundedPercent.toString()}%`;
 
-  const zIndex =
-    data.zPriority !== null
-      ? data.zPriority + 50
-      : data.canBePicked
-        ? height + 20
-        : height;
-
   const buriedLimit = 12;
   const buriedHeightOffset = Math.max(
     0,
     data.buriedPieceCount - (buriedLimit - 1),
   );
 
+  const actualHeight = data.canBePicked ? height : height - buriedHeightOffset;
+
+  const zIndex =
+    data.zPriority !== null
+      ? data.zPriority + 50
+      : data.canBePicked
+        ? actualHeight + 30
+        : Math.max(-12, actualHeight + 12);
+
   const xTransform = data.pos.x * 100 + (data.canBePicked ? 0 : 35);
   const yTransform =
     (size - 1 - data.pos.y) * 100 -
-    (data.canBePicked ? height : height - buriedHeightOffset) * 7 +
+    actualHeight * 7 +
     (data.canBePicked ? 0 : 35);
 
   const hidden =
