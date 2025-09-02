@@ -84,7 +84,11 @@ export function useUpdateGames() {
     }
   }, []);
 
-  useWSListener('update-games', { onMessage });
+  const onOpen = useCallback(() => {
+    removeAllGames();
+  }, []);
+
+  useWSListener('update-game-list', { onMessage, onOpen });
 }
 
 const gameAddRegex =

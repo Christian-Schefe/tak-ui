@@ -1,14 +1,23 @@
-import { ScrollArea } from '@mantine/core';
+import { ActionIcon, ScrollArea } from '@mantine/core';
 import type { MoveRecord, Player } from '../../packages/tak-core';
 import { moveToString } from '../../packages/tak-core/move';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useSettings } from '../../settings';
 import { useEffect, useRef } from 'react';
-import { FaArrowRotateLeft, FaFlag, FaHandshake } from 'react-icons/fa6';
+import {
+  FaAngleLeft,
+  FaAngleRight,
+  FaAnglesLeft,
+  FaAnglesRight,
+  FaArrowRotateLeft,
+  FaFlag,
+  FaHandshake,
+} from 'react-icons/fa6';
 import { gameResultToString } from '../../packages/tak-core/game';
-import { useGameHistory } from '../../features/history';
+import { useGameHistory, useHistoryNavigation } from '../../features/history';
 import { useGameOffer } from '../../features/gameOffers';
 import type { BoardMode, GameCallbacks } from '../board';
+import { useEvent } from 'react-use';
 
 export function History({
   game,
@@ -34,6 +43,16 @@ export function History({
 
   const result = useGameHistory(game);
 
+  const {
+    increasePlyIndex,
+    decreasePlyIndex,
+    goToFirstPly,
+    goToLastPly,
+    onArrowKey,
+  } = useHistoryNavigation(game, callbacks);
+
+  useEvent('keydown', onArrowKey);
+
   const makeHistoryItem = (index: number, player: Player, move: MoveRecord) => {
     const colors =
       (player === 'white') === index > 2
@@ -49,6 +68,7 @@ export function History({
             color: colors.text ?? colors.border,
             outlineColor: colors.border,
             opacity: game.plyIndex !== null && game.plyIndex < index ? 0.5 : 1,
+            transition: 'opacity 150ms ease-in-out',
           }}
           onClick={() => {
             if (
@@ -160,6 +180,36 @@ export function History({
       >
         <div className="flex lg:flex-col">{rows}</div>
       </ScrollArea>
+      <div className="flex justify-center p-2 gap-2">
+        <ActionIcon
+          onClick={() => {
+            goToFirstPly();
+          }}
+        >
+          <FaAnglesLeft />
+        </ActionIcon>
+        <ActionIcon
+          onClick={() => {
+            decreasePlyIndex();
+          }}
+        >
+          <FaAngleLeft />
+        </ActionIcon>
+        <ActionIcon
+          onClick={() => {
+            increasePlyIndex();
+          }}
+        >
+          <FaAngleRight />
+        </ActionIcon>
+        <ActionIcon
+          onClick={() => {
+            goToLastPly();
+          }}
+        >
+          <FaAnglesRight />
+        </ActionIcon>
+      </div>
     </div>
   );
 }

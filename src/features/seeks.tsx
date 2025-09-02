@@ -80,7 +80,11 @@ export function useUpdateSeeks() {
     }
   }, []);
 
-  useWSListener('update-seeks', { onMessage });
+  const onOpen = useCallback(() => {
+    removeAllSeeks();
+  }, []);
+
+  useWSListener('update-seeks', { onMessage, onOpen });
 }
 
 const seekAddRegex =
