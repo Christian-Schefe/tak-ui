@@ -164,7 +164,7 @@ function RouteComponent() {
 
   const elements = [
     { key: 'home', el: linkHome, visibleFrom: 1 },
-    { key: 'scratch', el: linkScratch, visibleFrom: 1 },
+    { key: 'scratch', el: linkScratch, visibleFrom: 0 },
     { key: 'newGame', el: buttonNewGame, visibleFrom: 2 },
     { key: 'play', el: linkPlay, visibleFrom: 0 },
     { key: 'seeks', el: buttonSeeks, visibleFrom: 2 },
@@ -230,12 +230,14 @@ function RouteComponent() {
     </>
   );
 
+  const largeBreakpoint = 'lg';
+
   return (
     <AppShell
       header={{ height: 40 }}
       navbar={{
         width: 300,
-        breakpoint: 'xl',
+        breakpoint: largeBreakpoint,
         collapsed: { mobile: !opened, desktop: !opened },
       }}
     >
@@ -244,11 +246,16 @@ function RouteComponent() {
           className="flex items-center justify-start"
           style={{ height: '40px' }}
         >
-          <Burger opened={opened} onClick={toggle} size="sm" />
-          <Group visibleFrom="xl" gap={'xs'} wrap="nowrap">
+          <Burger opened={opened} onClick={toggle} size="sm" mx="md" />
+          <Group visibleFrom={largeBreakpoint} gap={'xs'} wrap="nowrap">
             {navElementsSplitByVisible[0].visible}
           </Group>
-          <Group visibleFrom="md" hiddenFrom="xl" gap={'xs'} wrap="nowrap">
+          <Group
+            visibleFrom="md"
+            hiddenFrom={largeBreakpoint}
+            gap={'xs'}
+            wrap="nowrap"
+          >
             {navElementsSplitByVisible[1].visible}
           </Group>
           <div className="grow flex flex-nowrap justify-end items-center pr-2">
@@ -279,10 +286,10 @@ function RouteComponent() {
           </div>
         </div>
       </AppShell.Header>
-      <AppShell.Navbar visibleFrom="xl">
+      <AppShell.Navbar visibleFrom={largeBreakpoint}>
         {navElementsSplitByVisible[0].hidden}
       </AppShell.Navbar>
-      <AppShell.Navbar visibleFrom="md" hiddenFrom="xl">
+      <AppShell.Navbar visibleFrom="md" hiddenFrom={largeBreakpoint}>
         {navElementsSplitByVisible[1].hidden}
       </AppShell.Navbar>
       <AppShell.Navbar hiddenFrom="md">

@@ -1,12 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useImmer } from 'use-immer';
 import {
   ui,
   type Coord,
   type Move,
   type PieceVariant,
 } from '../../../packages/tak-core';
-import { newGame } from '../../../packages/tak-core/game';
 import { useSettings } from '../../../settings';
 import { Board2D } from '../../../components/board2d/Board2D';
 import { Board3D } from '../../../components/board3d/Board3D';
@@ -14,22 +12,18 @@ import { GameOverDialog } from '../../../components/dialogs/GameOverDialog';
 import { BoardNinja } from '../../../components/boardNinja/BoardNinja';
 import { useMemo, useRef } from 'react';
 import type { GameCallbacks } from '../../../components/board';
-import { getDefaultReserve } from '../../../packages/tak-core/piece';
+import {
+  modifyLocalGame,
+  useLocalGameState,
+} from '../../../features/localGame';
 
 export const Route = createFileRoute('/_app/_authenticated/scratch')({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const [game, setGame] = useImmer<ui.GameUI>(
-    ui.newGameUI(
-      newGame({
-        boardSize: 6,
-        halfKomi: 4,
-        reserve: getDefaultReserve(6),
-      }),
-    ),
-  );
+  const game = useLocalGameState((state) => state.game);
+
   const { boardType } = useSettings();
   const playerInfo = {
     white: { username: 'Player1', rating: 1500 },
@@ -38,13 +32,13 @@ function RouteComponent() {
 
   const gameCallbacks = useMemo(() => {
     const onClickTile = (pos: Coord, variant: PieceVariant) => {
-      setGame((draft) => {
+      modifyLocalGame((draft) => {
         ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
       });
     };
 
     const onMakeMove = (move: Move) => {
-      setGame((draft) => {
+      modifyLocalGame((draft) => {
         if (!ui.canDoMove(draft, move)) {
           console.error('Invalid move:', move);
           return;
@@ -54,12 +48,12 @@ function RouteComponent() {
       });
     };
     const onTimeout = () => {
-      setGame((draft) => {
+      modifyLocalGame((draft) => {
         ui.checkTimeout(draft);
       });
     };
     const goToPly = (index: number | null) => {
-      setGame((draft) => {
+      modifyLocalGame((draft) => {
         ui.setPlyIndex(draft, index);
       });
     };
@@ -79,7 +73,7 @@ function RouteComponent() {
       },
     };
     return callbacks;
-  }, [setGame]);
+  }, []);
 
   const currentCallbacks = useRef(gameCallbacks);
   useMemo(() => {

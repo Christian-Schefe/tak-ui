@@ -275,7 +275,7 @@ export function MainPage({
           </a>
         </div>
         <div className="w-full grow flex flex-col justify-start items-center">
-          <div className="w-full max-w-4xl flex flex-col gap-2">
+          <div className="w-full max-w-4xl flex flex-col gap-2 p-2">
             <h1 className="text-3xl mt-10">
               UPCOMING <span className="font-bold">EVENTS</span>
             </h1>

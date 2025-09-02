@@ -32,8 +32,8 @@ export function VariantSelector({
           v,
           (v === 'capstone'
             ? remaining.capstones === 0
-            : remaining.pieces === 0) &&
-            (game.actualGame.history.length >= 2 || v === 'flat'),
+            : remaining.pieces === 0) ||
+            (game.actualGame.history.length < 2 && v !== 'flat'),
         ]),
       ) as Record<PieceVariant, boolean>,
     [remaining, game.actualGame.history.length],
@@ -52,11 +52,7 @@ export function VariantSelector({
   return (
     <div className="w-full flex p-2 gap-2" style={{ color: themeParams.text }}>
       {pieceVariants.map((v) => {
-        const isDisabled =
-          (v === 'capstone'
-            ? remaining.capstones === 0
-            : remaining.pieces === 0) &&
-          (game.actualGame.history.length >= 2 || v === 'flat');
+        const isDisabled = disabledVariants[v];
         return (
           <button
             key={v}
