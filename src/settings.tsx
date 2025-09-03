@@ -54,6 +54,7 @@ export interface SettingsState {
     board2d: Setter<Board2DSettings>;
     boardNinja: Setter<BoardNinjaSettings>;
   };
+  volume: Settable<number>;
   devMode: Settable<boolean>;
 }
 
@@ -84,6 +85,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     });
 
   const [devMode, setDevMode] = useLocalStorage<boolean>('devMode', false);
+  const [volume, setVolume] = useLocalStorage<number>('volume', 100);
 
   const themeParams = useMemo(() => {
     return themes[board2dSettings?.colorTheme ?? 'classic'];
@@ -92,6 +94,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const settingsMemo = useMemo<SettingsState>(() => {
     return {
       boardType: boardType ?? '2d',
+      volume: {
+        value: volume ?? 100,
+        setValue: setVolume,
+      },
       boardSettings: {
         board2d: {
           ...defaultBoard2dSettings,
@@ -120,6 +126,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     board2dSettings,
     themeParams,
     devMode,
+    volume,
+    setVolume,
     setBoardType,
     setBoard2dSettings,
     setBoardNinjaSettings,

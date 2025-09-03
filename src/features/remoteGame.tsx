@@ -210,14 +210,6 @@ export function useRemoteGame(gameId: string) {
   return games[gameId];
 }
 
-export function useAssertedRemoteGame(gameId: string) {
-  const game = useRemoteGame(gameId);
-  if (!game) {
-    throw new Error(`Remote game not found: ${gameId}`);
-  }
-  return game;
-}
-
 export function modifyRemoteGame(
   gameId: string,
   recipe: ((game: GameUI) => void) | ((game: GameUI) => GameUI),

@@ -49,6 +49,7 @@ export function SettingsDialog({
   const {
     boardType,
     setBoardType,
+    volume,
     boardSettings: { board2d: board2dSettings, boardNinja: boardNinjaSettings },
     setBoardSettings: {
       board2d: setBoard2dSettings,
@@ -87,6 +88,17 @@ export function SettingsDialog({
           { value: 'dark', label: 'Dark' },
           { value: 'auto', label: 'Auto' },
         ]}
+      />
+      <p className="mt-4">Volume</p>
+      <Slider
+        value={Math.round(volumeToLinear(volume.value))}
+        onChange={(value) => {
+          console.log('set', value, volumeToLogarithmic(value));
+          volume.setValue(volumeToLogarithmic(value));
+        }}
+        min={0}
+        max={100}
+        step={1}
       />
       <p className="mt-4">Board Type</p>
       <Select
@@ -211,4 +223,12 @@ export function SettingsDialog({
       />
     </Modal>
   );
+}
+
+function volumeToLogarithmic(volume: number) {
+  return Math.pow(volume / 100, 2) * 100;
+}
+
+function volumeToLinear(volume: number) {
+  return Math.pow(volume / 100, 0.5) * 100;
 }

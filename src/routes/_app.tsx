@@ -115,7 +115,14 @@ function RouteComponent() {
             : 'gray'
         }
       >
-        {Object.values(seeks).length.toString()}
+        {Object.values(seeks)
+          .filter(
+            (s) =>
+              s.opponent === undefined ||
+              s.opponent === '' ||
+              (user !== null && s.opponent === user.username),
+          )
+          .length.toString()}
       </Badge>
     </button>
   );

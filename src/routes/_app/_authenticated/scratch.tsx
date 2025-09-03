@@ -16,6 +16,7 @@ import {
   modifyLocalGame,
   useLocalGameState,
 } from '../../../features/localGame';
+import { usePlayMoveSound } from '../../../packages/tak-core/hooks';
 
 export const Route = createFileRoute('/_app/_authenticated/scratch')({
   component: RouteComponent,
@@ -24,7 +25,7 @@ export const Route = createFileRoute('/_app/_authenticated/scratch')({
 function RouteComponent() {
   const game = useLocalGameState((state) => state.game);
 
-  const { boardType } = useSettings();
+  const { boardType, volume } = useSettings();
   const playerInfo = {
     white: { username: 'Player1', rating: 1500 },
     black: { username: 'Player2', rating: 1600 },
@@ -85,6 +86,8 @@ function RouteComponent() {
 
   const BoardComponent =
     boardType === '2d' ? Board2D : boardType === '3d' ? Board3D : BoardNinja;
+
+  usePlayMoveSound('/audio/move.mp3', game, volume.value);
 
   return (
     <div className="w-full grow flex flex-col">

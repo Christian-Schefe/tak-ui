@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { GameUI } from './ui';
 import type { PieceId } from '.';
+import { useSound } from 'use-sound';
 
 export function usePieceIds(game: GameUI) {
   return useMemo(() => {
@@ -25,4 +26,22 @@ export function usePieceIdsWithReserve(game: GameUI) {
     pieceIds.sort((a, b) => a.localeCompare(b));
     return pieceIds;
   }, [game.actualGame.settings.reserve]);
+}
+
+export function usePlayMoveSound(
+  src: string,
+  game: GameUI | undefined,
+  volume: number,
+) {
+  const [play] = useSound(src, {
+    interrupt: true,
+    volume: volume / 100,
+    soundEnabled: volume > 0,
+  });
+
+  useEffect(() => {
+    if (game?.actualGame.history && game.actualGame.history.length > 0) {
+      play();
+    }
+  }, [game?.actualGame.history, play]);
 }

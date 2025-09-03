@@ -18,6 +18,7 @@ import { BoardNinja } from './boardNinja/BoardNinja';
 import { useRatings } from '../api/ratings';
 import type { GameListEntry } from '../features/gameList';
 import { modifyRemoteGame, useRemoteGame } from '../features/remoteGame';
+import { usePlayMoveSound } from '../packages/tak-core/hooks';
 
 export function PlayedGame({
   observed,
@@ -27,7 +28,7 @@ export function PlayedGame({
   gameEntry: GameListEntry;
 }) {
   const gameId = useMemo(() => gameEntry.id.toString(), [gameEntry.id]);
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const ratings = useRatings([gameEntry.white, gameEntry.black]);
 
@@ -55,14 +56,14 @@ export function PlayedGame({
 
   const game = useRemoteGame(gameId);
 
-  const { devMode } = useSettings();
+  const { devMode, volume, boardType } = useSettings();
   const showNotifications = useRef(devMode.value);
   useEffect(() => {
     showNotifications.current = devMode.value;
   }, [devMode.value]);
 
   useEffect(() => {
-    if (observed && readyState === ReadyState.OPEN) {
+    if (observed && readyState === ReadyState.OPEN && isAuthenticated) {
       console.log('Subscribing to game:', gameId);
       sendMessage(`Observe ${gameId}`);
       if (showNotifications.current) {
@@ -85,10 +86,10 @@ export function PlayedGame({
         }
       };
     }
-  }, [observed, readyState, gameId, sendMessage]);
+  }, [observed, readyState, gameId, sendMessage, isAuthenticated]);
 
   useEffect(() => {
-    if (observed && readyState === ReadyState.OPEN) {
+    if (observed && readyState === ReadyState.OPEN && isAuthenticated) {
       const roomId = [gameEntry.white, gameEntry.black].sort().join('-');
       sendMessage(`JoinRoom ${roomId}`);
 
@@ -96,7 +97,14 @@ export function PlayedGame({
         sendMessage(`LeaveRoom ${roomId}`, false);
       };
     }
-  }, [observed, gameEntry.white, gameEntry.black, readyState, sendMessage]);
+  }, [
+    observed,
+    gameEntry.white,
+    gameEntry.black,
+    readyState,
+    sendMessage,
+    isAuthenticated,
+  ]);
 
   const sendMoveMessage = useCallback(
     (move: Move) => {
@@ -124,8 +132,6 @@ export function PlayedGame({
     },
     [gameId, sendMessage],
   );
-
-  const { boardType } = useSettings();
 
   const gameCallbacks = useMemo(() => {
     const onClickTile = (pos: Coord, variant: PieceVariant) => {
@@ -204,6 +210,8 @@ export function PlayedGame({
   useEffect(() => {
     currentCallbacks.current = gameCallbacks;
   }, [gameCallbacks]);
+
+  usePlayMoveSound('/audio/move.mp3', game?.game, volume.value);
 
   if (!game) return <div>No game found</div>;
 

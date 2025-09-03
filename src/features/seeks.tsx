@@ -23,6 +23,7 @@ export interface SeekEntry {
         amount: number;
       }
     | undefined;
+  isBot: boolean;
 }
 
 interface SeekState {
@@ -88,7 +89,7 @@ export function useUpdateSeeks() {
 }
 
 const seekAddRegex =
-  /^Seek new (\d+) ([A-Za-z0-9_]+) (\d+) (\d+) (\d+) ([WBA]) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+) ([A-Za-z0-9_]*)/;
+  /^Seek new (\d+) ([A-Za-z0-9_]+) (\d+) (\d+) (\d+) ([WBA]) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+) ([A-Za-z0-9_]*) (0|1)/;
 const seekRemoveRegex = /^Seek remove (\d+)/;
 
 function parseAddSeekMessage(message: string): SeekEntry | null {
@@ -118,6 +119,7 @@ function parseAddSeekMessage(message: string): SeekEntry | null {
           }
         : undefined,
     opponent: opponent === '0' ? undefined : opponent,
+    isBot: matches[15] === '1',
   };
   return seek;
 }
