@@ -28,7 +28,6 @@
   },
   "pieces": {
     "rounded": 10,
-    "border": "3px",
-    "size": 50
+    "border": "3px"
   }
 }

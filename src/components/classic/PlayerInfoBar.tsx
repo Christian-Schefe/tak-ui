@@ -13,7 +13,7 @@ export function PlayerInfoBar({
 }: {
   player: Player;
   username: string;
-  rating: number;
+  rating?: number;
   game: GameUI;
   onTimeout: () => void;
 }) {
@@ -31,7 +31,7 @@ export function PlayerInfoBar({
           <FaRegUser />
         )}
         <p className="font-bold overflow-hidden">{username}</p>
-        <p>({rating})</p>
+        {rating !== undefined && <p>({rating})</p>}
       </div>
       <div className="flex gap-2 items-center">
         <Clock game={game} onTimeout={onTimeout} player={player} />

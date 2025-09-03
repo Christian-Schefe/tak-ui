@@ -127,6 +127,19 @@ export function SettingsDialog({
             max={500}
             step={10}
           />
+          <p className="mt-4">Piece Size</p>
+          <Slider
+            value={board2dSettings.pieceSize}
+            onChange={(value) => {
+              setBoard2dSettings({
+                ...board2dSettings,
+                pieceSize: value,
+              });
+            }}
+            min={40}
+            max={70}
+            step={1}
+          />
           <p className="mt-4">Axis Labels</p>
           <Switch
             checked={board2dSettings.axisLabels}

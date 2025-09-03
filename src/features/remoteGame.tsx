@@ -16,6 +16,7 @@ import { useGameListState, type GameListEntry } from './gameList';
 import { newGame, setTimeRemaining } from '../packages/tak-core/game';
 import { dirFromAligned } from '../packages/tak-core/coord';
 import { useGameOfferState } from './gameOffers';
+import { router } from '../router';
 
 interface RemoteGameState {
   games: Record<string, GameStateEntry | undefined>;
@@ -102,6 +103,7 @@ export function useUpdateRemoteGames() {
             produce(state, (draft) => {
               if (!draft.games[id]) return;
               ui.undoMove(draft.games[id].game);
+              draft.games[id].undoOffer = false;
             }),
           );
         }
@@ -132,6 +134,8 @@ export function useUpdateRemoteGames() {
         }
         if (gameOver) {
           gameOffers.removeGameState(id);
+          gameOffers.setHasOfferedUndo(id, false);
+          gameOffers.setHasOfferedDraw(id, false);
         }
       } else if (text.startsWith('Observe')) {
         const id = parseObserveMessage(text);
@@ -172,6 +176,7 @@ export function useUpdateRemoteGames() {
               };
             }),
           );
+          void router.navigate({ to: '/play' });
         } else {
           console.error('Failed to parse game start message:', text);
         }
@@ -203,6 +208,14 @@ export function useUpdateRemoteGames() {
 export function useRemoteGame(gameId: string) {
   const games = useRemoteGameState((state) => state.games);
   return games[gameId];
+}
+
+export function useAssertedRemoteGame(gameId: string) {
+  const game = useRemoteGame(gameId);
+  if (!game) {
+    throw new Error(`Remote game not found: ${gameId}`);
+  }
+  return game;
 }
 
 export function modifyRemoteGame(

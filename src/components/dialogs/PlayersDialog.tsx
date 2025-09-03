@@ -27,7 +27,7 @@ export function PlayersDialog({
     .map((player) => (
       <Table.Tr key={player.username} className="cursor-pointer">
         <Table.Td>{player.username}</Table.Td>
-        <Table.Td>{ratings[player.username]?.rating ?? '???'}</Table.Td>
+        <Table.Td>{ratings[player.username]?.rating ?? '---'}</Table.Td>
       </Table.Tr>
     ));
 

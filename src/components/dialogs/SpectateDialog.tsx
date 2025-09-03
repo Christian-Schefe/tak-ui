@@ -30,34 +30,38 @@ export function SpectateDialog({
     });
   };
 
-  const rows = games.map((game) => (
-    <Table.Tr
-      key={game.id}
-      onClick={() => {
-        onClickSpectate(game.id);
-      }}
-      className="cursor-pointer"
-    >
-      <Table.Td>
-        <span className="font-bold">{game.white}</span> (
-        {ratings[game.white]?.rating ?? '???'})
-      </Table.Td>
-      <Table.Td>
-        <span className="font-bold">{game.black}</span> (
-        {ratings[game.black]?.rating ?? '???'})
-      </Table.Td>
-      <Table.Td>
-        {game.boardSize}x{game.boardSize}
-      </Table.Td>
-      <Table.Td>{game.halfKomi / 2}</Table.Td>
-      <Table.Td>
-        {game.timeContingentSeconds / 60}|{game.timeIncrementSeconds}
-      </Table.Td>
-      <Table.Td>
-        {game.pieces}/{game.capstones}
-      </Table.Td>
-    </Table.Tr>
-  ));
+  const rows = games.map((game) => {
+    const whiteRating = ratings[game.white]?.rating;
+    const blackRating = ratings[game.black]?.rating;
+    return (
+      <Table.Tr
+        key={game.id}
+        onClick={() => {
+          onClickSpectate(game.id);
+        }}
+        className="cursor-pointer"
+      >
+        <Table.Td>
+          <span className="font-bold">{game.white}</span>
+          {whiteRating !== undefined ? ` (${whiteRating.toString()})` : ''}
+        </Table.Td>
+        <Table.Td>
+          <span className="font-bold">{game.black}</span>
+          {blackRating !== undefined ? ` (${blackRating.toString()})` : ''}
+        </Table.Td>
+        <Table.Td>
+          {game.boardSize}x{game.boardSize}
+        </Table.Td>
+        <Table.Td>{game.halfKomi / 2}</Table.Td>
+        <Table.Td>
+          {game.timeContingentSeconds / 60}|{game.timeIncrementSeconds}
+        </Table.Td>
+        <Table.Td>
+          {game.pieces}/{game.capstones}
+        </Table.Td>
+      </Table.Tr>
+    );
+  });
 
   return (
     <Modal

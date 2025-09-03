@@ -34,11 +34,11 @@ export function PlayedGame({
   const playerInfo = {
     white: {
       username: gameEntry.white,
-      rating: ratings[gameEntry.white]?.rating ?? 1000,
+      rating: ratings[gameEntry.white]?.rating,
     },
     black: {
       username: gameEntry.black,
-      rating: ratings[gameEntry.black]?.rating ?? 1000,
+      rating: ratings[gameEntry.black]?.rating,
     },
   };
 
@@ -217,8 +217,6 @@ export function PlayedGame({
         playerInfo={playerInfo}
         mode={boardMode}
         callbacks={currentCallbacks}
-        hasUndoOffer={boardMode.type === 'remote' ? game.undoOffer : undefined}
-        hasDrawOffer={boardMode.type === 'remote' ? game.drawOffer : undefined}
       />
       <GameOverDialog
         game={game.game}

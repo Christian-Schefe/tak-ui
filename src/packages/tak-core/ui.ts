@@ -1,12 +1,13 @@
-import type {
-  Coord,
-  Direction,
-  Game,
-  Move,
-  PieceId,
-  PieceVariant,
-  Player,
-  Reserve,
+import {
+  playerOpposite,
+  type Coord,
+  type Direction,
+  type Game,
+  type Move,
+  type PieceId,
+  type PieceVariant,
+  type Player,
+  type Reserve,
 } from '.';
 import { isValidCoord } from './board';
 import { coordEquals, dirFromAdjacent, offsetCoord } from './coord';
@@ -73,6 +74,18 @@ export function setPlyIndex(ui: GameUI, index: number | null) {
       : Math.max(0, index);
   ui.priorityPieces = [];
   ui.partialMove = null;
+  onGameUpdate(ui);
+}
+
+export function doResign(ui: GameUI, player: Player) {
+  if (ui.actualGame.gameState.type !== 'ongoing') {
+    return;
+  }
+  ui.actualGame.gameState = {
+    type: 'win',
+    player: playerOpposite(player),
+    reason: 'resignation',
+  };
   onGameUpdate(ui);
 }
 
@@ -282,7 +295,7 @@ export function onGameUpdate(ui: GameUI) {
   );
   const shownGame =
     ui.plyIndex !== null
-      ? game.gameFromPlyCount(gameClone, ui.plyIndex)
+      ? game.gameFromPlyCount(gameClone, ui.plyIndex, true)
       : gameClone;
 
   const partialMove = partialMoveToMove(ui.partialMove);

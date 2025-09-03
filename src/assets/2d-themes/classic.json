@@ -20,7 +20,6 @@
   },
   "pieces": {
     "rounded": 10,
-    "border": "1px",
-    "size": 50
+    "border": "1px"
   }
 }

@@ -260,7 +260,10 @@ function RouteComponent() {
           </Group>
           <div className="grow flex flex-nowrap justify-end items-center pr-2">
             <p>
-              {user?.username} ({rating?.rating ?? '???'})
+              {user?.username}
+              {rating?.rating !== undefined
+                ? ` (${rating.rating.toString()})`
+                : ''}
             </p>
             <button
               className="flex items-center p-2 cursor-pointer"

@@ -14,14 +14,7 @@ const NinjaMessageSchema = z.object({
 
 const params =
   '&moveNumber=false&unplayedPieces=true&disableStoneCycling=true&showBoardPrefsBtn=false&disableNavigation=true&disablePTN=true&disableText=true&flatCounts=false&turnIndicator=false&showHeader=false&showEval=false&showRoads=false&stackCounts=false&notifyGame=false';
-export function BoardNinja({
-  game,
-  mode,
-  callbacks,
-  playerInfo,
-  hasDrawOffer,
-  hasUndoOffer,
-}: BoardProps) {
+export function BoardNinja({ game, mode, callbacks, playerInfo }: BoardProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
   const update = useUpdate();
@@ -128,14 +121,6 @@ export function BoardNinja({
         action: 'LAST',
         value: null,
       });
-      if (mode.type !== 'spectator') {
-        sendMessageToIframe({
-          action: 'SET_UI',
-          value: {
-            disableBoard: false,
-          },
-        });
-      }
     } else {
       if (game.plyIndex === 0) {
         sendMessageToIframe({
@@ -151,26 +136,31 @@ export function BoardNinja({
           },
         });
       }
-      if (mode.type !== 'spectator') {
-        sendMessageToIframe({
-          action: 'SET_UI',
-          value: {
-            disableBoard: true,
-          },
-        });
-      }
     }
-  }, [hasLoaded, mode.type, game.plyIndex, sendMessageToIframe]);
+    sendMessageToIframe({
+      action: 'SET_UI',
+      value: {
+        disableBoard: !(
+          game.plyIndex === null &&
+          mode.type !== 'spectator' &&
+          game.actualGame.gameState.type === 'ongoing'
+        ),
+      },
+    });
+  }, [
+    hasLoaded,
+    mode.type,
+    game.plyIndex,
+    sendMessageToIframe,
+    game.actualGame.gameState.type,
+  ]);
 
   return (
     <div className="w-full grow flex">
       <GameInfoDrawer
-        gameId={mode.type === 'local' ? undefined : mode.gameId}
         game={game}
+        mode={mode}
         playerInfo={playerInfo}
-        hasDrawOffer={hasDrawOffer}
-        hasUndoOffer={hasUndoOffer}
-        showResign={mode.type === 'remote'}
         callbacks={callbacks}
       />
       <div className="grow flex flex-col">

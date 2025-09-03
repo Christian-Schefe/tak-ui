@@ -11,14 +11,7 @@ import { History } from './History';
 import { usePieceIds } from '../../packages/tak-core/hooks';
 import { Chat } from './Chat';
 
-export function Board2D({
-  game,
-  playerInfo,
-  callbacks,
-  mode,
-  hasDrawOffer,
-  hasUndoOffer,
-}: BoardProps) {
+export function Board2D({ game, playerInfo, callbacks, mode }: BoardProps) {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const { themeParams } = useSettings();
 
@@ -56,13 +49,7 @@ export function Board2D({
     >
       <div className="w-full flex flex-col mx-auto lg:flex-row items-center mt-12 lg:mt-0 justify-center lg:p-2">
         <div className="w-full lg:w-fit h-full flex flex-col justify-center">
-          <History
-            game={game}
-            hasDrawOffer={hasDrawOffer}
-            hasUndoOffer={hasUndoOffer}
-            callbacks={callbacks}
-            mode={mode}
-          />
+          <History game={game} callbacks={callbacks} mode={mode} />
         </div>
         <div
           className="w-full lg:grow lg:w-0"

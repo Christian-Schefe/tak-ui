@@ -48,7 +48,7 @@ export function MainPage({
   );
 
   const [category, setCategory] = useState<string>('All');
-  const { login, isAuthenticated, signUp } = useAuth();
+  const { login, isAuthenticated, signUp, loginGuest } = useAuth();
 
   const loginForm = useForm({
     initialValues: {
@@ -148,6 +148,15 @@ export function MainPage({
                 ) : (
                   <>
                     <Button
+                      onClick={() => {
+                        void navigate({
+                          to: '/register',
+                        });
+                      }}
+                    >
+                      Sign Up
+                    </Button>
+                    <Button
                       variant="outline"
                       onClick={() =>
                         void navigate({
@@ -158,16 +167,6 @@ export function MainPage({
                     >
                       Login
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        void navigate({
-                          to: '/register',
-                        });
-                      }}
-                    >
-                      Sign Up
-                    </Button>
                   </>
                 )}
                 <Button component="a" href={discordLink}>
@@ -176,6 +175,19 @@ export function MainPage({
                     Find Players
                   </Group>
                 </Button>
+                {!auth.isAuthenticated && (
+                  <Anchor
+                    onClick={() => {
+                      loginGuest();
+                      void navigate({
+                        to: '/login',
+                        search: { redirect: '/scratch' },
+                      });
+                    }}
+                  >
+                    Play as Guest
+                  </Anchor>
+                )}
               </Stack>
             </>
           ) : register === true ? (

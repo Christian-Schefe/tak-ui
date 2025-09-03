@@ -89,11 +89,19 @@ export function isClockActive(game: Game, player: Player): boolean {
   );
 }
 
-export function gameFromPlyCount(game: Game, plyCount: number): Game {
+export function gameFromPlyCount(
+  game: Game,
+  plyCount: number,
+  removeClock?: boolean,
+): Game {
   const resultGame = newGame({ ...game.settings, clock: undefined });
   const history = game.history.slice(0, plyCount);
   for (const move of history) {
     doMove(resultGame, move);
+  }
+  if (removeClock !== true) {
+    resultGame.clock = game.clock;
+    resultGame.settings.clock = game.settings.clock;
   }
   return resultGame;
 }

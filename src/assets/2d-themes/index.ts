@@ -3,8 +3,9 @@ import classic from './classic.json';
 import jungle from './jungle.json';
 import ignis from './ignis.json';
 import neon from './neon.json';
+import discord from './discord.json';
 
-export type ColorTheme = 'classic' | 'jungle' | 'ignis' | 'neon';
+export type ColorTheme = 'classic' | 'jungle' | 'ignis' | 'neon' | 'discord';
 
 const pieceColorSchema = z.object({
   background: z.string(),
@@ -34,7 +35,6 @@ export const themeSchema = z.object({
   }),
   pieces: object({
     rounded: z.number(),
-    size: z.number(),
     border: z.string(),
   }),
 });
@@ -46,6 +46,7 @@ const themes: Record<ColorTheme, ThemeParams> = {
   jungle: themeSchema.parse(jungle),
   ignis: themeSchema.parse(ignis),
   neon: themeSchema.parse(neon),
+  discord: themeSchema.parse(discord),
 };
 
 export { themes };

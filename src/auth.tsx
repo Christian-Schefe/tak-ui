@@ -23,6 +23,7 @@ export interface AuthState {
   logout: () => void;
   signUp: (username: string, email: string) => void;
   changePassword: (oldPassword: string, newPassword: string) => void;
+  loginGuest: () => void;
 }
 
 export interface WebSocketAPIState {
@@ -198,6 +199,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [sendToken],
   );
 
+  const loginGuest = useCallback(() => {
+    console.log('Logging in as guest');
+    const guestToken = generateGuestToken(20);
+    console.log('token', guestToken);
+    localStorage.setItem('auth-token', `Guest ${guestToken}`);
+    sendToken();
+  }, [sendToken]);
+
   const logout = useCallback(() => {
     console.log('Logging out');
     setUser(null);
@@ -222,8 +231,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const authContextMemo = useMemo<AuthState>(() => {
-    return { isAuthenticated, user, login, logout, signUp, changePassword };
-  }, [isAuthenticated, user, login, logout, signUp, changePassword]);
+    return {
+      isAuthenticated,
+      user,
+      login,
+      logout,
+      signUp,
+      changePassword,
+      loginGuest,
+    };
+  }, [
+    isAuthenticated,
+    user,
+    login,
+    logout,
+    signUp,
+    changePassword,
+    loginGuest,
+  ]);
 
   const { devMode } = useSettings();
 
@@ -237,4 +262,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       )}
     </AuthContext>
   );
+}
+
+function generateGuestToken(length: number) {
+  const values = new Uint8Array(length);
+  crypto.getRandomValues(values);
+  return Array.from(values, (v) => randomLetterFromByte(v)).join('');
+}
+
+function randomLetterFromByte(byte: number): string {
+  if (byte < 26 * 9) {
+    // 26 * 9 = 234
+    const index = byte % 26;
+    return String.fromCharCode('a'.charCodeAt(0) + index); // a–z
+  }
+  // If byte ≥ 234, discard and retry with a new random byte
+  return randomLetterFromByte(crypto.getRandomValues(new Uint8Array(1))[0]);
 }

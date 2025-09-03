@@ -57,6 +57,11 @@ function RouteComponent() {
         ui.setPlyIndex(draft, index);
       });
     };
+    const doResign = () => {
+      modifyLocalGame((draft) => {
+        ui.doResign(draft, draft.actualGame.currentPlayer);
+      });
+    };
     const callbacks: GameCallbacks = {
       onTimeout,
       onClickTile,
@@ -68,9 +73,7 @@ function RouteComponent() {
       sendUndoOffer: () => {
         void 0;
       },
-      doResign: () => {
-        void 0;
-      },
+      doResign,
     };
     return callbacks;
   }, []);

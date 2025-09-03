@@ -6,8 +6,6 @@ export interface BoardProps {
   playerInfo: Record<Player, PlayerInfo>;
   mode: BoardMode;
   callbacks: React.RefObject<GameCallbacks>;
-  hasDrawOffer?: boolean;
-  hasUndoOffer?: boolean;
 }
 
 export interface GameCallbacks {
@@ -22,10 +20,14 @@ export interface GameCallbacks {
 
 export interface PlayerInfo {
   username: string;
-  rating: number;
+  rating?: number;
 }
 
 export type BoardMode =
   | { type: 'local'; review: boolean }
-  | { type: 'remote'; localPlayer: Player; gameId: string }
+  | {
+      type: 'remote';
+      localPlayer: Player;
+      gameId: string;
+    }
   | { type: 'spectator'; gameId: string };

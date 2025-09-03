@@ -6,7 +6,7 @@ export function Piece({ id, game }: { id: PieceId; game: GameUI }) {
   const {
     themeParams,
     boardSettings: {
-      board2d: { animationSpeed },
+      board2d: { animationSpeed, pieceSize },
     },
   } = useSettings();
 
@@ -28,7 +28,6 @@ export function Piece({ id, game }: { id: PieceId; game: GameUI }) {
 
   const colors = isWhite ? themeParams.piece1 : themeParams.piece2;
 
-  const pieceSize = themeParams.pieces.size;
   const wallWidthRatio = 2 / 5;
   const roundedPercent = themeParams.pieces.rounded;
   const buriedSizeFactor = 0.25;

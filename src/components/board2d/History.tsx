@@ -9,37 +9,23 @@ import {
   FaAngleRight,
   FaAnglesLeft,
   FaAnglesRight,
-  FaArrowRotateLeft,
-  FaFlag,
-  FaHandshake,
 } from 'react-icons/fa6';
 import { gameResultToString } from '../../packages/tak-core/game';
 import { useGameHistory, useHistoryNavigation } from '../../features/history';
-import { useGameOffer } from '../../features/gameOffers';
 import type { BoardMode, GameCallbacks } from '../board';
 import { useEvent } from 'react-use';
+import { GameActions } from '../classic/GameInfoDrawer';
 
 export function History({
   game,
   mode,
-  hasDrawOffer,
-  hasUndoOffer,
   callbacks,
 }: {
   game: GameUI;
   mode: BoardMode;
-  hasDrawOffer?: boolean;
-  hasUndoOffer?: boolean;
   callbacks: React.RefObject<GameCallbacks>;
 }) {
   const { themeParams } = useSettings();
-
-  const {
-    hasOfferedDraw,
-    hasOfferedUndo,
-    setHasOfferedDraw,
-    setHasOfferedUndo,
-  } = useGameOffer(mode.type === 'local' ? '' : mode.gameId, callbacks);
 
   const result = useGameHistory(game);
 
@@ -130,49 +116,12 @@ export function History({
       className="flex flex-col rounded-md p-2 m-2 justify-center lg:w-72 lg:max-h-200 h-full"
       style={{ color: themeParams.text, backgroundColor: themeParams.board1 }}
     >
-      {mode.type === 'remote' && (
-        <div className="flex gap-2">
-          {hasUndoOffer !== undefined && (
-            <FaArrowRotateLeft
-              className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
-              style={{
-                color: hasUndoOffer
-                  ? themeParams.piece1.background
-                  : hasOfferedUndo
-                    ? themeParams.piece2.background
-                    : themeParams.text,
-              }}
-              size={32}
-              onClick={() => {
-                setHasOfferedUndo(!hasOfferedUndo);
-              }}
-            />
-          )}
-          {hasDrawOffer !== undefined && (
-            <FaHandshake
-              className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
-              style={{
-                color: hasDrawOffer
-                  ? themeParams.piece1.background
-                  : hasOfferedDraw
-                    ? themeParams.piece2.background
-                    : themeParams.text,
-              }}
-              size={32}
-              onClick={() => {
-                setHasOfferedDraw(!hasOfferedDraw);
-              }}
-            />
-          )}
-          <FaFlag
-            className="m-2 hover:outline-2 rounded-md p-1 cursor-pointer"
-            size={32}
-            onClick={() => {
-              callbacks.current.doResign();
-            }}
-          />
-        </div>
-      )}
+      <GameActions
+        mode={mode}
+        callbacks={callbacks}
+        padding="0.5rem"
+        gameState={game.actualGame.gameState}
+      />
       <ScrollArea
         viewportRef={viewport}
         className="grow"

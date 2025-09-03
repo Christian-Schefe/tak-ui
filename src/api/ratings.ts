@@ -20,26 +20,13 @@ export function useRatings(playerNames: string[]) {
       staleTime: 1000 * 60 * 60,
       queryFn: async () => {
         if (playerName.startsWith('Guest')) {
-          return {
-            name: playerName,
-            rating: 1000,
-            maxrating: 0,
-            ratedgames: 0,
-            isbot: false,
-            participation_rating: null,
-          };
+          return null;
         }
         const res = await fetch(`${API_BASE_URL}/v1/ratings/${playerName}`);
-        if (!res.ok)
-          //TODO: error handling
-          return {
-            name: playerName,
-            rating: 1000,
-            maxrating: 0,
-            ratedgames: 0,
-            isbot: false,
-            participation_rating: null,
-          };
+        if (!res.ok) {
+          console.error('Failed to fetch rating for', playerName);
+          return null;
+        }
         return RatingSchema.parse(await res.json());
       },
     })),

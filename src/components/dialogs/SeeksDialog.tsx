@@ -75,7 +75,7 @@ export function SeeksDialog({
             <p className="font-bold">{seek.creator}</p>
           </Tooltip>
         </Table.Td>
-        <Table.Td>{ratings[seek.creator]?.rating ?? '???'}</Table.Td>
+        <Table.Td>{ratings[seek.creator]?.rating ?? '---'}</Table.Td>
         <Table.Td>
           {seek.boardSize}x{seek.boardSize}
         </Table.Td>

@@ -26,8 +26,6 @@ export const Board3D: FC<BoardProps> = ({
   playerInfo,
   callbacks,
   mode,
-  hasDrawOffer,
-  hasUndoOffer,
 }) => {
   const [variant, setVariant] = useState<PieceVariant>('flat');
   const canvasContainer = useRef<HTMLDivElement | null>(null);
@@ -180,12 +178,9 @@ export const Board3D: FC<BoardProps> = ({
       </div>
       <div className="w-full grow flex">
         <GameInfoDrawer
-          gameId={mode.type === 'local' ? undefined : mode.gameId}
+          mode={mode}
           game={game}
           playerInfo={playerInfo}
-          hasDrawOffer={hasDrawOffer}
-          hasUndoOffer={hasUndoOffer}
-          showResign={mode.type === 'remote'}
           callbacks={callbacks}
         />
         <div className="w-0 grow pointer-events-none"></div>

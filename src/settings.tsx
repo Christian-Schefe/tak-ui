@@ -7,6 +7,7 @@ export type BoardType = '2d' | '3d' | 'ninja';
 export interface Board2DSettings {
   colorTheme: ColorTheme;
   animationSpeed: number;
+  pieceSize: number;
   axisLabels: boolean;
   axisLabelSize: number;
 }
@@ -56,6 +57,14 @@ export interface SettingsState {
   devMode: Settable<boolean>;
 }
 
+const defaultBoard2dSettings: Board2DSettings = {
+  colorTheme: 'classic',
+  animationSpeed: 150,
+  axisLabels: true,
+  axisLabelSize: 12,
+  pieceSize: 50,
+};
+
 const SettingsContext = createContext<SettingsState | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
@@ -65,10 +74,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   );
   const [board2dSettings, setBoard2dSettings] =
     useLocalStorage<Board2DSettings>('board2dSettings', {
-      colorTheme: 'classic',
-      animationSpeed: 150,
-      axisLabels: true,
-      axisLabelSize: 12,
+      ...defaultBoard2dSettings,
     });
 
   const [boardNinjaSettings, setBoardNinjaSettings] =
@@ -88,10 +94,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       boardType: boardType ?? '2d',
       boardSettings: {
         board2d: {
-          colorTheme: 'classic',
-          axisLabels: true,
-          axisLabelSize: 12,
-          animationSpeed: 150,
+          ...defaultBoard2dSettings,
           ...board2dSettings,
         },
         boardNinja: {
