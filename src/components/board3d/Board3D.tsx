@@ -15,6 +15,7 @@ import envTexture from '../../assets/766-hdri-skies-com.env';
 import { GameInfoDrawer } from '../classic/GameInfoDrawer';
 import { ChatDrawer } from '../classic/ChatDrawer';
 import { usePieceIdsWithReserve } from '../../packages/tak-core/hooks';
+import { useVariantSelector } from '../../features/variantSelector';
 
 export interface EnvConfig {
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
@@ -88,6 +89,13 @@ export const Board3D: FC<BoardProps> = ({
     (mode.type === 'remote' &&
       game.actualGame.currentPlayer === mode.localPlayer) ||
     (mode.type === 'local' && !mode.review);
+
+  useVariantSelector(
+    game,
+    mode.type === 'remote' ? mode.localPlayer : game.actualGame.currentPlayer,
+    variant,
+    setVariant,
+  );
 
   return (
     <>

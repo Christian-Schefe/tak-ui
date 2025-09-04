@@ -1,7 +1,7 @@
-import { useEffect, useMemo } from 'react';
 import type { PieceVariant, Player } from '../../packages/tak-core';
 import { useSettings } from '../../settings';
 import type { GameUI } from '../../packages/tak-core/ui';
+import { useVariantSelector } from '../../features/variantSelector';
 
 const pieceVariants: PieceVariant[] = ['flat', 'standing', 'capstone'];
 
@@ -23,29 +23,12 @@ export function VariantSelector({
     },
   } = useSettings();
 
-  const remaining = game.actualGame.reserves[player];
-
-  const disabledVariants = useMemo(
-    () =>
-      Object.fromEntries(
-        pieceVariants.map((v) => [
-          v,
-          (v === 'capstone'
-            ? remaining.capstones === 0
-            : remaining.pieces === 0) ||
-            (game.actualGame.history.length < 2 && v !== 'flat'),
-        ]),
-      ) as Record<PieceVariant, boolean>,
-    [remaining, game.actualGame.history.length],
+  const { disabledVariants } = useVariantSelector(
+    game,
+    player,
+    variant,
+    setVariant,
   );
-
-  useEffect(() => {
-    if (disabledVariants[variant] && !disabledVariants.capstone) {
-      setVariant('capstone');
-    } else if (disabledVariants[variant] && !disabledVariants.flat) {
-      setVariant('flat');
-    }
-  }, [remaining, setVariant, variant, disabledVariants]);
 
   const opacityTransition = `opacity ${animationSpeed.toString()}ms ease-in-out`;
 

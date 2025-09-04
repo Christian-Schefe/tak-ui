@@ -12,7 +12,6 @@ import {
 } from '../packages/tak-core';
 import type { TimeMessage } from '../gameData';
 import { produce } from 'immer';
-import { useGameListState, type GameListEntry } from './gameList';
 import { newGame, setTimeRemaining } from '../packages/tak-core/game';
 import { dirFromAligned } from '../packages/tak-core/coord';
 import { useGameOfferState } from './gameOffers';
@@ -33,8 +32,19 @@ export const useRemoteGameState = create<RemoteGameState>()(() => ({
   unprocessedMessages: {},
 }));
 
+function modifyGame(id: string, recipe: (game: GameStateEntry) => void) {
+  useRemoteGameState.setState((state) =>
+    produce(state, (draft) => {
+      if (!draft.games[id]) {
+        console.error('No entry from game ', id);
+        return;
+      }
+      recipe(draft.games[id]);
+    }),
+  );
+}
+
 export function useUpdateRemoteGames() {
-  const gameEntries = useGameListState((state) => state.games);
   const gameOffers = useGameOfferState();
 
   const handleMessage = useCallback(
@@ -50,83 +60,60 @@ export function useUpdateRemoteGames() {
 
         const timeMessage = parseGameTimeMessage(text);
         if (timeMessage) {
-          useRemoteGameState.setState((state) =>
-            produce(state, (draft) => {
-              if (!draft.games[id]) return;
-              setTimeRemaining(
-                draft.games[id].game.actualGame,
-                timeMessage,
-                timeMessage.timestamp,
-              );
-            }),
-          );
+          modifyGame(id, (draft) => {
+            setTimeRemaining(
+              draft.game.actualGame,
+              timeMessage,
+              timeMessage.timestamp,
+            );
+          });
         }
 
         const drawOffer = parseGameDrawMessage(text);
         if (drawOffer !== null) {
-          useRemoteGameState.setState((state) =>
-            produce(state, (draft) => {
-              if (!draft.games[id]) return;
-              draft.games[id].drawOffer = drawOffer;
-            }),
-          );
+          modifyGame(id, (draft) => {
+            draft.drawOffer = drawOffer;
+          });
         }
 
         const undoOffer = parseGameUndoOfferMessage(text);
         if (undoOffer !== null) {
-          useRemoteGameState.setState((state) =>
-            produce(state, (draft) => {
-              if (!draft.games[id]) return;
-              draft.games[id].undoOffer = undoOffer;
-            }),
-          );
+          modifyGame(id, (draft) => {
+            draft.undoOffer = undoOffer;
+          });
         }
 
         const gameOver = parseGameOverPattern(text);
         if (gameOver !== null) {
-          useRemoteGameState.setState((state) =>
-            produce(state, (draft) => {
-              if (!draft.games[id]) return;
-              if (
-                draft.games[id].game.actualGame.gameState.type !== gameOver.type
-              ) {
-                draft.games[id].game.actualGame.gameState = gameOver;
-                ui.onGameUpdate(draft.games[id].game);
-              }
-            }),
-          );
+          modifyGame(id, (draft) => {
+            if (draft.game.actualGame.gameState.type !== gameOver.type) {
+              draft.game.actualGame.gameState = gameOver;
+              ui.onGameUpdate(draft.game);
+            }
+          });
         }
 
         const isUndo = isGameUndoMessage(text);
         if (isUndo) {
-          useRemoteGameState.setState((state) =>
-            produce(state, (draft) => {
-              if (!draft.games[id]) return;
-              ui.undoMove(draft.games[id].game);
-              draft.games[id].undoOffer = false;
-            }),
-          );
+          modifyGame(id, (draft) => {
+            ui.undoMove(draft.game);
+            draft.undoOffer = false;
+          });
         }
 
         const placeMatch = placeRegex.exec(text);
         if (placeMatch) {
           const move = parsePlaceMove(placeMatch);
-          useRemoteGameState.setState((state) =>
-            produce(state, (draft) => {
-              if (!draft.games[id]) return;
-              ui.doMove(draft.games[id].game, move);
-            }),
-          );
+          modifyGame(id, (draft) => {
+            ui.doMove(draft.game, move);
+          });
         }
         const moveMatch = moveRegex.exec(text);
         if (moveMatch) {
           const move = parseMoveMove(moveMatch);
-          useRemoteGameState.setState((state) =>
-            produce(state, (draft) => {
-              if (!draft.games[id]) return;
-              ui.doMove(draft.games[id].game, move);
-            }),
-          );
+          modifyGame(id, (draft) => {
+            ui.doMove(draft.game, move);
+          });
         }
 
         if (isUndo) {
@@ -138,24 +125,18 @@ export function useUpdateRemoteGames() {
           gameOffers.setHasOfferedDraw(id, false);
         }
       } else if (text.startsWith('Observe')) {
-        const id = parseObserveMessage(text);
-        if (id !== null) {
-          console.log('Received observe message for game:', id);
-          useRemoteGameState.setState((state) => {
-            if (!gameEntries[id]) return state;
-            return {
-              games: {
-                ...state.games,
-                [id]: {
-                  game: newGameUI(
-                    newGame(settingsFromGameEntry(gameEntries[id])),
-                  ),
-                  drawOffer: false,
-                  undoOffer: false,
-                },
-              },
-            };
-          });
+        const observeSettings = parseObserveMessage(text);
+        if (observeSettings) {
+          console.log('Received observe message for game:', observeSettings.id);
+          useRemoteGameState.setState((state) =>
+            produce(state, (draft) => {
+              draft.games[observeSettings.id] = {
+                game: newGameUI(newGame(observeSettings.settings)),
+                drawOffer: false,
+                undoOffer: false,
+              };
+            }),
+          );
         } else {
           console.error('Failed to parse observe game message:', text);
         }
@@ -182,7 +163,7 @@ export function useUpdateRemoteGames() {
         }
       }
     },
-    [gameEntries, gameOffers],
+    [gameOffers],
   );
 
   const onMessage = useCallback(
@@ -230,28 +211,6 @@ export function modifyRemoteGame(
   });
 }
 
-function settingsFromGameEntry(gameEntry: GameListEntry): GameSettings {
-  const settings: GameSettings = {
-    boardSize: gameEntry.boardSize,
-    halfKomi: gameEntry.halfKomi,
-    reserve: {
-      pieces: gameEntry.pieces,
-      capstones: gameEntry.capstones,
-    },
-    clock: {
-      contingentMs: gameEntry.timeContingentSeconds * 1000,
-      incrementMs: gameEntry.timeIncrementSeconds * 1000,
-      extra: gameEntry.triggerMove
-        ? {
-            move: gameEntry.triggerMove.move,
-            amountMs: gameEntry.triggerMove.amountSeconds * 1000,
-          }
-        : undefined,
-    },
-  };
-  return settings;
-}
-
 const gameStartMessagePattern =
   /^Game Start (\d+) (\w+) vs (\w+) (white|black) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+)/;
 
@@ -278,6 +237,7 @@ function parseGameStartMessage(
     extraTriggerAmount,
   ] = match;
   const extraTimeMs = parseInt(extraTriggerAmount) * 1000;
+  const extraTimeMove = parseInt(extraTriggerMove);
   const settings: GameSettings = {
     boardSize: parseInt(boardSize),
     halfKomi: parseInt(halfKomi),
@@ -289,9 +249,9 @@ function parseGameStartMessage(
       contingentMs: parseInt(time) * 1000,
       incrementMs: parseInt(increment) * 1000,
       extra:
-        extraTimeMs > 0
+        extraTimeMs > 0 && extraTimeMove > 0
           ? {
-              move: parseInt(extraTriggerMove),
+              move: extraTimeMove,
               amountMs: extraTimeMs,
             }
           : undefined,
@@ -412,11 +372,53 @@ const parseMoveMove = (moveMatch: RegExpMatchArray): Move => {
   };
 };
 
-function parseObserveMessage(message: string): string | null {
-  const matches = /^Observe (\d+)/.exec(message);
-  if (!matches) return null;
+const gameObserveMessagePattern =
+  /^Observe (\d+) (\w+) (\w+) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (0|1) (0|1) (\d+) (\d+)/;
 
-  return matches[1];
+function parseObserveMessage(
+  message: string,
+): { settings: GameSettings; id: string } | null {
+  const match = gameObserveMessagePattern.exec(message);
+  if (!match) return null;
+  const [
+    ,
+    id,
+    _white,
+    _black,
+    boardSize,
+    time,
+    increment,
+    halfKomi,
+    pieces,
+    capstones,
+    _unrated,
+    _tournament,
+    extraTriggerMove,
+    extraTriggerAmount,
+  ] = match;
+  const extraTimeMs = parseInt(extraTriggerAmount) * 1000;
+  const extraTimeMove = parseInt(extraTriggerMove);
+  const settings: GameSettings = {
+    boardSize: parseInt(boardSize),
+    halfKomi: parseInt(halfKomi),
+    reserve: {
+      pieces: parseInt(pieces),
+      capstones: parseInt(capstones),
+    },
+    clock: {
+      contingentMs: parseInt(time) * 1000,
+      incrementMs: parseInt(increment) * 1000,
+      extra:
+        extraTimeMs > 0 && extraTimeMove > 0
+          ? {
+              move: extraTimeMove,
+              amountMs: extraTimeMs,
+            }
+          : undefined,
+    },
+  };
+
+  return { settings, id };
 }
 
 function batch<T>(cb: (args: T[]) => void) {

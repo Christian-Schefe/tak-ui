@@ -3,6 +3,7 @@ import {
   Color3,
   Mesh,
   Quaternion,
+  Texture,
   Vector3,
 } from '@babylonjs/core';
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
@@ -35,6 +36,7 @@ import marbleWhiteAO from '../../assets/textures/marble_white/marble_0008_ao_1k.
 import marbleWhiteRoughness from '../../assets/textures/marble_white/marble_0008_roughness_1k.jpg';
 import { PBRBox, PBRCylinder } from './Box';
 import type { BoardMode } from '../board';
+import { Control } from '@babylonjs/gui/2D/controls/control';
 
 export function Lerp(start: number, end: number, amount: number): number {
   return start + (end - start) * amount;
@@ -67,6 +69,12 @@ export const Board: FC<{
   size: number;
   cubeTextureRef: React.RefObject<BaseTexture | undefined>;
 }> = ({ size, cubeTextureRef }) => {
+  const rowPositions = [];
+  const colPositions = [];
+  for (let i = 0; i < size; i++) {
+    rowPositions.push({ x: i, y: 0 });
+    colPositions.push({ x: 0, y: i });
+  }
   return (
     // Key hack to recreate mesh when size changes
     <PBRBox
@@ -85,7 +93,24 @@ export const Board: FC<{
       roughness={0}
       specularIntensity={0.05}
       albedoColor={Color3.FromHexString('#c0c0c0')}
-    />
+    >
+      {colPositions.map((pos, index) => (
+        <BoardLetters
+          key={`col-${index.toString()}`}
+          size={size}
+          pos={pos}
+          isCol
+        />
+      ))}
+      {rowPositions.map((pos, index) => (
+        <BoardLetters
+          key={`row-${index.toString()}`}
+          size={size}
+          pos={pos}
+          isCol={false}
+        />
+      ))}
+    </PBRBox>
   );
 };
 
@@ -422,5 +447,44 @@ export const Piece: FC<{
       specularIntensity={0.05}
       textureScale={1 / 12}
     />
+  );
+};
+
+export const BoardLetters: FC<{ size: number; pos: Coord; isCol: boolean }> = ({
+  size,
+  pos,
+  isCol,
+}) => {
+  return (
+    <plane
+      name="text-plane"
+      size={1}
+      position={new Vector3(pos.x - size / 2, 0.101, pos.y - size / 2).add(
+        isCol ? new Vector3(-0.125, 0, 0.5) : new Vector3(0.5, 0, -0.125),
+      )}
+      rotation={new Vector3(Math.PI / 2, 0, 0)}
+    >
+      <advancedDynamicTexture
+        name="text-texture"
+        height={512}
+        width={512}
+        createForParentMesh
+        generateMipMaps
+        samplingMode={Texture.TRILINEAR_SAMPLINGMODE}
+      >
+        <textBlock
+          text={
+            isCol
+              ? (pos.y + 1).toString()
+              : String.fromCharCode('A'.charCodeAt(0) + pos.x)
+          }
+          color="white"
+          fontStyle="bold"
+          fontSize={96}
+          textHorizontalAlignment={Control.HORIZONTAL_ALIGNMENT_CENTER}
+          textVerticalAlignment={Control.VERTICAL_ALIGNMENT_CENTER}
+        />
+      </advancedDynamicTexture>
+    </plane>
   );
 };
