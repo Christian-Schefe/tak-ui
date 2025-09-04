@@ -33,7 +33,7 @@ export type Move =
       drops: number[];
     };
 
-export type MoveRecord =
+export type MoveRecord = (
   | { type: 'place'; pos: Coord; variant: PieceVariant }
   | {
       type: 'move';
@@ -41,7 +41,8 @@ export type MoveRecord =
       dir: Direction;
       drops: number[];
       smash: boolean;
-    };
+    }
+) & { affectedPieces: PieceId[] };
 
 export type PieceId = `${'W' | 'B'}/${'P' | 'C'}/${string}`;
 

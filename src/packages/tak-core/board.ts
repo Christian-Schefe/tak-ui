@@ -72,6 +72,7 @@ export function placePiece(
     type: 'place',
     pos,
     variant,
+    affectedPieces: [trackedPiece.id],
   };
 }
 
@@ -128,6 +129,7 @@ export function movePiece(
     throw new Error('No stack found at move origin. This should never happen');
 
   const takenPieces = stack.composition.splice(-take);
+  const affectedPieces = takenPieces.map((p) => p.id);
   const variant = stack.variant;
   stack.variant = 'flat';
 
@@ -162,6 +164,7 @@ export function movePiece(
     dir,
     drops,
     smash,
+    affectedPieces,
   };
 }
 

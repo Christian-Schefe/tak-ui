@@ -38,7 +38,7 @@ export interface GameUI {
   actualGame: Game;
   plyIndex: number | null;
   pieces: Record<PieceId, UIPiece | undefined>;
-  priorityPieces: string[];
+  priorityPieces: PieceId[];
   tiles: UITile[][];
   partialMove: {
     take: number;
@@ -68,11 +68,22 @@ export function newGameUI(game: Game): GameUI {
 }
 
 export function setPlyIndex(ui: GameUI, index: number | null) {
+  const prevIndex = ui.plyIndex ?? ui.actualGame.history.length;
   ui.plyIndex =
     index === null || index >= ui.actualGame.history.length
       ? null
       : Math.max(0, index);
-  ui.priorityPieces = [];
+
+  const newIndex = ui.plyIndex ?? ui.actualGame.history.length;
+
+  const isSteppingForwardOne = newIndex === prevIndex + 1;
+  const isSteppingBackOne = newIndex === prevIndex - 1;
+
+  ui.priorityPieces = isSteppingForwardOne
+    ? ui.actualGame.history[prevIndex].affectedPieces
+    : isSteppingBackOne
+      ? ui.actualGame.history[newIndex].affectedPieces
+      : [];
   ui.partialMove = null;
   onGameUpdate(ui);
 }
@@ -263,30 +274,10 @@ function addToPartialMoveHelper(ui: GameUI, pos: Coord) {
   }
 }
 
-function getLastMovePiecesInOrder(game: Game): string[] {
+function getLastMovePiecesInOrder(game: Game): PieceId[] {
   if (game.history.length === 0) return [];
   const lastMove = game.history[game.history.length - 1];
-  if (lastMove.type === 'place') {
-    return (
-      game.board.pieces[lastMove.pos.y][lastMove.pos.x]?.composition.map(
-        (piece) => piece.id,
-      ) ?? []
-    );
-  } else {
-    const pieces = [];
-    for (let i = 0; i < lastMove.drops.length; i++) {
-      const pos = offsetCoord(lastMove.from, lastMove.dir, i + 1);
-      const stack = game.board.pieces[pos.y][pos.x];
-      if (stack) {
-        pieces.push(
-          ...stack.composition
-            .slice(-lastMove.drops[i])
-            .map((piece) => piece.id),
-        );
-      }
-    }
-    return pieces;
-  }
+  return lastMove.affectedPieces;
 }
 
 export function onGameUpdate(ui: GameUI) {
