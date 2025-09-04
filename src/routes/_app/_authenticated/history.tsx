@@ -15,7 +15,7 @@ export const Route = createFileRoute('/_app/_authenticated/history')({
 });
 
 function RouteComponent() {
-  const [activePage, setPage] = useState(1);
+  const [activePage, setPage] = useState(0);
   const { data: games } = useGameDatabase(activePage);
   if (!games)
     return (
@@ -56,6 +56,7 @@ function RouteComponent() {
       </Anchor>,
     ]),
   };
+
   return (
     <div className="w-full flex grow flex-col items-center p-2 gap-2">
       <div className="w-full h-0 grow relative overflow-hidden">
@@ -64,8 +65,10 @@ function RouteComponent() {
         </ScrollArea>
       </div>
       <Pagination
-        value={activePage}
-        onChange={setPage}
+        value={activePage + 1}
+        onChange={(p) => {
+          setPage(Math.max(0, p - 1));
+        }}
         total={games.totalPages}
       />
     </div>

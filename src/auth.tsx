@@ -66,7 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       onOpen: () => {
         console.log('WebSocket opened');
         sendMessage('Protocol 2');
-        sendToken();
         onOpenListeners.current.forEach((listener) => {
           console.log('Called onOpen listener', listener.key);
           listener.callback();
@@ -78,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('Called onClose listener', listener.key);
           listener.callback(ev);
         });
+        setIsAuthenticated(false);
       },
       onMessage: (msg) => {
         onMessageListeners.current.forEach((listener) => {

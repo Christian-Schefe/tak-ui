@@ -15,6 +15,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAuthenticatedRouteImport } from './routes/_app/_authenticated'
 import { Route as AppAuthenticatedScratchRouteImport } from './routes/_app/_authenticated/scratch'
+import { Route as AppAuthenticatedPlayersRouteImport } from './routes/_app/_authenticated/players'
 import { Route as AppAuthenticatedPlayRouteImport } from './routes/_app/_authenticated/play'
 import { Route as AppAuthenticatedHistoryRouteImport } from './routes/_app/_authenticated/history'
 import { Route as AppAuthenticatedAccountRouteImport } from './routes/_app/_authenticated/account'
@@ -47,6 +48,11 @@ const AppAuthenticatedRoute = AppAuthenticatedRouteImport.update({
 const AppAuthenticatedScratchRoute = AppAuthenticatedScratchRouteImport.update({
   id: '/scratch',
   path: '/scratch',
+  getParentRoute: () => AppAuthenticatedRoute,
+} as any)
+const AppAuthenticatedPlayersRoute = AppAuthenticatedPlayersRouteImport.update({
+  id: '/players',
+  path: '/players',
   getParentRoute: () => AppAuthenticatedRoute,
 } as any)
 const AppAuthenticatedPlayRoute = AppAuthenticatedPlayRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AppAuthenticatedAccountRoute
   '/history': typeof AppAuthenticatedHistoryRoute
   '/play': typeof AppAuthenticatedPlayRoute
+  '/players': typeof AppAuthenticatedPlayersRoute
   '/scratch': typeof AppAuthenticatedScratchRoute
   '/games/$gameId': typeof AppAuthenticatedGamesGameIdRoute
   '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/account': typeof AppAuthenticatedAccountRoute
   '/history': typeof AppAuthenticatedHistoryRoute
   '/play': typeof AppAuthenticatedPlayRoute
+  '/players': typeof AppAuthenticatedPlayersRoute
   '/scratch': typeof AppAuthenticatedScratchRoute
   '/games/$gameId': typeof AppAuthenticatedGamesGameIdRoute
   '/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/_app/_authenticated/account': typeof AppAuthenticatedAccountRoute
   '/_app/_authenticated/history': typeof AppAuthenticatedHistoryRoute
   '/_app/_authenticated/play': typeof AppAuthenticatedPlayRoute
+  '/_app/_authenticated/players': typeof AppAuthenticatedPlayersRoute
   '/_app/_authenticated/scratch': typeof AppAuthenticatedScratchRoute
   '/_app/_authenticated/games/$gameId': typeof AppAuthenticatedGamesGameIdRoute
   '/_app/_authenticated/spectate/$gameId': typeof AppAuthenticatedSpectateGameIdRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/history'
     | '/play'
+    | '/players'
     | '/scratch'
     | '/games/$gameId'
     | '/spectate/$gameId'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/history'
     | '/play'
+    | '/players'
     | '/scratch'
     | '/games/$gameId'
     | '/spectate/$gameId'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/_app/_authenticated/account'
     | '/_app/_authenticated/history'
     | '/_app/_authenticated/play'
+    | '/_app/_authenticated/players'
     | '/_app/_authenticated/scratch'
     | '/_app/_authenticated/games/$gameId'
     | '/_app/_authenticated/spectate/$gameId'
@@ -202,6 +214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthenticatedScratchRouteImport
       parentRoute: typeof AppAuthenticatedRoute
     }
+    '/_app/_authenticated/players': {
+      id: '/_app/_authenticated/players'
+      path: '/players'
+      fullPath: '/players'
+      preLoaderRoute: typeof AppAuthenticatedPlayersRouteImport
+      parentRoute: typeof AppAuthenticatedRoute
+    }
     '/_app/_authenticated/play': {
       id: '/_app/_authenticated/play'
       path: '/play'
@@ -244,6 +263,7 @@ interface AppAuthenticatedRouteChildren {
   AppAuthenticatedAccountRoute: typeof AppAuthenticatedAccountRoute
   AppAuthenticatedHistoryRoute: typeof AppAuthenticatedHistoryRoute
   AppAuthenticatedPlayRoute: typeof AppAuthenticatedPlayRoute
+  AppAuthenticatedPlayersRoute: typeof AppAuthenticatedPlayersRoute
   AppAuthenticatedScratchRoute: typeof AppAuthenticatedScratchRoute
   AppAuthenticatedGamesGameIdRoute: typeof AppAuthenticatedGamesGameIdRoute
   AppAuthenticatedSpectateGameIdRoute: typeof AppAuthenticatedSpectateGameIdRoute
@@ -253,6 +273,7 @@ const AppAuthenticatedRouteChildren: AppAuthenticatedRouteChildren = {
   AppAuthenticatedAccountRoute: AppAuthenticatedAccountRoute,
   AppAuthenticatedHistoryRoute: AppAuthenticatedHistoryRoute,
   AppAuthenticatedPlayRoute: AppAuthenticatedPlayRoute,
+  AppAuthenticatedPlayersRoute: AppAuthenticatedPlayersRoute,
   AppAuthenticatedScratchRoute: AppAuthenticatedScratchRoute,
   AppAuthenticatedGamesGameIdRoute: AppAuthenticatedGamesGameIdRoute,
   AppAuthenticatedSpectateGameIdRoute: AppAuthenticatedSpectateGameIdRoute,

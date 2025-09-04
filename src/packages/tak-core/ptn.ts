@@ -30,7 +30,7 @@ export function gameToPTN(game: Game, usernames: Record<Player, string>) {
 const PTN_ATTRIBUTES_REGEX = /(?:\[(\w*)\s"([^"]*)"\])\s*/g;
 const PTN_MOVES_REGEX = /(?!\d*\.)[^\s]+/g;
 
-const PTN_GAME_OVER_REGEX = /^(1\/2-1\/2|0-1|1-0|0-F|F-0|0-R|R-0)/;
+const PTN_GAME_OVER_REGEX = /^(1\/2-1\/2|0-1|1-0|0-F|F-0|0-R|R-0|0-0)/;
 const INTEGER_REGEX = /^\d+$/;
 
 export function PTNToGame(ptn: string): {

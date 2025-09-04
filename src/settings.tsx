@@ -1,6 +1,11 @@
 import { createContext, use, useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
-import { themes, type ColorTheme, type ThemeParams } from './assets/2d-themes';
+import {
+  defaultTheme,
+  themes,
+  type ColorTheme,
+  type ThemeParams,
+} from './assets/2d-themes';
 
 export type BoardType = '2d' | '3d' | 'ninja';
 
@@ -88,7 +93,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [volume, setVolume] = useLocalStorage<number>('volume', 100);
 
   const themeParams = useMemo(() => {
-    return themes[board2dSettings?.colorTheme ?? 'classic'];
+    return themes[board2dSettings?.colorTheme ?? 'classic'] ?? defaultTheme;
   }, [board2dSettings?.colorTheme]);
 
   const settingsMemo = useMemo<SettingsState>(() => {

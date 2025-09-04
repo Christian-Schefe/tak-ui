@@ -266,12 +266,12 @@ function RouteComponent() {
             {navElementsSplitByVisible[1].visible}
           </Group>
           <div className="grow flex flex-nowrap justify-end items-center pr-2">
-            <p>
-              {user?.username}
+            <Link to="/players">
+              <span className="font-bold">{user?.username}</span>
               {rating?.rating !== undefined
                 ? ` (${rating.rating.toString()})`
                 : ''}
-            </p>
+            </Link>
             <button
               className="flex items-center p-2 cursor-pointer"
               onClick={() => {
