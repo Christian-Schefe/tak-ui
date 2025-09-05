@@ -82,6 +82,7 @@ export function SettingsDialog({
         <p className="mt-4">Color Scheme</p>
         <Select
           value={colorScheme}
+          allowDeselect={false}
           onChange={(value) => {
             setColorScheme(value as 'light' | 'dark' | 'auto');
           }}
@@ -105,6 +106,7 @@ export function SettingsDialog({
         <p className="mt-4">Board Type</p>
         <Select
           value={boardType}
+          allowDeselect={false}
           onChange={(value) => {
             setBoardType(value as BoardType);
           }}
@@ -119,6 +121,7 @@ export function SettingsDialog({
             <p className="mt-4">Color Theme</p>
             <Select
               value={board2dSettings.colorTheme}
+              allowDeselect={false}
               onChange={(e) => {
                 setBoard2dSettings({
                   ...board2dSettings,
@@ -188,6 +191,7 @@ export function SettingsDialog({
             <p className="mt-4">Color Theme</p>
             <Select
               value={boardNinjaSettings.colorTheme}
+              allowDeselect={false}
               onChange={(e) => {
                 setBoardNinjaSettings({
                   ...boardNinjaSettings,
@@ -202,6 +206,7 @@ export function SettingsDialog({
             <p className="mt-4">Axis Labels</p>
             <Select
               value={boardNinjaSettings.axisLabels}
+              allowDeselect={false}
               onChange={(e) => {
                 setBoardNinjaSettings({
                   ...boardNinjaSettings,

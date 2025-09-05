@@ -7,6 +7,8 @@ import discord from './discord.json';
 import beach from './beach.json';
 import assassin from './assassin.json';
 import space from './space.json';
+import sakura from './sakura.json';
+import steampunk from './steampunk.json';
 
 export type ColorTheme =
   | 'classic'
@@ -16,7 +18,9 @@ export type ColorTheme =
   | 'neon'
   | 'discord'
   | 'beach'
-  | 'assassin';
+  | 'assassin'
+  | 'sakura'
+  | 'steampunk';
 
 const pieceColorSchema = z.object({
   background: z.string(),
@@ -63,6 +67,8 @@ const themes: Record<ColorTheme, ThemeParams | undefined> = {
   beach: themeSchema.parse(beach),
   assassin: themeSchema.parse(assassin),
   space: themeSchema.parse(space),
+  sakura: themeSchema.parse(sakura),
+  steampunk: themeSchema.parse(steampunk),
 };
 
 export { themes };
