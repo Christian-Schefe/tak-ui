@@ -1,6 +1,7 @@
 import { ui, type PieceId } from '../../packages/tak-core';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useSettings } from '../../settings';
+import { AnimatePresence, motion } from 'motion/react';
 
 export function Piece({ id, game }: { id: PieceId; game: GameUI }) {
   const {
@@ -61,58 +62,77 @@ export function Piece({ id, game }: { id: PieceId; game: GameUI }) {
     (data.canBePicked ? 0 : 35);
 
   const hidden =
-    !data.canBePicked && data.buriedPieceCount - height >= buriedLimit;
+    data.deleted ||
+    (!data.canBePicked && data.buriedPieceCount - height >= buriedLimit);
 
   return (
-    <div
-      className="absolute pointer-events-none"
-      style={{
-        width: `${(100 / size).toString()}%`,
-        height: `${(100 / size).toString()}%`,
-        transform: `translate(${xTransform.toString()}%, ${yTransform.toString()}%)`,
-        zIndex: zIndex,
-        transition: `transform ${animationSetting}, opacity ${animationSetting}`,
-        opacity: hidden ? 0 : 1,
-        filter: 'drop-shadow(0 5px 5px rgb(0, 0, 0, 0.1))',
-      }}
-    >
-      <div
-        className="w-full h-full flex items-center justify-center"
-        style={{
-          animation: data.deleted
-            ? `scaleOut ${animationSpeed.toString()}ms ease-out forwards`
-            : `scaleIn ${animationSpeed.toString()}ms ease-out forwards`,
-        }}
-      >
-        <div
-          className="outline"
-          style={{
-            width: data.canBePicked
-              ? `${pieceSize.toString()}%`
-              : `${(pieceSize * buriedSizeFactor).toString()}%`,
-            outlineWidth: themeParams.pieces.border,
-            outlineColor:
-              data.variant === 'capstone' && colors.capstoneOverride
-                ? colors.capstoneOverride.border
-                : colors.border,
-            backgroundColor:
-              data.variant === 'capstone' && colors.capstoneOverride
-                ? colors.capstoneOverride.background
-                : colors.background,
-            height: data.canBePicked
-              ? data.variant === 'standing'
-                ? `${(pieceSize * wallWidthRatio).toString()}%`
-                : `${pieceSize.toString()}%`
-              : `${(pieceSize * buriedSizeFactor).toString()}%`,
-            borderBottomLeftRadius: radiusStr,
-            borderBottomRightRadius: radiusStr,
-            borderTopLeftRadius: radiusStr,
-            borderTopRightRadius: radiusStr,
-            transform: data.variant === 'standing' ? 'rotate(-45deg)' : '',
-            transition: `width ${animationSetting}, height ${animationSetting}, transform ${animationSetting}`,
+    <AnimatePresence>
+      {!hidden && (
+        <motion.div
+          key="piece-inner"
+          className="absolute pointer-events-none"
+          initial={{
+            x: `${xTransform.toString()}%`,
+            y: `${yTransform.toString()}%`,
+            opacity: 0,
+            scale: 0.8,
           }}
-        ></div>
-      </div>
-    </div>
+          animate={{
+            x: `${xTransform.toString()}%`,
+            y: `${yTransform.toString()}%`,
+            opacity: 1,
+            scale: 1,
+          }}
+          exit={{
+            x: `${xTransform.toString()}%`,
+            y: `${yTransform.toString()}%`,
+            opacity: 0,
+            scale: 0.8,
+          }}
+          transition={{
+            duration: animationSpeed / 1000,
+            type: 'tween',
+            ease: 'easeInOut',
+          }}
+          style={{
+            width: `${(100 / size).toString()}%`,
+            height: `${(100 / size).toString()}%`,
+            zIndex: zIndex,
+            filter: 'drop-shadow(0 5px 5px rgb(0, 0, 0, 0.1))',
+          }}
+        >
+          <motion.div className="w-full h-full flex items-center justify-center">
+            <div
+              className="outline"
+              style={{
+                width: data.canBePicked
+                  ? `${pieceSize.toString()}%`
+                  : `${(pieceSize * buriedSizeFactor).toString()}%`,
+                outlineWidth: themeParams.pieces.border,
+                outlineColor:
+                  data.variant === 'capstone' && colors.capstoneOverride
+                    ? colors.capstoneOverride.border
+                    : colors.border,
+                backgroundColor:
+                  data.variant === 'capstone' && colors.capstoneOverride
+                    ? colors.capstoneOverride.background
+                    : colors.background,
+                height: data.canBePicked
+                  ? data.variant === 'standing'
+                    ? `${(pieceSize * wallWidthRatio).toString()}%`
+                    : `${pieceSize.toString()}%`
+                  : `${(pieceSize * buriedSizeFactor).toString()}%`,
+                borderBottomLeftRadius: radiusStr,
+                borderBottomRightRadius: radiusStr,
+                borderTopLeftRadius: radiusStr,
+                borderTopRightRadius: radiusStr,
+                transform: data.variant === 'standing' ? 'rotate(-45deg)' : '',
+                transition: `width ${animationSetting}, height ${animationSetting}, transform ${animationSetting}`,
+              }}
+            ></div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

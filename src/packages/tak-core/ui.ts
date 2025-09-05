@@ -132,10 +132,11 @@ export function undoMove(ui: GameUI) {
     gameClone,
     ui.actualGame.history.length - 1,
   );
+  const undoneMove = ui.actualGame.history[ui.actualGame.history.length - 1];
   ui.actualGame = undoneGame;
   ui.plyIndex = null;
   ui.partialMove = null;
-  ui.priorityPieces = [];
+  ui.priorityPieces = undoneMove.affectedPieces;
   onGameUpdate(ui);
 }
 
@@ -343,7 +344,7 @@ export function onGameUpdate(ui: GameUI) {
   ui.pieces = {};
   ui.tiles = [];
   for (const piece of Object.keys(oldPieces) as PieceId[]) {
-    if (oldPieces[piece]?.deleted === false) {
+    if (oldPieces[piece] !== undefined) {
       ui.pieces[piece] = {
         ...oldPieces[piece],
         deleted: true,

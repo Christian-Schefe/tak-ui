@@ -185,6 +185,14 @@ export function LocalGameActions({
     <div className="flex gap-2" style={{ padding: padding }}>
       <ActionIcon
         onClick={() => {
+          callbacks.current.sendUndoOffer(true);
+        }}
+        disabled={gameState.type !== 'ongoing'}
+      >
+        <FaArrowRotateLeft />
+      </ActionIcon>
+      <ActionIcon
+        onClick={() => {
           callbacks.current.doResign();
         }}
         disabled={gameState.type !== 'ongoing'}

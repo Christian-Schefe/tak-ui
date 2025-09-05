@@ -15,6 +15,7 @@ import { useGameHistory, useHistoryNavigation } from '../../features/history';
 import type { BoardMode, GameCallbacks } from '../board';
 import { useEvent } from 'react-use';
 import { GameActions } from '../classic/GameInfoDrawer';
+import { motion } from 'motion/react';
 
 export function History({
   game,
@@ -25,7 +26,7 @@ export function History({
   mode: BoardMode;
   callbacks: React.RefObject<GameCallbacks>;
 }) {
-  const { themeParams } = useSettings();
+  const { themeParams, boardSettings } = useSettings();
 
   const result = useGameHistory(game);
 
@@ -45,14 +46,20 @@ export function History({
         ? themeParams.piece1
         : themeParams.piece2;
     return (
-      <div className="min-w-12">
+      <motion.div
+        className="min-w-12"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: boardSettings.board2d.animationSpeed / 1000 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+      >
         <button
-          className="text-left rounded-md px-1 hover:outline-2"
+          className="text-left rounded-md px-1"
           style={{
             width: '100%',
             backgroundColor: colors.background,
             color: colors.text ?? colors.border,
-            outlineColor: colors.border,
             opacity: game.plyIndex !== null && game.plyIndex < index ? 0.5 : 1,
             transition: 'opacity 150ms ease-in-out',
           }}
@@ -70,7 +77,7 @@ export function History({
         >
           <span className="font-bold">{moveToString(move)}</span>
         </button>
-      </div>
+      </motion.div>
     );
   };
 
@@ -79,7 +86,14 @@ export function History({
       key={`move-${index.toString()}`}
       className="flex gap-2 p-1 font-mono text-nowrap"
     >
-      <div className="w-8">{index + 1}.</div>
+      <motion.div
+        className="w-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: boardSettings.board2d.animationSpeed / 1000 }}
+      >
+        {index + 1}.
+      </motion.div>
       {whiteMove ? makeHistoryItem(index * 2 + 1, 'white', whiteMove) : null}
       {blackMove ? makeHistoryItem(index * 2 + 2, 'black', blackMove) : null}
     </div>

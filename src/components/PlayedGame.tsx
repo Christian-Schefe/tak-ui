@@ -17,7 +17,11 @@ import type { BoardMode } from './board';
 import { BoardNinja } from './boardNinja/BoardNinja';
 import { useRatings } from '../api/ratings';
 import type { GameListEntry } from '../features/gameList';
-import { modifyRemoteGame, useRemoteGame } from '../features/remoteGame';
+import {
+  modifyRemoteGame,
+  useRemoteGame,
+  useRemoteGameState,
+} from '../features/remoteGame';
 import { usePlayMoveSound } from '../packages/tak-core/hooks';
 
 export function PlayedGame({
@@ -213,7 +217,16 @@ export function PlayedGame({
 
   usePlayMoveSound('/audio/move.mp3', game?.game, volume.value);
 
-  if (!game) return <div>No game found</div>;
+  if (!game) {
+    console.warn(
+      'No game found for id. This should not happen',
+      gameId,
+      Object.entries(useRemoteGameState.getState().games).filter(
+        ([_k, v]) => v !== undefined,
+      ),
+    );
+    return <div>No game found. Try refreshing the page.</div>;
+  }
 
   const BoardComponent =
     boardType === '2d' ? Board2D : boardType === '3d' ? Board3D : BoardNinja;

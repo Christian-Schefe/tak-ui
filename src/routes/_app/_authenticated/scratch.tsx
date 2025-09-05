@@ -63,6 +63,12 @@ function RouteComponent() {
         ui.doResign(draft, draft.actualGame.currentPlayer);
       });
     };
+    const doUndo = () => {
+      modifyLocalGame((draft) => {
+        if (draft.actualGame.history.length === 0) return;
+        ui.undoMove(draft);
+      });
+    };
     const callbacks: GameCallbacks = {
       onTimeout,
       onClickTile,
@@ -71,9 +77,7 @@ function RouteComponent() {
       sendDrawOffer: () => {
         void 0;
       },
-      sendUndoOffer: () => {
-        void 0;
-      },
+      sendUndoOffer: doUndo,
       doResign,
     };
     return callbacks;
