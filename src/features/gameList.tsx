@@ -41,6 +41,33 @@ export function useGamesList() {
   }, [games]);
 }
 
+export function useGameById(gameId: string) {
+  return useGameListState(
+    (state) => state.games[gameId] ?? state.removedGames[gameId],
+  );
+}
+
+export function useGameByUsername(username: string | undefined) {
+  return useGameListState((state) => {
+    if (username === undefined) return undefined;
+    return (
+      Object.values(state.games).find(
+        (g) => g?.white === username || g?.black === username,
+      ) ??
+      Object.values(state.removedGames).find(
+        (g) => g?.white === username || g?.black === username,
+      )
+    );
+  });
+}
+
+export function useRemovedGamesList() {
+  const removedGames = useGameListState((state) => state.removedGames);
+  return useMemo(() => {
+    return Object.values(removedGames).filter(isDefined);
+  }, [removedGames]);
+}
+
 export function addGame(game: GameListEntry) {
   useGameListState.setState((state) => ({
     games: {

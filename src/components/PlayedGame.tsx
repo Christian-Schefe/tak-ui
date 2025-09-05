@@ -11,17 +11,11 @@ import { useAuth, useWSAPI } from '../authHooks';
 import { useSettings } from '../settings';
 import { Board2D } from './board2d/Board2D';
 import { GameOverDialog } from './dialogs/GameOverDialog';
-import { notifications } from '@mantine/notifications';
-import { ReadyState } from 'react-use-websocket';
 import type { BoardMode } from './board';
 import { BoardNinja } from './boardNinja/BoardNinja';
 import { useRatings } from '../api/ratings';
 import type { GameListEntry } from '../features/gameList';
-import {
-  modifyRemoteGame,
-  useRemoteGame,
-  useRemoteGameState,
-} from '../features/remoteGame';
+import { modifyRemoteGame, useRemoteGame } from '../features/remoteGame';
 import { usePlayMoveSound } from '../packages/tak-core/hooks';
 
 export function PlayedGame({
@@ -32,9 +26,11 @@ export function PlayedGame({
   gameEntry: GameListEntry;
 }) {
   const gameId = useMemo(() => gameEntry.id.toString(), [gameEntry.id]);
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
 
   const ratings = useRatings([gameEntry.white, gameEntry.black]);
+
+  const game = useRemoteGame(gameId);
 
   const playerInfo = {
     white: {
@@ -56,59 +52,9 @@ export function PlayedGame({
     return { type: 'spectator', gameId };
   }, [observed, user?.username, gameEntry.white, gameEntry.black, gameId]);
 
-  const { sendMessage, readyState } = useWSAPI();
+  const { sendMessage } = useWSAPI();
 
-  const game = useRemoteGame(gameId);
-
-  const { devMode, volume, boardType } = useSettings();
-  const showNotifications = useRef(devMode.value);
-  useEffect(() => {
-    showNotifications.current = devMode.value;
-  }, [devMode.value]);
-
-  useEffect(() => {
-    if (observed && readyState === ReadyState.OPEN && isAuthenticated) {
-      console.log('Subscribing to game:', gameId);
-      sendMessage(`Observe ${gameId}`);
-      if (showNotifications.current) {
-        notifications.show({
-          title: 'Subscribing to game',
-          message: `Subscribing to game: ${gameId}`,
-          position: 'top-right',
-        });
-      }
-
-      return () => {
-        console.log('Unsubscribing from game:', gameId);
-        sendMessage(`Unobserve ${gameId}`, false);
-        if (showNotifications.current) {
-          notifications.show({
-            title: 'Unsubscribing from game',
-            message: `Unsubscribing from game: ${gameId}`,
-            position: 'top-right',
-          });
-        }
-      };
-    }
-  }, [observed, readyState, gameId, sendMessage, isAuthenticated]);
-
-  useEffect(() => {
-    if (observed && readyState === ReadyState.OPEN && isAuthenticated) {
-      const roomId = [gameEntry.white, gameEntry.black].sort().join('-');
-      sendMessage(`JoinRoom ${roomId}`);
-
-      return () => {
-        sendMessage(`LeaveRoom ${roomId}`, false);
-      };
-    }
-  }, [
-    observed,
-    gameEntry.white,
-    gameEntry.black,
-    readyState,
-    sendMessage,
-    isAuthenticated,
-  ]);
+  const { volume, boardType } = useSettings();
 
   const sendMoveMessage = useCallback(
     (move: Move) => {
@@ -139,10 +85,9 @@ export function PlayedGame({
 
   const gameCallbacks = useMemo(() => {
     const onClickTile = (pos: Coord, variant: PieceVariant) => {
-      if (observed) return;
+      if (observed || !game) return;
       if (
         boardMode.type !== 'remote' ||
-        !game ||
         game.game.actualGame.currentPlayer !== boardMode.localPlayer ||
         game.game.actualGame.gameState.type !== 'ongoing'
       ) {
@@ -159,10 +104,9 @@ export function PlayedGame({
 
     const onMakeMove = (move: Move) => {
       console.log('on make move', move);
-      if (observed) return;
+      if (observed || !game) return;
       if (
         boardMode.type !== 'remote' ||
-        !game ||
         game.game.actualGame.currentPlayer !== boardMode.localPlayer ||
         game.game.actualGame.gameState.type !== 'ongoing'
       ) {
@@ -218,14 +162,7 @@ export function PlayedGame({
   usePlayMoveSound('/audio/move.mp3', game?.game, volume.value);
 
   if (!game) {
-    console.warn(
-      'No game found for id. This should not happen',
-      gameId,
-      Object.entries(useRemoteGameState.getState().games).filter(
-        ([_k, v]) => v !== undefined,
-      ),
-    );
-    return <div>No game found. Try refreshing the page.</div>;
+    return null;
   }
 
   const BoardComponent =

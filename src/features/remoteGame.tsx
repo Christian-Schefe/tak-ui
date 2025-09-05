@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { newGameUI, type GameUI } from '../packages/tak-core/ui';
-import { useWSListener } from '../authHooks';
-import { useCallback, useMemo } from 'react';
+import { useAuth, useWSAPI, useWSListener } from '../authHooks';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { TextMessage } from '../auth';
 import {
   ui,
@@ -16,12 +16,16 @@ import { newGame, setTimeRemaining } from '../packages/tak-core/game';
 import { dirFromAligned } from '../packages/tak-core/coord';
 import { useGameOfferState } from './gameOffers';
 import { router } from '../router';
+import { ReadyState } from 'react-use-websocket';
+import { useSettings } from '../settings';
+import { notifications } from '@mantine/notifications';
+import type { GameListEntry } from './gameList';
 
 interface RemoteGameState {
   games: Record<string, GameStateEntry | undefined>;
 }
 
-interface GameStateEntry {
+export interface GameStateEntry {
   game: GameUI;
   drawOffer: boolean;
   undoOffer: boolean;
@@ -436,4 +440,56 @@ function batch<T>(cb: (args: T[]) => void) {
       }, 1);
     }
   };
+}
+
+export function useSubscribeToRemoteGame(
+  gameId: string,
+  gameEntry: GameListEntry | undefined,
+) {
+  const { sendMessage, readyState } = useWSAPI();
+  const { isAuthenticated } = useAuth();
+
+  const { devMode } = useSettings();
+  const showNotifications = useRef(devMode.value);
+  useEffect(() => {
+    showNotifications.current = devMode.value;
+  }, [devMode.value]);
+
+  useEffect(() => {
+    console.log('Checking subscription:', readyState, isAuthenticated);
+    if (gameEntry && readyState === ReadyState.OPEN && isAuthenticated) {
+      console.log('Subscribing to game:', gameId);
+      sendMessage(`Observe ${gameId}`);
+      if (showNotifications.current) {
+        notifications.show({
+          title: 'Subscribing to game',
+          message: `Subscribing to game: ${gameId}`,
+          position: 'top-right',
+        });
+      }
+
+      return () => {
+        console.log('Unsubscribing from game:', gameId);
+        sendMessage(`Unobserve ${gameId}`, false);
+        if (showNotifications.current) {
+          notifications.show({
+            title: 'Unsubscribing from game',
+            message: `Unsubscribing from game: ${gameId}`,
+            position: 'top-right',
+          });
+        }
+      };
+    }
+  }, [gameEntry, readyState, gameId, sendMessage, isAuthenticated]);
+
+  useEffect(() => {
+    if (gameEntry && readyState === ReadyState.OPEN && isAuthenticated) {
+      const roomId = [gameEntry.white, gameEntry.black].sort().join('-');
+      sendMessage(`JoinRoom ${roomId}`);
+
+      return () => {
+        sendMessage(`LeaveRoom ${roomId}`, false);
+      };
+    }
+  }, [gameEntry, readyState, sendMessage, isAuthenticated]);
 }
