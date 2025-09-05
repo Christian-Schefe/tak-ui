@@ -9,12 +9,53 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useWSAPI } from '../../authHooks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getDefaultReserve } from '../../packages/tak-core/piece';
 import { FaPlus } from 'react-icons/fa6';
 import type { GameSettings } from '../../packages/tak-core';
 import { newLocalGame } from '../../features/localGame';
 import { router } from '../../router';
+
+interface Preset {
+  name: string;
+  id: string;
+  halfKomi?: number;
+  boardSize?: number;
+  reserve?: { pieces: number; capstones: number };
+  time?: number;
+  increment?: number;
+  gameType?: 'normal' | 'unrated' | 'tournament';
+  extraTimeMove?: number;
+  extraTimeAmount?: number;
+  requiresOpponent?: boolean;
+}
+
+const defaultPreset: Preset = {
+  name: 'None',
+  id: 'none',
+};
+
+const presets: Preset[] = [
+  defaultPreset,
+  {
+    name: 'Beginner Tournament',
+    id: 'beginner-tournament',
+    halfKomi: 4,
+    boardSize: 6,
+    reserve: { pieces: 30, capstones: 1 },
+    time: 15,
+    increment: 10,
+    gameType: 'tournament',
+    extraTimeAmount: 0,
+    extraTimeMove: 0,
+    requiresOpponent: true,
+  },
+];
+
+const presetData = presets.map((preset) => ({
+  value: preset.id,
+  label: preset.name,
+}));
 
 export function NewGameDialog({
   isOpen,
@@ -60,14 +101,51 @@ export function NewGameDialog({
   const [extraTimeAmount, setExtraTimeAmount] = useState<number | null>(0);
   const [stones, setStones] = useState<number | null>(null);
   const [capstones, setCapstones] = useState<number | null>(null);
+  const [presetId, setPresetId] = useState<string>('none');
 
   const defaultPieces = getDefaultReserve(boardSize);
 
-  const valid = time !== null && time > 0;
+  const currentPreset = presets.find((p) => p.id === presetId) ?? defaultPreset;
+
+  const valid =
+    time !== null &&
+    time > 0 &&
+    (currentPreset.requiresOpponent !== true || opponent !== '');
+
+  useEffect(() => {
+    if (currentPreset.boardSize !== undefined)
+      setBoardSize(currentPreset.boardSize);
+    if (currentPreset.halfKomi !== undefined)
+      setHalfKomi(currentPreset.halfKomi);
+    if (currentPreset.reserve !== undefined) {
+      setStones(currentPreset.reserve.pieces);
+      setCapstones(currentPreset.reserve.capstones);
+    }
+    if (currentPreset.time !== undefined) setTime(currentPreset.time);
+    if (currentPreset.increment !== undefined)
+      setIncrement(currentPreset.increment);
+    if (currentPreset.gameType !== undefined)
+      setGameTypeValue(currentPreset.gameType);
+    if (currentPreset.extraTimeMove !== undefined)
+      setExtraTimeMove(currentPreset.extraTimeMove);
+    if (currentPreset.extraTimeAmount !== undefined)
+      setExtraTimeAmount(currentPreset.extraTimeAmount);
+  }, [currentPreset]);
 
   const onClickCreate = () => {
     if (!valid) return;
-    const seekString = `Seek ${boardSize.toString()} ${(time * 60).toString()} ${increment?.toString() ?? '0'} ${color} ${halfKomi.toString()} ${(stones ?? defaultPieces.pieces).toString()} ${(capstones ?? defaultPieces.capstones).toString()} ${gameTypeValue === 'unrated' ? '1' : '0'} ${gameTypeValue === 'tournament' ? '1' : '0'} ${extraTimeMove?.toString() ?? '0'} ${((extraTimeAmount ?? 0) * 60).toString()} ${opponent}`;
+    const capstonesVal = (capstones ?? defaultPieces.capstones).toString();
+    const stonesVal = (stones ?? defaultPieces.pieces).toString();
+    const unratedVal = gameTypeValue === 'unrated' ? '1' : '0';
+    const tournamentVal = gameTypeValue === 'tournament' ? '1' : '0';
+    const timeVal = (time * 60).toString();
+    const incrementVal = increment?.toString() ?? '0';
+    const extraTimeMoveVal = extraTimeMove?.toString() ?? '0';
+    const extraTimeAmountVal = (
+      (extraTimeMove !== null ? (extraTimeAmount ?? 0) : 0) * 60
+    ).toString();
+    const opponentVal = opponent.trim();
+    const seekString = `Seek ${boardSize.toString()} ${timeVal} ${incrementVal} ${color} ${halfKomi.toString()} ${stonesVal} ${capstonesVal} ${unratedVal} ${tournamentVal} ${extraTimeMoveVal} ${extraTimeAmountVal} ${opponentVal}`;
     sendMessage(seekString);
     onClose();
   };
@@ -90,6 +168,7 @@ export function NewGameDialog({
   const boardSizeSelect = (
     <Select
       label="Board Size"
+      disabled={currentPreset.boardSize !== undefined}
       data={boardSizeData}
       value={boardSize.toString()}
       onChange={(v) => {
@@ -102,6 +181,7 @@ export function NewGameDialog({
   const komiSelect = (
     <Select
       label="Komi"
+      disabled={currentPreset.halfKomi !== undefined}
       data={komiData}
       value={halfKomi.toString()}
       onChange={(v) => {
@@ -114,6 +194,7 @@ export function NewGameDialog({
   const stonesInput = (
     <TextInput
       label="Stones"
+      disabled={currentPreset.reserve !== undefined}
       value={stones?.toString() ?? ''}
       onChange={(e) => {
         e.target.value = e.target.value
@@ -133,6 +214,7 @@ export function NewGameDialog({
   const capstonesInput = (
     <TextInput
       label="Capstones"
+      disabled={currentPreset.reserve !== undefined}
       value={capstones?.toString() ?? ''}
       onChange={(e) => {
         e.target.value = e.target.value
@@ -173,11 +255,20 @@ export function NewGameDialog({
               <Stack>
                 <TextInput
                   label="Opponent"
-                  placeholder="Anyone"
+                  placeholder={
+                    currentPreset.requiresOpponent === true &&
+                    opponent.trim() === ''
+                      ? ''
+                      : 'Anyone'
+                  }
                   value={opponent}
                   onChange={(e) => {
-                    setOpponent(e.target.value);
+                    setOpponent(e.target.value.trim().replace(/\s+/g, ''));
                   }}
+                  error={
+                    currentPreset.requiresOpponent === true &&
+                    opponent.trim() === ''
+                  }
                 />
                 <Select
                   label="My Color"
@@ -191,6 +282,7 @@ export function NewGameDialog({
                 {boardSizeSelect}
                 <TextInput
                   label="Time (minutes per player)"
+                  disabled={currentPreset.time !== undefined}
                   value={time?.toString() ?? ''}
                   onChange={(e) => {
                     e.target.value = e.target.value
@@ -208,6 +300,7 @@ export function NewGameDialog({
                 />
                 <TextInput
                   label="Extra Time Move"
+                  disabled={currentPreset.extraTimeMove !== undefined}
                   value={extraTimeMove?.toString() ?? ''}
                   onChange={(e) => {
                     e.target.value = e.target.value
@@ -227,9 +320,17 @@ export function NewGameDialog({
             </Grid.Col>
             <Grid.Col span={6}>
               <Stack>
-                <Select label="Presets" />
+                <Select
+                  label="Preset"
+                  data={presetData}
+                  value={presetId}
+                  onChange={(e) => {
+                    setPresetId(e ?? 'none');
+                  }}
+                />
                 <Select
                   label="Game Type"
+                  disabled={currentPreset.gameType !== undefined}
                   data={gameType}
                   value={gameTypeValue}
                   onChange={(v) => {
@@ -241,6 +342,7 @@ export function NewGameDialog({
                 {komiSelect}
                 <TextInput
                   label="Increment (seconds)"
+                  disabled={currentPreset.increment !== undefined}
                   value={increment?.toString() ?? ''}
                   onChange={(e) => {
                     e.target.value = e.target.value
@@ -257,6 +359,10 @@ export function NewGameDialog({
                 />
                 <TextInput
                   label="Extra Time Amount (minutes)"
+                  disabled={
+                    extraTimeMove === null ||
+                    currentPreset.extraTimeAmount !== undefined
+                  }
                   value={extraTimeAmount?.toString() ?? ''}
                   onChange={(e) => {
                     e.target.value = e.target.value
@@ -269,7 +375,6 @@ export function NewGameDialog({
                     }
                     setExtraTimeAmount(parseInt(e.target.value));
                   }}
-                  disabled={extraTimeMove === null}
                   placeholder="0"
                 />
                 {capstonesInput}
