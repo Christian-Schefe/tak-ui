@@ -9,6 +9,9 @@ import assassin from './assassin.json';
 import space from './space.json';
 import sakura from './sakura.json';
 import steampunk from './steampunk.json';
+import bubblegum from './bubblegum.json';
+import frost from './frost.json';
+import papyrus from './papyrus.json';
 
 export type ColorTheme =
   | 'classic'
@@ -20,7 +23,10 @@ export type ColorTheme =
   | 'beach'
   | 'assassin'
   | 'sakura'
-  | 'steampunk';
+  | 'steampunk'
+  | 'bubblegum'
+  | 'frost'
+  | 'papyrus';
 
 const pieceColorSchema = z.object({
   background: z.string(),
@@ -46,7 +52,7 @@ export const themeSchema = z.object({
   board: object({
     spacing: z.string(),
     rounded: z.string(),
-    tiling: z.enum(['checkerboard', 'rings', 'linear']),
+    tiling: z.enum(['checkerboard', 'rings', 'linear', 'random']),
   }),
   pieces: object({
     rounded: z.number(),
@@ -69,6 +75,9 @@ const themes: Record<ColorTheme, ThemeParams | undefined> = {
   space: themeSchema.parse(space),
   sakura: themeSchema.parse(sakura),
   steampunk: themeSchema.parse(steampunk),
+  bubblegum: themeSchema.parse(bubblegum),
+  frost: themeSchema.parse(frost),
+  papyrus: themeSchema.parse(papyrus),
 };
 
 export { themes };

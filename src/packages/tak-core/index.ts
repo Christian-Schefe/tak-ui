@@ -14,7 +14,13 @@ export type GameState =
   | {
       type: 'win';
       player: Player;
-      reason: 'flats' | 'resignation' | 'timeout';
+      reason: 'resignation' | 'timeout';
+    }
+  | {
+      type: 'win';
+      player: Player;
+      reason: 'flats';
+      flats?: Coord[];
     }
   | {
       type: 'win';
@@ -87,6 +93,7 @@ export interface GameSettings {
   halfKomi: number;
   reserve: Reserve;
   clock?: {
+    externallyDriven?: boolean;
     contingentMs: number;
     incrementMs: number;
     extra?: {

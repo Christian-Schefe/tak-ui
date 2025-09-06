@@ -93,6 +93,15 @@ function RouteComponent() {
     </Link>
   );
 
+  const seeksCount = Object.values(seeks)
+    .filter(
+      (s) =>
+        s.opponent === undefined ||
+        s.opponent === '' ||
+        (user !== null && s.opponent === user.username),
+    )
+    .length.toString();
+
   const buttonSeeks = (
     <button
       className={buttonClassName}
@@ -115,17 +124,17 @@ function RouteComponent() {
             : 'gray'
         }
       >
-        {Object.values(seeks)
-          .filter(
-            (s) =>
-              s.opponent === undefined ||
-              s.opponent === '' ||
-              (user !== null && s.opponent === user.username),
-          )
-          .length.toString()}
+        {seeksCount}
       </Badge>
     </button>
   );
+
+  const gamesCount = games
+    .filter(
+      (game) =>
+        !user || (game.white !== user.username && game.black !== user.username),
+    )
+    .length.toString();
 
   const buttonGames = (
     <button
@@ -137,7 +146,7 @@ function RouteComponent() {
     >
       <FaEye size={18} />
       <p className="group-hover:underline">Watch</p>
-      <Badge color="gray">{games.length.toString()}</Badge>
+      <Badge color="gray">{gamesCount}</Badge>
     </button>
   );
 

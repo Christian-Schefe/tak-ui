@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { TextMessage } from '../auth';
 import {
   ui,
+  type Coord,
   type GameSettings,
   type GameState,
   type Move,
@@ -13,13 +14,15 @@ import {
 import type { TimeMessage } from '../gameData';
 import { produce } from 'immer';
 import { newGame, setTimeRemaining } from '../packages/tak-core/game';
-import { dirFromAligned } from '../packages/tak-core/coord';
+import { dirFromAligned, offsetCoord } from '../packages/tak-core/coord';
 import { useGameOfferState } from './gameOffers';
 import { router } from '../router';
 import { ReadyState } from 'react-use-websocket';
 import { useSettings } from '../settings';
 import { notifications } from '@mantine/notifications';
 import type { GameListEntry } from './gameList';
+import type { BoardMode } from '../components/board';
+import { logDebug, logError, logInfo, logWarn } from '../logger';
 
 interface RemoteGameState {
   games: Record<string, GameStateEntry | undefined>;
@@ -36,29 +39,17 @@ export const useRemoteGameState = create<RemoteGameState>()(() => ({
   unprocessedMessages: {},
 }));
 
-function modifyGame(id: string, recipe: (game: GameStateEntry) => void) {
-  useRemoteGameState.setState((state) =>
-    produce(state, (draft) => {
-      if (!draft.games[id]) {
-        console.error('No entry from game ', id);
-        return;
-      }
-      recipe(draft.games[id]);
-    }),
-  );
-}
-
 export function useUpdateRemoteGames() {
   const gameOffers = useGameOfferState();
 
   const handleMessage = useCallback(
     (msg: TextMessage) => {
       const text = msg.text;
-      console.log('handling', text);
+      logDebug('handling', text);
       if (text.startsWith('Game#')) {
         const id = parseGameUpdateMessage(text);
         if (id === null) {
-          console.log('no id for game message', text);
+          logWarn('no id for game message', text);
           return;
         }
 
@@ -131,7 +122,7 @@ export function useUpdateRemoteGames() {
       } else if (text.startsWith('Observe')) {
         const observeSettings = parseObserveMessage(text);
         if (observeSettings) {
-          console.log('Received observe message for game:', observeSettings.id);
+          logDebug('Received observe message for game:', observeSettings.id);
           useRemoteGameState.setState((state) =>
             produce(state, (draft) => {
               draft.games[observeSettings.id] = {
@@ -142,12 +133,12 @@ export function useUpdateRemoteGames() {
             }),
           );
         } else {
-          console.error('Failed to parse observe game message:', text);
+          logError('Failed to parse observe game message:', text);
         }
       } else if (text.startsWith('Game Start')) {
         const startGameSettings = parseGameStartMessage(text);
         if (startGameSettings) {
-          console.log(
+          logDebug(
             'Received game start message for game:',
             startGameSettings.id,
             startGameSettings.settings,
@@ -163,7 +154,7 @@ export function useUpdateRemoteGames() {
           );
           void router.navigate({ to: '/play' });
         } else {
-          console.error('Failed to parse game start message:', text);
+          logError('Failed to parse game start message:', text);
         }
       }
     },
@@ -190,9 +181,24 @@ export function useUpdateRemoteGames() {
   useWSListener('update-remote-games', { onMessage: batchedOnMessage, onOpen });
 }
 
-export function useRemoteGame(gameId: string) {
-  const games = useRemoteGameState((state) => state.games);
-  return games[gameId];
+export function useRemoteGame(gameId: string | undefined) {
+  return useRemoteGameState((state) =>
+    gameId !== undefined ? state.games[gameId] : undefined,
+  );
+}
+
+function modifyGame(gameId: string, recipe: (game: GameStateEntry) => void) {
+  useRemoteGameState.setState((state) => {
+    if (!state.games[gameId]) {
+      throw new Error(`Cannot modify remote game state of game ${gameId}`);
+    }
+    return {
+      games: {
+        ...state.games,
+        [gameId]: produce(state.games[gameId], recipe),
+      },
+    };
+  });
 }
 
 export function modifyRemoteGame(
@@ -210,6 +216,17 @@ export function modifyRemoteGame(
           ...state.games[gameId],
           game: produce(state.games[gameId].game, recipe),
         },
+      },
+    };
+  });
+}
+
+export function setRemoteGame(gameId: string, game: GameStateEntry) {
+  useRemoteGameState.setState((state) => {
+    return {
+      games: {
+        ...state.games,
+        [gameId]: game,
       },
     };
   });
@@ -250,6 +267,7 @@ function parseGameStartMessage(
       capstones: parseInt(capstones),
     },
     clock: {
+      externallyDriven: true,
       contingentMs: parseInt(time) * 1000,
       incrementMs: parseInt(increment) * 1000,
       extra:
@@ -362,7 +380,7 @@ const parseMoveMove = (moveMatch: RegExpMatchArray): Move => {
   const toY = toRow.charCodeAt(0) - '1'.charCodeAt(0);
   const dir = dirFromAligned({ x: toX, y: toY }, { x: fromX, y: fromY });
   if (!dir) {
-    console.error('invalid move received: from', { fromX, fromY }, 'to', {
+    logError('invalid move received: from', { fromX, fromY }, 'to', {
       toX,
       toY,
     });
@@ -410,6 +428,7 @@ function parseObserveMessage(
       capstones: parseInt(capstones),
     },
     clock: {
+      externallyDriven: true,
       contingentMs: parseInt(time) * 1000,
       incrementMs: parseInt(increment) * 1000,
       extra:
@@ -456,9 +475,9 @@ export function useSubscribeToRemoteGame(
   }, [devMode.value]);
 
   useEffect(() => {
-    console.log('Checking subscription:', readyState, isAuthenticated);
+    logDebug('Checking subscription:', readyState, isAuthenticated);
     if (gameEntry && readyState === ReadyState.OPEN && isAuthenticated) {
-      console.log('Subscribing to game:', gameId);
+      logInfo('Subscribing to game:', gameId);
       sendMessage(`Observe ${gameId}`);
       if (showNotifications.current) {
         notifications.show({
@@ -469,7 +488,7 @@ export function useSubscribeToRemoteGame(
       }
 
       return () => {
-        console.log('Unsubscribing from game:', gameId);
+        logInfo('Unsubscribing from game:', gameId);
         sendMessage(`Unobserve ${gameId}`, false);
         if (showNotifications.current) {
           notifications.show({
@@ -492,4 +511,123 @@ export function useSubscribeToRemoteGame(
       };
     }
   }, [gameEntry, readyState, sendMessage, isAuthenticated]);
+}
+
+export function useSendMoveMessage(gameId: string) {
+  const { sendMessage } = useWSAPI();
+  const sendMoveMessage = useCallback(
+    (move: Move) => {
+      if (move.type === 'place') {
+        const col = String.fromCharCode(move.pos.x + 'A'.charCodeAt(0));
+        const row = move.pos.y + 1;
+        const variant =
+          move.variant === 'capstone'
+            ? ' C'
+            : move.variant === 'standing'
+              ? ' W'
+              : '';
+        sendMessage(`Game#${gameId} P ${col}${row.toString()}${variant}`);
+      } else {
+        const fromCol = String.fromCharCode(move.from.x + 'A'.charCodeAt(0));
+        const fromRow = move.from.y + 1;
+        const to = offsetCoord(move.from, move.dir, move.drops.length);
+        const toCol = String.fromCharCode(to.x + 'A'.charCodeAt(0));
+        const toRow = to.y + 1;
+        const drops = move.drops.join(' ');
+        sendMessage(
+          `Game#${gameId} M ${fromCol}${fromRow.toString()} ${toCol}${toRow.toString()} ${drops}`,
+        );
+      }
+    },
+    [gameId, sendMessage],
+  );
+  return sendMoveMessage;
+}
+
+export function useRemoteGameCallbacks(
+  gameId: string,
+  observed: boolean,
+  boardMode: BoardMode,
+  game: GameStateEntry,
+) {
+  const { sendMessage } = useWSAPI();
+  const sendMoveMessage = useSendMoveMessage(gameId);
+
+  const gameCallbacks = useMemo(() => {
+    const onClickTile = (pos: Coord, variant: PieceVariant) => {
+      if (observed) return;
+      if (
+        boardMode.type !== 'remote' ||
+        game.game.actualGame.currentPlayer !== boardMode.localPlayer ||
+        game.game.actualGame.gameState.type !== 'ongoing'
+      ) {
+        throw new Error('not your turn');
+      }
+      modifyRemoteGame(gameId, (draft) => {
+        const move = ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
+        //TODO: react strict mode causes duplicated send.
+        if (move) {
+          sendMoveMessage(move);
+        }
+      });
+    };
+
+    const onMakeMove = (move: Move) => {
+      logDebug('on make move', move);
+      if (observed) return;
+      if (
+        boardMode.type !== 'remote' ||
+        game.game.actualGame.currentPlayer !== boardMode.localPlayer ||
+        game.game.actualGame.gameState.type !== 'ongoing'
+      ) {
+        throw new Error('not your turn');
+      }
+      modifyRemoteGame(gameId, (draft) => {
+        if (!ui.canDoMove(draft, move)) {
+          logError('Invalid move:', move);
+          return;
+        }
+        logDebug('doing move', move);
+        ui.doMove(draft, move);
+        //TODO: react strict mode causes duplicated send.
+        sendMoveMessage(move);
+      });
+    };
+
+    const onTimeout = () => {
+      modifyRemoteGame(gameId, (draft) => {
+        ui.checkTimeout(draft);
+      });
+    };
+    const goToPly = (index: number | null) => {
+      modifyRemoteGame(gameId, (draft) => {
+        ui.setPlyIndex(draft, index);
+      });
+    };
+    const sendDrawOffer = (offer: boolean) => {
+      sendMessage(`Game#${gameId} ${offer ? 'Offer' : 'Remove'}Draw`);
+    };
+    const sendUndoOffer = (offer: boolean) => {
+      sendMessage(`Game#${gameId} ${offer ? 'Request' : 'Remove'}Undo`);
+    };
+    const doResign = () => {
+      sendMessage(`Game#${gameId} Resign`);
+    };
+    return {
+      onTimeout,
+      onClickTile,
+      onMakeMove,
+      goToPly,
+      sendDrawOffer,
+      sendUndoOffer,
+      doResign,
+    };
+  }, [boardMode, game, gameId, sendMessage, observed, sendMoveMessage]);
+
+  const currentCallbacks = useRef(gameCallbacks);
+  useEffect(() => {
+    currentCallbacks.current = gameCallbacks;
+  }, [gameCallbacks]);
+
+  return currentCallbacks;
 }

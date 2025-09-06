@@ -21,6 +21,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from '@mantine/form';
 import { router } from '../router';
 import { notifications } from '@mantine/notifications';
+import { logInfo } from '../logger';
 
 const discordLink = 'https://discord.gg/2xEt42X';
 
@@ -72,7 +73,7 @@ export function MainPage({
   });
 
   useEffect(() => {
-    console.log('Checking authentication status...', isAuthenticated);
+    logInfo('Checking authentication status: ', isAuthenticated);
     if (isAuthenticated && loginRedirect !== undefined) {
       void router.navigate({ to: loginRedirect });
     }

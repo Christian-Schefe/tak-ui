@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useRatings } from '../../api/ratings';
 import { useGamesList } from '../../features/gameList';
 import { FaEye } from 'react-icons/fa6';
+import { useAuth } from '../../authHooks';
 
 export function SpectateDialog({
   isOpen,
@@ -14,6 +15,8 @@ export function SpectateDialog({
 }) {
   const games = useGamesList();
   const nav = useNavigate();
+
+  const { user } = useAuth();
 
   const players = useMemo(() => {
     const playerArr = games.flatMap((game) => [game.white, game.black]);
@@ -30,38 +33,43 @@ export function SpectateDialog({
     });
   };
 
-  const rows = games.map((game) => {
-    const whiteRating = ratings[game.white]?.rating;
-    const blackRating = ratings[game.black]?.rating;
-    return (
-      <Table.Tr
-        key={game.id}
-        onClick={() => {
-          onClickSpectate(game.id);
-        }}
-        className="cursor-pointer"
-      >
-        <Table.Td>
-          <span className="font-bold">{game.white}</span>
-          {whiteRating !== undefined ? ` (${whiteRating.toString()})` : ''}
-        </Table.Td>
-        <Table.Td>
-          <span className="font-bold">{game.black}</span>
-          {blackRating !== undefined ? ` (${blackRating.toString()})` : ''}
-        </Table.Td>
-        <Table.Td>
-          {game.boardSize}x{game.boardSize}
-        </Table.Td>
-        <Table.Td>{game.halfKomi / 2}</Table.Td>
-        <Table.Td>
-          {game.timeContingentSeconds / 60}|{game.timeIncrementSeconds}
-        </Table.Td>
-        <Table.Td>
-          {game.pieces}/{game.capstones}
-        </Table.Td>
-      </Table.Tr>
-    );
-  });
+  const rows = games
+    .filter(
+      (game) =>
+        !user || (game.white !== user.username && game.black !== user.username),
+    )
+    .map((game) => {
+      const whiteRating = ratings[game.white]?.rating;
+      const blackRating = ratings[game.black]?.rating;
+      return (
+        <Table.Tr
+          key={game.id}
+          onClick={() => {
+            onClickSpectate(game.id);
+          }}
+          className="cursor-pointer"
+        >
+          <Table.Td>
+            <span className="font-bold">{game.white}</span>
+            {whiteRating !== undefined ? ` (${whiteRating.toString()})` : ''}
+          </Table.Td>
+          <Table.Td>
+            <span className="font-bold">{game.black}</span>
+            {blackRating !== undefined ? ` (${blackRating.toString()})` : ''}
+          </Table.Td>
+          <Table.Td>
+            {game.boardSize}x{game.boardSize}
+          </Table.Td>
+          <Table.Td>{game.halfKomi / 2}</Table.Td>
+          <Table.Td>
+            {game.timeContingentSeconds / 60}|{game.timeIncrementSeconds}
+          </Table.Td>
+          <Table.Td>
+            {game.pieces}/{game.capstones}
+          </Table.Td>
+        </Table.Tr>
+      );
+    });
 
   return (
     <Modal

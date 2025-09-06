@@ -12,6 +12,7 @@ import {
   canPlacePiece,
   countFlats,
   findRoads,
+  getFlats,
   isFilled,
   movePiece,
   newBoard,
@@ -174,7 +175,12 @@ export function checkTimeout(game: Game, now: Date): number | null {
 
 export function doMove(game: Game, move: Move, now?: Date) {
   now ??= new Date();
-  const timeRemaining = checkTimeout(game, now);
+
+  const timeRemaining =
+    game.settings.clock?.externallyDriven !== true
+      ? checkTimeout(game, now)
+      : null;
+
   const err = canDoMove(game, move, now);
   if (err !== null) {
     throw new Error(`Invalid move: ${err}`);
@@ -211,14 +217,6 @@ export function doMove(game: Game, move: Move, now?: Date) {
       game.settings.clock.extra && move === game.settings.clock.extra.move
         ? game.settings.clock.extra.amountMs
         : 0;
-    if (extraGain) {
-      console.log(
-        'gained',
-        extraGain,
-        timeRemaining,
-        extraGain + timeRemaining,
-      );
-    }
     game.clock.remainingMs[game.currentPlayer] =
       timeRemaining + game.settings.clock.incrementMs + extraGain;
     game.clock.lastMove = now;
@@ -242,10 +240,12 @@ export function doMove(game: Game, move: Move, now?: Date) {
     const whiteScore = flatCounts.white * 2;
     const blackScore = flatCounts.black * 2 + game.settings.halfKomi;
     if (whiteScore !== blackScore) {
+      const winner = whiteScore > blackScore ? 'white' : 'black';
       game.gameState = {
         type: 'win',
-        player: whiteScore > blackScore ? 'white' : 'black',
+        player: winner,
         reason: 'flats',
+        flats: getFlats(game.board, winner),
       };
     } else {
       game.gameState = {

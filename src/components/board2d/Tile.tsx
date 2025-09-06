@@ -37,6 +37,11 @@ export function Tile({
         return ringIndex;
       case 'linear':
         return (pos.x + pos.y) / (2 * (boardSize - 1));
+      case 'random': {
+        const seed = (pos.x * 73856093) ^ (pos.y * 19349663);
+        const rand = ((seed % 1000) + 1000) % 1000;
+        return rand / 1000;
+      }
       default:
         return 0;
     }
@@ -50,6 +55,16 @@ export function Tile({
     game.actualGame.gameState.reason === 'road' &&
     game.actualGame.gameState.road?.some((coord) => coordEquals(coord, pos)) ===
       true;
+
+  const isFlatWin =
+    game.plyIndex === null &&
+    game.actualGame.gameState.type === 'win' &&
+    game.actualGame.gameState.reason === 'flats' &&
+    game.actualGame.gameState.flats?.some((coord) =>
+      coordEquals(coord, pos),
+    ) === true;
+
+  const isSpecialHighlight = isRoad || isFlatWin;
 
   const isHover = interactive && data.hoverable;
 
@@ -101,7 +116,7 @@ export function Tile({
         }}
       ></div>
       <div
-        className={`absolute inset-0 opacity-0 ${isHover ? 'hover:opacity-100' : ''} ${isRoad ? 'opacity-100' : ''}`}
+        className={`absolute inset-0 opacity-0 ${isHover ? 'hover:opacity-100' : ''} ${isSpecialHighlight ? 'opacity-100' : ''}`}
         style={{
           backgroundColor: themeParams.hover,
           transition: opacityTransition,

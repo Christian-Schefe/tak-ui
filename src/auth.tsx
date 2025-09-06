@@ -11,6 +11,7 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { AuthContext, WebSocketAPIContext } from './authHooks';
 import { Affix, Button } from '@mantine/core';
 import { useSettings } from './settings';
+import { logDebug, logInfo, logWarn } from './logger';
 
 interface User {
   username: string;
@@ -64,17 +65,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     {
       ...wsOptions,
       onOpen: () => {
-        console.log('WebSocket opened');
+        logInfo('WebSocket opened');
         sendMessage('Protocol 2');
         onOpenListeners.current.forEach((listener) => {
-          console.log('Called onOpen listener', listener.key);
+          logDebug('Called onOpen listener', listener.key);
           listener.callback();
         });
       },
       onClose: (ev) => {
-        console.warn('WebSocket closed', ev);
+        logWarn('WebSocket closed', ev);
         onCloseListeners.current.forEach((listener) => {
-          console.log('Called onClose listener', listener.key);
+          logDebug('Called onClose listener', listener.key);
           listener.callback(ev);
         });
         setIsAuthenticated(false);
@@ -134,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return {
       readyState,
       sendMessage: (msg, keep) => {
-        console.log('sent:', msg);
+        logDebug('sent:', msg);
         sendMessage(msg, keep ?? true);
       },
       addOnCloseListener,
@@ -158,11 +159,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const sendToken = useCallback(() => {
     const token = localStorage.getItem('auth-token');
     if (token !== null) {
-      console.log('Found auth token:', token);
+      logInfo('Found auth token');
       sendMessage(`Login ${token}`);
-      console.log('Sent login message');
+      logInfo('Sent login message');
     } else {
-      console.log('No auth token found');
+      logInfo('No auth token found');
     }
   }, [sendMessage]);
 
@@ -171,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     msgToString(lastMessage)
       .then((msg) => {
         if (msg === null) return;
-        console.log('Received WebSocket message:', msg);
+        logDebug('Received WebSocket message:', msg);
         const userMatch = /Welcome (.+)!/.exec(msg);
         if (msg === 'NOK') {
           if (isAuthenticated) return;
@@ -181,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser({ username: userMatch[1] || '' });
           setIsAuthenticated(true);
         } else if (msg.startsWith('Login or Register')) {
-          console.log('No user found, sending token');
+          logInfo('Server requested login, sending token');
           sendToken();
         }
       })
@@ -192,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(
     (username: string, password: string) => {
-      console.log('Logging in as:', username, password);
+      logInfo('Logging in as:', username);
       localStorage.setItem('auth-token', `${username} ${password}`);
       sendToken();
     },
@@ -200,15 +201,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const loginGuest = useCallback(() => {
-    console.log('Logging in as guest');
+    logInfo('Logging in as guest');
     const guestToken = generateGuestToken(20);
-    console.log('token', guestToken);
     localStorage.setItem('auth-token', `Guest ${guestToken}`);
     sendToken();
   }, [sendToken]);
 
   const logout = useCallback(() => {
-    console.log('Logging out');
+    logInfo('Logging out');
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('auth-token');

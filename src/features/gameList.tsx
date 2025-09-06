@@ -3,6 +3,8 @@ import { create } from 'zustand';
 import type { TextMessage } from '../auth';
 import { useWSListener } from '../authHooks';
 import { isDefined } from './utils';
+import { useRatings } from '../api/ratings';
+import { logError } from '../logger';
 
 export interface GameListEntry {
   id: number;
@@ -39,6 +41,21 @@ export function useGamesList() {
   return useMemo(() => {
     return Object.values(games).filter(isDefined);
   }, [games]);
+}
+
+export function usePlayerInfo(game: GameListEntry) {
+  const ratings = useRatings([game.white, game.black]);
+  const playerInfo = {
+    white: {
+      username: game.white,
+      rating: ratings[game.white]?.rating,
+    },
+    black: {
+      username: game.black,
+      rating: ratings[game.black]?.rating,
+    },
+  };
+  return playerInfo;
 }
 
 export function useGameById(gameId: string) {
@@ -99,14 +116,14 @@ export function useUpdateGames() {
       if (newGame) {
         addGame(newGame);
       } else {
-        console.error('Failed to add game:', text);
+        logError('Failed to add game:', text);
       }
     } else if (text.startsWith('GameList Remove')) {
       const removedGameId = parseRemoveGameMessage(text);
       if (removedGameId !== null) {
         removeGame(removedGameId.toString());
       } else {
-        console.error('Failed to remove game:', text);
+        logError('Failed to remove game:', text);
       }
     }
   }, []);

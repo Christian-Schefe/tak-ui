@@ -1,6 +1,7 @@
 import { createContext, use, useEffect, useRef } from 'react';
 import type { AuthState, TextMessage, WebSocketAPIState } from './auth';
 import { msgToString } from './websocket';
+import { logDebug, logError } from './logger';
 
 export const AuthContext = createContext<AuthState | undefined>(undefined);
 export const WebSocketAPIContext = createContext<WebSocketAPIState | undefined>(
@@ -61,7 +62,7 @@ export function useWSListener(
   }, [onOpen]);
 
   useEffect(() => {
-    console.log('Adding onMessage listener:', id);
+    logDebug('Adding onMessage listener:', id);
     addOnMessageListener(id, (msg) => {
       msgToString(msg)
         .then((text) => {
@@ -69,33 +70,33 @@ export function useWSListener(
           onMessageRef.current?.({ text, timestamp: new Date() });
         })
         .catch((err: unknown) => {
-          console.error('Error parsing WebSocket message:', err);
+          logError('Error parsing WebSocket message:', err);
         });
     });
     return () => {
-      console.log('Removing onMessage listener:', id);
+      logDebug('Removing onMessage listener:', id);
       removeOnMessageListener(id);
     };
   }, [addOnMessageListener, id, removeOnMessageListener]);
 
   useEffect(() => {
-    console.log('Adding onClose listener:', id);
+    logDebug('Adding onClose listener:', id);
     addOnCloseListener(id, (ev) => {
       onCloseRef.current?.(ev);
     });
     return () => {
-      console.log('Removing onClose listener:', id);
+      logDebug('Removing onClose listener:', id);
       removeOnCloseListener(id);
     };
   }, [addOnCloseListener, id, removeOnCloseListener]);
 
   useEffect(() => {
-    console.log('Adding onOpen listener:', id);
+    logDebug('Adding onOpen listener:', id);
     addOnOpenListener(id, () => {
       onOpenRef.current?.();
     });
     return () => {
-      console.log('Removing onOpen listener:', id);
+      logDebug('Removing onOpen listener:', id);
       removeOnOpenListener(id);
     };
   }, [addOnOpenListener, id, removeOnOpenListener]);

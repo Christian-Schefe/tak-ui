@@ -9,6 +9,7 @@ import { useUpdateSeeks } from './features/seeks';
 import { useUpdateGames } from './features/gameList';
 import { useUpdatePlayers } from './features/players';
 import { useUpdateRemoteGames } from './features/remoteGame';
+import { logDebug, logError } from './logger';
 
 export interface GameDataState {
   chats: ChatData;
@@ -47,7 +48,7 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
   const onMsg = useCallback(
     (msg: TextMessage) => {
       const text = msg.text;
-      console.log('Called with message:', text);
+      logDebug('Called with message:', text);
       if (text.startsWith('Tell')) {
         const matches = /^Tell <(.*)> (.+)/.exec(text);
         if (matches) {
@@ -67,9 +68,9 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
               ],
             },
           }));
-          console.log('Received tell message from', sender, ':', message);
+          logDebug('Received tell message from', sender, ':', message);
         } else {
-          console.error('Failed to parse tell message:', text);
+          logError('Failed to parse tell message:', text);
         }
       } else if (text.startsWith('Told')) {
         const matches = /^Told <(.*)> (.+)/.exec(text);
@@ -91,9 +92,9 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
               ],
             },
           }));
-          console.log('Received told message from', sender, ':', message);
+          logDebug('Received told message from', sender, ':', message);
         } else {
-          console.error('Failed to parse told message:', text);
+          logError('Failed to parse told message:', text);
         }
       }
     },

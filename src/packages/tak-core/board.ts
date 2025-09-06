@@ -259,6 +259,23 @@ export function isFilled(board: Board): boolean {
   return true;
 }
 
+export function getFlats(board: Board, player: Player): Coord[] {
+  const flats: Coord[] = [];
+  for (let y = 0; y < board.size; y++) {
+    for (let x = 0; x < board.size; x++) {
+      const stack = board.pieces[y][x];
+      if (
+        stack &&
+        stack.variant === 'flat' &&
+        stack.composition[stack.composition.length - 1].player === player
+      ) {
+        flats.push({ x, y });
+      }
+    }
+  }
+  return flats;
+}
+
 export function countFlats(board: Board): Record<Player, number> {
   const counts: Record<Player, number> = { white: 0, black: 0 };
   for (const row of board.pieces) {

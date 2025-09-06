@@ -96,7 +96,6 @@ export function SettingsDialog({
         <Slider
           value={Math.round(volumeToLinear(volume.value))}
           onChange={(value) => {
-            console.log('set', value, volumeToLogarithmic(value));
             volume.setValue(volumeToLogarithmic(value));
           }}
           min={0}

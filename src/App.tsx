@@ -19,6 +19,9 @@ import '@mantine/notifications/styles.css';
 const theme = createTheme({
   fontFamily: 'Nunito, sans-serif',
   primaryColor: 'blue',
+  breakpoints: {
+    tailwind_lg: '64em',
+  },
 });
 
 const mergedTheme = mergeMantineTheme(DEFAULT_THEME, theme);

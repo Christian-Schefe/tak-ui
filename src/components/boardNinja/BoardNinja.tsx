@@ -6,6 +6,7 @@ import { useEvent, useUpdate } from 'react-use';
 import z from 'zod';
 import { GameInfoDrawer } from '../classic/GameInfoDrawer';
 import { ChatDrawer } from '../classic/ChatDrawer';
+import { logDebug } from '../../logger';
 
 const NinjaMessageSchema = z.object({
   action: z.string(),
@@ -73,7 +74,6 @@ export function BoardNinja({ game, mode, callbacks, playerInfo }: BoardProps) {
         const parsed = NinjaMessageSchema.safeParse(event.data);
         if (!parsed.success) return;
         if (parsed.data.action === 'INSERT_PLY') {
-          console.log('Move:', parsed.data.value);
           setPlyIndex((index) => index + 1);
           callbacks.current.onMakeMove(
             moveFromString(parsed.data.value as string),
@@ -98,7 +98,7 @@ export function BoardNinja({ game, mode, callbacks, playerInfo }: BoardProps) {
     }
     if (plyIndex < game.actualGame.history.length) {
       for (let i = plyIndex; i < game.actualGame.history.length; i++) {
-        console.log(
+        logDebug(
           'sending move to ninja:',
           moveToString(game.actualGame.history[i]),
         );

@@ -1,4 +1,4 @@
-import { ActionIcon, ScrollArea } from '@mantine/core';
+import { ActionIcon, Box, ScrollArea } from '@mantine/core';
 import type { MoveRecord, Player } from '../../packages/tak-core';
 import { moveToString } from '../../packages/tak-core/move';
 import type { GameUI } from '../../packages/tak-core/ui';
@@ -125,17 +125,55 @@ export function History({
     scrollToBottom();
   }, [game.actualGame.history.length]);
 
+  const historyNavigation = (
+    <>
+      <ActionIcon
+        onClick={() => {
+          goToFirstPly();
+        }}
+      >
+        <FaAnglesLeft />
+      </ActionIcon>
+      <ActionIcon
+        onClick={() => {
+          decreasePlyIndex();
+        }}
+      >
+        <FaAngleLeft />
+      </ActionIcon>
+      <ActionIcon
+        onClick={() => {
+          increasePlyIndex();
+        }}
+      >
+        <FaAngleRight />
+      </ActionIcon>
+      <ActionIcon
+        onClick={() => {
+          goToLastPly();
+        }}
+      >
+        <FaAnglesRight />
+      </ActionIcon>
+    </>
+  );
+
   return (
     <div
       className="flex flex-col rounded-md p-2 m-2 justify-center lg:w-72 lg:max-h-200 h-full"
       style={{ color: themeParams.text, backgroundColor: themeParams.board1 }}
     >
-      <GameActions
-        mode={mode}
-        callbacks={callbacks}
-        padding="0.5rem"
-        gameState={game.actualGame.gameState}
-      />
+      <div className="flex justify-between lg:p-1">
+        <GameActions
+          mode={mode}
+          callbacks={callbacks}
+          padding="0.25rem"
+          gameState={game.actualGame.gameState}
+        />
+        <Box className="flex justify-center p-1 gap-2" hiddenFrom="tailwind_lg">
+          {historyNavigation}
+        </Box>
+      </div>
       <ScrollArea
         viewportRef={viewport}
         className="grow"
@@ -143,36 +181,9 @@ export function History({
       >
         <div className="flex lg:flex-col">{rows}</div>
       </ScrollArea>
-      <div className="flex justify-center p-2 gap-2">
-        <ActionIcon
-          onClick={() => {
-            goToFirstPly();
-          }}
-        >
-          <FaAnglesLeft />
-        </ActionIcon>
-        <ActionIcon
-          onClick={() => {
-            decreasePlyIndex();
-          }}
-        >
-          <FaAngleLeft />
-        </ActionIcon>
-        <ActionIcon
-          onClick={() => {
-            increasePlyIndex();
-          }}
-        >
-          <FaAngleRight />
-        </ActionIcon>
-        <ActionIcon
-          onClick={() => {
-            goToLastPly();
-          }}
-        >
-          <FaAnglesRight />
-        </ActionIcon>
-      </div>
+      <Box className="flex justify-center p-2 gap-2" visibleFrom="tailwind_lg">
+        {historyNavigation}
+      </Box>
     </div>
   );
 }

@@ -68,7 +68,6 @@ export const Board3D: FC<BoardProps> = ({
   const cubeTextureCallback = useCallback((node: CubeTexture | null) => {
     if (node) {
       cubeTextureRef.current = node;
-      console.log('hdrTexture', node);
 
       cubeTextureCloneRef.current = node.clone();
       cubeTextureCloneRef.current.name = 'cloned texture';

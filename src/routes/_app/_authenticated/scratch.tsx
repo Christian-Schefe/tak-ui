@@ -17,6 +17,7 @@ import {
   useLocalGameState,
 } from '../../../features/localGame';
 import { usePlayMoveSound } from '../../../packages/tak-core/hooks';
+import { logError } from '../../../logger';
 
 export const Route = createFileRoute('/_app/_authenticated/scratch')({
   component: RouteComponent,
@@ -41,10 +42,9 @@ function RouteComponent() {
     const onMakeMove = (move: Move) => {
       modifyLocalGame((draft) => {
         if (!ui.canDoMove(draft, move)) {
-          console.error('Invalid move:', move);
+          logError('Invalid move:', move);
           return;
         }
-        console.log('doing move', move);
         ui.doMove(draft, move);
       });
     };
