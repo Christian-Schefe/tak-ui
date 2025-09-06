@@ -151,7 +151,7 @@ export function GameActions({
 }) {
   switch (mode.type) {
     case 'local':
-      return (
+      return mode.review ? null : (
         <LocalGameActions
           callbacks={callbacks}
           padding={padding}

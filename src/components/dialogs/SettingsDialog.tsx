@@ -157,32 +157,31 @@ export function SettingsDialog({
               step={1}
             />
             <p className="mt-4">Axis Labels</p>
-            <Switch
-              checked={board2dSettings.axisLabels}
-              onChange={(e) => {
-                setBoard2dSettings({
-                  ...board2dSettings,
-                  axisLabels: e.currentTarget.checked,
-                });
-              }}
-            />
-            {board2dSettings.axisLabels && (
-              <>
-                <p className="mt-4">Axis Label Size</p>
-                <Slider
-                  value={board2dSettings.axisLabelSize}
-                  onChange={(value) => {
-                    setBoard2dSettings({
-                      ...board2dSettings,
-                      axisLabelSize: value,
-                    });
-                  }}
-                  min={8}
-                  max={24}
-                  step={1}
-                />
-              </>
-            )}
+            <div className="flex gap-2 items-center">
+              <Switch
+                checked={board2dSettings.axisLabels}
+                onChange={(e) => {
+                  setBoard2dSettings({
+                    ...board2dSettings,
+                    axisLabels: e.currentTarget.checked,
+                  });
+                }}
+              />
+              <Slider
+                style={{ flexGrow: 1 }}
+                value={board2dSettings.axisLabelSize}
+                disabled={!board2dSettings.axisLabels}
+                onChange={(value) => {
+                  setBoard2dSettings({
+                    ...board2dSettings,
+                    axisLabelSize: value,
+                  });
+                }}
+                min={8}
+                max={24}
+                step={1}
+              />
+            </div>
           </>
         )}
         {boardType === 'ninja' && (
