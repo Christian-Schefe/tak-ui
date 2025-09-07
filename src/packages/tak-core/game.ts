@@ -246,11 +246,13 @@ export function doMove(game: Game, move: Move, now?: Date) {
         player: winner,
         reason: 'flats',
         flats: getFlats(game.board, winner),
+        counts: flatCounts,
       };
     } else {
       game.gameState = {
         type: 'draw',
         reason: 'flats',
+        counts: flatCounts,
       };
     }
   }

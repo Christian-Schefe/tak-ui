@@ -1,4 +1,4 @@
-import { ActionIcon, Box, ScrollArea } from '@mantine/core';
+import { ActionIcon, ScrollArea } from '@mantine/core';
 import type { MoveRecord, Player } from '../../packages/tak-core';
 import { moveToString } from '../../packages/tak-core/move';
 import type { GameUI } from '../../packages/tak-core/ui';
@@ -16,6 +16,7 @@ import type { BoardMode, GameCallbacks } from '../board';
 import { useEvent } from 'react-use';
 import { GameActions } from '../classic/GameInfoDrawer';
 import { motion } from 'motion/react';
+import { useBreakpoint } from '../breakpoints';
 
 export function History({
   game,
@@ -158,21 +159,28 @@ export function History({
     </>
   );
 
+  const isLarge = useBreakpoint('tailwind_lg');
+
   return (
     <div
       className="flex flex-col rounded-md p-2 m-2 justify-center lg:w-72 lg:max-h-200 h-full"
       style={{ color: themeParams.text, backgroundColor: themeParams.board1 }}
     >
-      <div className="flex justify-between lg:p-1">
+      <div className="flex">
         <GameActions
           mode={mode}
           callbacks={callbacks}
-          padding="0.25rem"
+          padding={isLarge ? '0.5rem' : '0.25rem'}
           gameState={game.actualGame.gameState}
         />
-        <Box className="flex justify-center p-1 gap-2" hiddenFrom="tailwind_lg">
-          {historyNavigation}
-        </Box>
+        {!isLarge && (
+          <>
+            <div className="w-0 grow" />
+            <div className="flex justify-center p-1 gap-2 justify-self-end self-end">
+              {historyNavigation}
+            </div>
+          </>
+        )}
       </div>
       <ScrollArea
         viewportRef={viewport}
@@ -181,9 +189,9 @@ export function History({
       >
         <div className="flex lg:flex-col">{rows}</div>
       </ScrollArea>
-      <Box className="flex justify-center p-2 gap-2" visibleFrom="tailwind_lg">
-        {historyNavigation}
-      </Box>
+      {isLarge && (
+        <div className="flex justify-center p-2 gap-2">{historyNavigation}</div>
+      )}
     </div>
   );
 }

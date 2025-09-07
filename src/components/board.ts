@@ -11,6 +11,7 @@ export interface BoardProps {
 export interface GameCallbacks {
   onTimeout: () => void;
   onClickTile: (pos: Coord, variant: PieceVariant) => void;
+  onDeselect: () => void;
   onMakeMove: (move: Move) => void;
   goToPly: (index: number | null) => void;
   sendDrawOffer: (offer: boolean) => void;
@@ -24,7 +25,8 @@ export interface PlayerInfo {
 }
 
 export type BoardMode =
-  | { type: 'local'; review: boolean }
+  | { type: 'local'; review: false }
+  | { type: 'local'; review: true; gameId: string }
   | {
       type: 'remote';
       localPlayer: Player;

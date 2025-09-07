@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { GameUI } from '../../packages/tak-core/ui';
-import type { PlayerInfo } from '../board';
+import type { BoardMode, PlayerInfo } from '../board';
 import type { Player } from '../../packages/tak-core';
 import { Affix, Modal, Button, Transition, CopyButton } from '@mantine/core';
-import { FaCopy, FaLink, FaTrophy } from 'react-icons/fa6';
+import { FaArrowRotateLeft, FaCopy, FaLink, FaTrophy } from 'react-icons/fa6';
 import { gameToPTN } from '../../packages/tak-core/ptn';
 import { useNavigate } from '@tanstack/react-router';
 import { LuExternalLink } from 'react-icons/lu';
+import { rematchLocalGame } from '../../features/localGame';
 
 export function GameOverDialog({
+  mode,
   game,
-  gameId,
   playerInfo,
 }: {
   game: GameUI;
-  gameId?: string;
+  mode: BoardMode;
   playerInfo: Record<Player, PlayerInfo>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -42,6 +43,14 @@ export function GameOverDialog({
     window.open(`https://ptn.ninja/${encodeURIComponent(ptn)}`, '_blank');
   };
 
+  const flatDifferenceText =
+    (game.actualGame.gameState.type === 'win' ||
+      game.actualGame.gameState.type === 'draw') &&
+    game.actualGame.gameState.reason === 'flats' &&
+    game.actualGame.gameState.counts
+      ? ` (${game.actualGame.gameState.counts.white.toString()} to ${game.actualGame.gameState.counts.black.toString()} + ${(game.actualGame.settings.halfKomi / 2).toString()})`
+      : '';
+
   return (
     <>
       <Modal
@@ -68,11 +77,15 @@ export function GameOverDialog({
                         {playerInfo[game.actualGame.gameState.player].username}
                       </span>{' '}
                       wins by {game.actualGame.gameState.reason}
+                      {flatDifferenceText}
                     </p>
                   );
                 case 'draw':
                   return (
-                    <p>It's a draw by {game.actualGame.gameState.reason}</p>
+                    <p>
+                      It's a draw by {game.actualGame.gameState.reason}
+                      {flatDifferenceText}
+                    </p>
                   );
                 case 'ongoing':
                   return <p>Game is ongoing</p>;
@@ -80,8 +93,8 @@ export function GameOverDialog({
             })()}
           </div>
           <div className="flex flex-col gap-4">
-            {gameId !== undefined && (
-              <CopyButton value={gameId}>
+            {(mode.type !== 'local' || mode.review) && (
+              <CopyButton value={mode.gameId}>
                 {({ copy, copied }) => (
                   <Button
                     leftSection={<FaCopy />}
@@ -110,14 +123,27 @@ export function GameOverDialog({
             >
               Open in PTN Ninja
             </Button>
-            {gameId !== undefined && (
+            {mode.type !== 'local' && (
               <Button
                 leftSection={<FaLink />}
                 onClick={() => {
-                  void navigate({ to: '/games/$gameId', params: { gameId } });
+                  void navigate({
+                    to: '/games/$gameId',
+                    params: { gameId: mode.gameId },
+                  });
                 }}
               >
                 Open in Review Board
+              </Button>
+            )}
+            {mode.type === 'local' && !mode.review && (
+              <Button
+                leftSection={<FaArrowRotateLeft />}
+                onClick={() => {
+                  rematchLocalGame();
+                }}
+              >
+                Rematch
               </Button>
             )}
           </div>

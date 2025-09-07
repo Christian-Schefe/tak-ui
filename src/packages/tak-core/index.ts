@@ -20,6 +20,7 @@ export type GameState =
       type: 'win';
       player: Player;
       reason: 'flats';
+      counts?: Record<Player, number>;
       flats?: Coord[];
     }
   | {
@@ -28,7 +29,8 @@ export type GameState =
       reason: 'road';
       road?: Coord[];
     }
-  | { type: 'draw'; reason: 'flats' | 'mutual agreement' };
+  | { type: 'draw'; reason: 'flats'; counts?: Record<Player, number> }
+  | { type: 'draw'; reason: 'mutual agreement' };
 
 export type Move =
   | { type: 'place'; pos: Coord; variant: PieceVariant }

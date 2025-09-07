@@ -10,6 +10,7 @@ import { PlayerInfoBar } from './PlayerInfoBar';
 import { History } from './History';
 import { usePieceIds } from '../../packages/tak-core/hooks';
 import { Chat } from './Chat';
+import { useEvent } from 'react-use';
 
 export function Board2D({ game, playerInfo, callbacks, mode }: BoardProps) {
   const [variant, setVariant] = useState<PieceVariant>('flat');
@@ -41,6 +42,12 @@ export function Board2D({ game, playerInfo, callbacks, mode }: BoardProps) {
     },
     [callbacks, variant],
   );
+
+  useEvent('keydown', (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      callbacks.current.onDeselect();
+    }
+  });
 
   return (
     <div

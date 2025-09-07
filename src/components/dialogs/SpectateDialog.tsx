@@ -49,11 +49,11 @@ export function SpectateDialog({
           }}
           className="cursor-pointer"
         >
-          <Table.Td>
+          <Table.Td className="text-nowrap">
             <span className="font-bold">{game.white}</span>
             {whiteRating !== undefined ? ` (${whiteRating.toString()})` : ''}
           </Table.Td>
-          <Table.Td>
+          <Table.Td className="text-nowrap">
             <span className="font-bold">{game.black}</span>
             {blackRating !== undefined ? ` (${blackRating.toString()})` : ''}
           </Table.Td>

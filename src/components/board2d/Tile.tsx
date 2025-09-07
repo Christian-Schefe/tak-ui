@@ -87,14 +87,32 @@ export function Tile({
       }}
     >
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 flex items-center justify-center"
         style={{
-          transition: `background-color ${board2dSettings.animationSpeed.toString()}ms ease-in-out`,
-          backgroundColor: backgroundColor.toString(),
+          backgroundColor:
+            themeParams.tileSpecial?.hideBackground !== true
+              ? backgroundColor.toString()
+              : undefined,
           margin: themeParams.board.spacing,
           borderRadius: themeParams.board.rounded,
         }}
-      ></div>
+      >
+        {themeParams.tileSpecial && (
+          <div
+            className="rounded-full"
+            style={{
+              backgroundColor: themeParams.tileSpecial.color,
+              width: themeParams.tileSpecial.size,
+              height: themeParams.tileSpecial.size,
+              borderRadius: themeParams.tileSpecial.rounded,
+              transform: themeParams.tileSpecial.transform,
+              outlineColor: themeParams.tileSpecial.borderColor,
+              outlineWidth: themeParams.tileSpecial.border,
+              outlineStyle: 'solid',
+            }}
+          />
+        )}
+      </div>
       <div
         className="absolute inset-0"
         style={{
@@ -104,7 +122,7 @@ export function Tile({
           margin: themeParams.board.spacing,
           borderRadius: themeParams.board.rounded,
         }}
-      ></div>
+      />
       <div
         className="absolute inset-0"
         style={{
@@ -114,7 +132,7 @@ export function Tile({
           margin: themeParams.board.spacing,
           borderRadius: themeParams.board.rounded,
         }}
-      ></div>
+      />
       <div
         className={`absolute inset-0 opacity-0 ${isHover ? 'hover:opacity-100' : ''} ${isSpecialHighlight ? 'opacity-100' : ''}`}
         style={{
@@ -123,7 +141,7 @@ export function Tile({
           margin: themeParams.board.spacing,
           borderRadius: themeParams.board.rounded,
         }}
-      ></div>
+      />
       {pos.y === 0 && board2dSettings.axisLabels ? (
         <div
           className={

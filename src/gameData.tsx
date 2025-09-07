@@ -101,14 +101,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
     [user],
   );
 
-  const onOpen = useCallback(() => {
-    notifications.show({
-      title: 'Connection opened',
-      message: 'Connection opened',
-      position: 'top-right',
-    });
-  }, []);
-
   const onClose = useCallback((ev: CloseEvent) => {
     notifications.show({
       title: 'Connection closed',
@@ -119,7 +111,6 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
 
   const { sendMessage } = useWSListener('GameData', {
     onMessage: onMsg,
-    onOpen,
     onClose,
   });
 

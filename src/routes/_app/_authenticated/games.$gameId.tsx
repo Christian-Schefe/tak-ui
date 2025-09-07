@@ -8,7 +8,7 @@ import { Board3D } from '../../../components/board3d/Board3D';
 import { BoardNinja } from '../../../components/boardNinja/BoardNinja';
 import { newGameUI } from '../../../packages/tak-core/ui';
 import { useEffect, useMemo, useRef } from 'react';
-import type { GameCallbacks } from '../../../components/board';
+import type { BoardMode, GameCallbacks } from '../../../components/board';
 import { GameOverDialog } from '../../../components/dialogs/GameOverDialog';
 import { useImmer } from 'use-immer';
 import { ui } from '../../../packages/tak-core';
@@ -39,6 +39,10 @@ function RouteComponent() {
       void 0;
     };
 
+    const onDeselect = () => {
+      void 0;
+    };
+
     const onMakeMove = () => {
       void 0;
     };
@@ -54,6 +58,7 @@ function RouteComponent() {
     const callbacks: GameCallbacks = {
       onTimeout,
       onClickTile,
+      onDeselect,
       onMakeMove,
       goToPly,
       sendDrawOffer: () => {
@@ -91,15 +96,17 @@ function RouteComponent() {
     black: { rating: 1000, ...parsedGame.playerInfo.black },
   };
 
+  const gameMode: BoardMode = { type: 'local', review: true, gameId };
+
   return (
     <div className="w-full grow flex flex-col">
       <BoardComponent
         game={game}
         playerInfo={playerInfo}
         callbacks={currentCallbacks}
-        mode={{ type: 'local', review: true }}
+        mode={gameMode}
       />
-      <GameOverDialog game={game} gameId={gameId} playerInfo={playerInfo} />
+      <GameOverDialog game={game} mode={gameMode} playerInfo={playerInfo} />
     </div>
   );
 }

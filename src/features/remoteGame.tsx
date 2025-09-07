@@ -21,7 +21,7 @@ import { ReadyState } from 'react-use-websocket';
 import { useSettings } from '../settings';
 import { notifications } from '@mantine/notifications';
 import type { GameListEntry } from './gameList';
-import type { BoardMode } from '../components/board';
+import type { BoardMode, GameCallbacks } from '../components/board';
 import { logDebug, logError, logInfo, logWarn } from '../logger';
 
 interface RemoteGameState {
@@ -549,7 +549,7 @@ export function useRemoteGameCallbacks(
   observed: boolean,
   boardMode: BoardMode,
   game: GameStateEntry,
-) {
+): React.RefObject<GameCallbacks> {
   const { sendMessage } = useWSAPI();
   const sendMoveMessage = useSendMoveMessage(gameId);
 
@@ -594,6 +594,13 @@ export function useRemoteGameCallbacks(
       });
     };
 
+    const onDeselect = () => {
+      if (observed) return;
+      modifyRemoteGame(gameId, (draft) => {
+        ui.clearPartialMove(draft);
+      });
+    };
+
     const onTimeout = () => {
       modifyRemoteGame(gameId, (draft) => {
         ui.checkTimeout(draft);
@@ -613,15 +620,17 @@ export function useRemoteGameCallbacks(
     const doResign = () => {
       sendMessage(`Game#${gameId} Resign`);
     };
-    return {
+    const callbacks: GameCallbacks = {
       onTimeout,
       onClickTile,
+      onDeselect,
       onMakeMove,
       goToPly,
       sendDrawOffer,
       sendUndoOffer,
       doResign,
     };
+    return callbacks;
   }, [boardMode, game, gameId, sendMessage, observed, sendMoveMessage]);
 
   const currentCallbacks = useRef(gameCallbacks);

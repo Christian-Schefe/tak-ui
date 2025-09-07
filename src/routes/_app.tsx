@@ -16,8 +16,8 @@ import {
 } from 'react-icons/fa6';
 import { LuLogOut, LuSwords, LuWifi, LuWifiOff } from 'react-icons/lu';
 
-import { AppShell, Badge, Burger, Group } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { AppShell, Badge, Burger, Group, useMantineTheme } from '@mantine/core';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { SeeksDialog } from '../components/dialogs/SeeksDialog';
 import { SpectateDialog } from '../components/dialogs/SpectateDialog';
 import { useAuth, useWSAPI } from '../authHooks';
@@ -37,6 +37,10 @@ const linkClassName =
   'flex gap-[6px] items-center py-2 px-3 hover:underline text-nowrap';
 const buttonClassName =
   'flex gap-[6px] items-center py-2 px-3 cursor-pointer group text-nowrap';
+
+function elementsToList(items: { el: React.ReactNode; key: string }[]) {
+  return items.map((item) => <Fragment key={item.key}>{item.el}</Fragment>);
+}
 
 function RouteComponent() {
   const [opened, { toggle, close }] = useDisclosure();
@@ -179,37 +183,27 @@ function RouteComponent() {
   );
 
   const elements = [
-    { key: 'home', el: linkHome, visibleFrom: 1 },
-    { key: 'scratch', el: linkScratch, visibleFrom: 0 },
-    { key: 'newGame', el: buttonNewGame, visibleFrom: 2 },
-    { key: 'play', el: linkPlay, visibleFrom: 0 },
-    { key: 'seeks', el: buttonSeeks, visibleFrom: 2 },
-    { key: 'games', el: buttonGames, visibleFrom: 2 },
-    { key: 'players', el: buttonPlayers, visibleFrom: 1 },
-    { key: 'history', el: linkGameDatabase, visibleFrom: 0 },
-    { key: 'account', el: linkToAccount, visibleFrom: 0 },
+    { key: 'home', el: linkHome, visibleAfter: 1 },
+    { key: 'scratch', el: linkScratch, visibleAfter: 2 },
+    { key: 'newGame', el: buttonNewGame, visibleAfter: 0 },
+    { key: 'play', el: linkPlay, visibleAfter: 2 },
+    { key: 'seeks', el: buttonSeeks, visibleAfter: 0 },
+    { key: 'games', el: buttonGames, visibleAfter: 0 },
+    { key: 'players', el: buttonPlayers, visibleAfter: 1 },
+    { key: 'history', el: linkGameDatabase, visibleAfter: 2 },
+    { key: 'account', el: linkToAccount, visibleAfter: 2 },
   ];
 
-  const navElementsSplitByVisible = [0, 1, 2].map((x) => {
-    const visible = elements.filter((el) => el.visibleFrom > x);
-    const hidden = elements.filter((el) => el.visibleFrom <= x);
-    return {
-      visible: (
-        <>
-          {visible.map((el) => (
-            <Fragment key={el.key}>{el.el}</Fragment>
-          ))}
-        </>
-      ),
-      hidden: (
-        <>
-          {hidden.map((el) => (
-            <Fragment key={el.key}>{el.el}</Fragment>
-          ))}
-        </>
-      ),
-    };
-  });
+  const largeBreakpoint = 'lg';
+
+  const breakpointIndex = useThreeStageBreakpoint('md', largeBreakpoint);
+
+  const visibleNavElements = elementsToList(
+    elements.filter((el) => breakpointIndex > el.visibleAfter),
+  );
+  const hiddenNavElements = elementsToList(
+    elements.filter((el) => breakpointIndex <= el.visibleAfter),
+  );
 
   const modals = (
     <>
@@ -246,8 +240,6 @@ function RouteComponent() {
     </>
   );
 
-  const largeBreakpoint = 'lg';
-
   return (
     <AppShell
       header={{ height: 40 }}
@@ -263,17 +255,12 @@ function RouteComponent() {
           style={{ height: '40px' }}
         >
           <Burger opened={opened} onClick={toggle} size="sm" mx="md" />
-          <Group visibleFrom={largeBreakpoint} gap={'xs'} wrap="nowrap">
-            {navElementsSplitByVisible[0].visible}
-          </Group>
-          <Group
-            visibleFrom="md"
-            hiddenFrom={largeBreakpoint}
-            gap={'xs'}
-            wrap="nowrap"
-          >
-            {navElementsSplitByVisible[1].visible}
-          </Group>
+
+          {breakpointIndex > 0 && (
+            <Group gap={'xs'} wrap="nowrap">
+              {visibleNavElements}
+            </Group>
+          )}
           <div className="grow flex flex-nowrap justify-end items-center pr-2">
             <Link to="/players">
               <span className="font-bold">{user?.username}</span>
@@ -305,15 +292,7 @@ function RouteComponent() {
           </div>
         </div>
       </AppShell.Header>
-      <AppShell.Navbar visibleFrom={largeBreakpoint}>
-        {navElementsSplitByVisible[0].hidden}
-      </AppShell.Navbar>
-      <AppShell.Navbar visibleFrom="md" hiddenFrom={largeBreakpoint}>
-        {navElementsSplitByVisible[1].hidden}
-      </AppShell.Navbar>
-      <AppShell.Navbar hiddenFrom="md">
-        {navElementsSplitByVisible[2].hidden}
-      </AppShell.Navbar>
+      <AppShell.Navbar>{hiddenNavElements}</AppShell.Navbar>
       <AppShell.Main className="flex flex-col">
         <Outlet />
         {modals}
@@ -322,4 +301,18 @@ function RouteComponent() {
       </AppShell.Main>
     </AppShell>
   );
+}
+
+function useThreeStageBreakpoint(
+  smallBreakpoint: string,
+  largeBreakpoint: string,
+): number {
+  const { breakpoints: themeBreakpoints } = useMantineTheme();
+  const smallMatching = useMediaQuery(
+    `(max-width: ${themeBreakpoints[smallBreakpoint]})`,
+  );
+  const largeMatching = useMediaQuery(
+    `(max-width: ${themeBreakpoints[largeBreakpoint]})`,
+  );
+  return smallMatching ? 0 : largeMatching ? 1 : 2;
 }

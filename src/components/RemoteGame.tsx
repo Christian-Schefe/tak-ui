@@ -49,7 +49,7 @@ export function RemoteGame({
       <GameOverDialog
         game={game.game}
         playerInfo={playerInfo}
-        gameId={boardMode.gameId}
+        mode={boardMode}
       />
     </div>
   );

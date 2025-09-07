@@ -28,3 +28,9 @@ export function newLocalGame(settings: GameSettings) {
     game: newGameUI(newGame(settings)),
   }));
 }
+
+export function rematchLocalGame() {
+  useLocalGameState.setState((state) => ({
+    game: newGameUI(newGame(state.game.actualGame.settings)),
+  }));
+}

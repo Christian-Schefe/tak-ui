@@ -11,7 +11,7 @@ import { Board3D } from '../../../components/board3d/Board3D';
 import { GameOverDialog } from '../../../components/dialogs/GameOverDialog';
 import { BoardNinja } from '../../../components/boardNinja/BoardNinja';
 import { useMemo, useRef } from 'react';
-import type { GameCallbacks } from '../../../components/board';
+import type { BoardMode, GameCallbacks } from '../../../components/board';
 import {
   modifyLocalGame,
   useLocalGameState,
@@ -22,6 +22,8 @@ import { logError } from '../../../logger';
 export const Route = createFileRoute('/_app/_authenticated/scratch')({
   component: RouteComponent,
 });
+
+const gameMode: BoardMode = { type: 'local', review: false };
 
 function RouteComponent() {
   const game = useLocalGameState((state) => state.game);
@@ -36,6 +38,12 @@ function RouteComponent() {
     const onClickTile = (pos: Coord, variant: PieceVariant) => {
       modifyLocalGame((draft) => {
         ui.tryPlaceOrAddToPartialMove(draft, pos, variant);
+      });
+    };
+
+    const onDeselect = () => {
+      modifyLocalGame((draft) => {
+        ui.clearPartialMove(draft);
       });
     };
 
@@ -72,6 +80,7 @@ function RouteComponent() {
     const callbacks: GameCallbacks = {
       onTimeout,
       onClickTile,
+      onDeselect,
       onMakeMove,
       goToPly,
       sendDrawOffer: () => {
@@ -99,9 +108,9 @@ function RouteComponent() {
         game={game}
         playerInfo={playerInfo}
         callbacks={currentCallbacks}
-        mode={{ type: 'local', review: false }}
+        mode={gameMode}
       />
-      <GameOverDialog game={game} playerInfo={playerInfo} />
+      <GameOverDialog game={game} playerInfo={playerInfo} mode={gameMode} />
     </div>
   );
 }

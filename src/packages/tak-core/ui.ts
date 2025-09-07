@@ -140,6 +140,11 @@ export function undoMove(ui: GameUI) {
   onGameUpdate(ui);
 }
 
+export function clearPartialMove(ui: GameUI) {
+  ui.partialMove = null;
+  onGameUpdate(ui);
+}
+
 export function tryPlaceOrAddToPartialMove(
   ui: GameUI,
   pos: Coord,

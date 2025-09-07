@@ -12,6 +12,8 @@ import steampunk from './steampunk.json';
 import bubblegum from './bubblegum.json';
 import frost from './frost.json';
 import papyrus from './papyrus.json';
+import galaxy from './galaxy.json';
+import mushroom from './mushroom.json';
 
 export type ColorTheme =
   | 'classic'
@@ -26,7 +28,9 @@ export type ColorTheme =
   | 'steampunk'
   | 'bubblegum'
   | 'frost'
-  | 'papyrus';
+  | 'papyrus'
+  | 'galaxy'
+  | 'mushroom';
 
 const pieceColorSchema = z.object({
   background: z.string(),
@@ -40,25 +44,39 @@ const pieceColorSchema = z.object({
     .optional(),
 });
 
-export const themeSchema = z.object({
-  background: z.string(),
-  text: z.string(),
-  board1: z.string(),
-  board2: z.string(),
-  highlight: z.string(),
-  hover: z.string(),
-  piece1: pieceColorSchema,
-  piece2: pieceColorSchema,
-  board: object({
-    spacing: z.string(),
-    rounded: z.string(),
-    tiling: z.enum(['checkerboard', 'rings', 'linear', 'random']),
-  }),
-  pieces: object({
-    rounded: z.number(),
-    border: z.string(),
-  }),
-});
+export const themeSchema = z
+  .object({
+    background: z.string(),
+    text: z.string(),
+    board1: z.string(),
+    board2: z.string(),
+    tileSpecial: z
+      .object({
+        color: z.string(),
+        border: z.string(),
+        borderColor: z.string(),
+        rounded: z.string().default('0'),
+        size: z.string(),
+        transform: z.string().optional(),
+        hideBackground: z.boolean().default(false),
+      })
+      .strict()
+      .optional(),
+    highlight: z.string(),
+    hover: z.string(),
+    piece1: pieceColorSchema,
+    piece2: pieceColorSchema,
+    board: object({
+      spacing: z.string(),
+      rounded: z.string(),
+      tiling: z.enum(['checkerboard', 'rings', 'linear', 'random']),
+    }).strict(),
+    pieces: object({
+      rounded: z.number(),
+      border: z.string(),
+    }).strict(),
+  })
+  .strict();
 
 export type ThemeParams = z.infer<typeof themeSchema>;
 
@@ -78,6 +96,8 @@ const themes: Record<ColorTheme, ThemeParams | undefined> = {
   bubblegum: themeSchema.parse(bubblegum),
   frost: themeSchema.parse(frost),
   papyrus: themeSchema.parse(papyrus),
+  galaxy: themeSchema.parse(galaxy),
+  mushroom: themeSchema.parse(mushroom),
 };
 
 export { themes };
