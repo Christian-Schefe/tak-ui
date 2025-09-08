@@ -122,17 +122,10 @@ export function doMove(ui: GameUI, move: Move) {
 }
 
 export function undoMove(ui: GameUI) {
-  if (ui.actualGame.history.length === 0) {
-    throw new Error('No moves to undo');
-  }
   const gameClone = structuredClone(
     isDraft(ui) ? current(ui).actualGame : ui.actualGame,
   );
-  const undoneGame = game.gameFromPlyCount(
-    gameClone,
-    ui.actualGame.history.length - 1,
-  );
-  const undoneMove = ui.actualGame.history[ui.actualGame.history.length - 1];
+  const { undoneGame, undoneMove } = game.withUndoneMove(gameClone);
   ui.actualGame = undoneGame;
   ui.plyIndex = null;
   ui.partialMove = null;

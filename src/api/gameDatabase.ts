@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import z from 'zod';
 import { API_BASE_URL } from '.';
+import { logError } from '../logger';
 
 const HistoricGameSchema = z.object({
   id: z.number(),
@@ -45,7 +46,7 @@ export function useGameDatabase(page: number) {
       );
       const parsed = HistoricGamesSchema.safeParse(await res.json());
       if (!parsed.success) {
-        console.error('Failed to fetch historic games:', parsed.error);
+        logError('Failed to fetch historic games:', parsed.error);
         return { items: [], total: 0, page: 1, perPage: 50, totalPages: 1 };
       }
       return parsed.data;

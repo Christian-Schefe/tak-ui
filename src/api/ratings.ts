@@ -1,6 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import z from 'zod';
 import { API_BASE_URL } from '.';
+import { logError } from '../logger';
 
 const RatingSchema = z.object({
   name: z.string(),
@@ -30,7 +31,7 @@ export function useRatingList(page: number) {
         `${API_BASE_URL}/v1/ratings?page=${page.toString()}`,
       );
       if (!res.ok) {
-        console.error('Failed to fetch ratings for page', page);
+        logError('Failed to fetch ratings for page', page);
         return null;
       }
       return RatingListSchema.parse(await res.json());
@@ -49,7 +50,7 @@ export function useRatings(playerNames: string[]) {
         }
         const res = await fetch(`${API_BASE_URL}/v1/ratings/${playerName}`);
         if (!res.ok) {
-          console.error('Failed to fetch rating for', playerName);
+          logError('Failed to fetch rating for', playerName);
           return null;
         }
         return RatingSchema.parse(await res.json());

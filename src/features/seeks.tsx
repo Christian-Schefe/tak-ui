@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import type { TextMessage } from '../auth';
 import { useWSListener } from '../authHooks';
 import { isDefined } from './utils';
+import { logError } from '../logger';
 
 export interface SeekEntry {
   id: number;
@@ -69,14 +70,14 @@ export function useUpdateSeeks() {
       if (newSeek) {
         addSeek(newSeek);
       } else {
-        console.error('Failed to add seek:', text);
+        logError('Failed to add seek:', text);
       }
     } else if (text.startsWith('Seek remove')) {
       const removedSeekId = parseRemoveSeekMessage(text);
       if (removedSeekId !== null) {
         removeSeek(removedSeekId);
       } else {
-        console.error('Failed to remove seek:', text);
+        logError('Failed to remove seek:', text);
       }
     }
   }, []);

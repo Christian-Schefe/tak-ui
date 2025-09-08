@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import z from 'zod';
 import { API_BASE_URL } from '.';
+import { logError } from '../logger';
 
 const EventSchema = z.object({
   name: z.string(),
@@ -27,7 +28,7 @@ export function useEvents() {
       const res = await fetch(`${API_BASE_URL}/events`);
       const parsed = EventsSchema.safeParse(await res.json());
       if (!parsed.success) {
-        console.error('Failed to fetch events:', parsed.error);
+        logError('Failed to fetch events:', parsed.error);
         return { data: [] };
       }
       return parsed.data;

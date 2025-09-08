@@ -78,6 +78,7 @@ export interface Reserve {
 export interface Clock {
   lastMove: Date | null;
   remainingMs: Record<Player, number>;
+  hasGainedExtra: Record<Player, boolean>;
 }
 
 export interface Game {

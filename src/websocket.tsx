@@ -1,4 +1,5 @@
 import { type Options } from 'react-use-websocket';
+import { logError } from './logger';
 
 export const wsOptions: Options = {
   shouldReconnect: () => true,
@@ -16,7 +17,7 @@ export async function msgToString(msg: MessageEvent): Promise<string | null> {
     const text = await (msg.data as Blob).text();
     return text;
   } catch (error) {
-    console.error('Failed to convert message to string:', error);
+    logError('Failed to convert message to string:', error);
     return null;
   }
 }

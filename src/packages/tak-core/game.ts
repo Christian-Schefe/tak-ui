@@ -37,6 +37,7 @@ export function newGame(settings: GameSettings): Game {
         white: settings.clock.contingentMs,
         black: settings.clock.contingentMs,
       },
+      hasGainedExtra: { white: false, black: false },
     },
   };
 }
@@ -175,6 +176,40 @@ export function checkTimeout(game: Game, now: Date): number | null {
   return timeRemaining ?? null;
 }
 
+export function canUndoMove(game: Game, now?: Date): string | null {
+  now ??= new Date();
+  if (isTimeout(game, now)) {
+    return 'Game is over: timeout';
+  }
+
+  if (game.gameState.type !== 'ongoing')
+    return `Game is not ongoing: ${game.gameState.type}`;
+
+  if (game.history.length === 0) {
+    return 'No moves to undo';
+  }
+
+  return null;
+}
+
+export function withUndoneMove(game: Game, now?: Date) {
+  now ??= new Date();
+
+  if (game.settings.clock?.externallyDriven !== true) {
+    checkTimeout(game, now);
+  }
+
+  const err = canUndoMove(game, now);
+  if (err !== null) {
+    throw new Error(`Cannot undo: ${err}`);
+  }
+
+  const gameClone = structuredClone(game);
+  const undoneGame = gameFromPlyCount(gameClone, game.history.length - 1);
+  const undoneMove = game.history[game.history.length - 1];
+  return { undoneGame, undoneMove };
+}
+
 export function doMove(game: Game, move: Move, now?: Date) {
   now ??= new Date();
 
@@ -215,10 +250,17 @@ export function doMove(game: Game, move: Move, now?: Date) {
 
   if (game.clock && game.settings.clock && timeRemaining !== null) {
     const move = Math.floor(game.history.length / 2) + 1;
-    const extraGain =
-      game.settings.clock.extra && move === game.settings.clock.extra.move
-        ? game.settings.clock.extra.amountMs
-        : 0;
+    const shouldGainExtra =
+      game.settings.clock.extra !== undefined &&
+      move === game.settings.clock.extra.move &&
+      !game.clock.hasGainedExtra[player];
+
+    if (shouldGainExtra) {
+      game.clock.hasGainedExtra[player] = true;
+    }
+    const extraGain = shouldGainExtra
+      ? (game.settings.clock.extra?.amountMs ?? 0)
+      : 0;
     game.clock.remainingMs[game.currentPlayer] =
       timeRemaining + game.settings.clock.incrementMs + extraGain;
     game.clock.lastMove = now;

@@ -1,3 +1,4 @@
+import { logError } from '../../logger';
 import { ui, type PieceId } from '../../packages/tak-core';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useSettings } from '../../settings';
@@ -15,7 +16,7 @@ export function Piece({ id, game }: { id: PieceId; game: GameUI }) {
   const data = game.pieces[id];
 
   if (!data) {
-    console.error('Piece does not exist. This should never happen');
+    logError('Piece does not exist. This should never happen');
     return null;
   }
 

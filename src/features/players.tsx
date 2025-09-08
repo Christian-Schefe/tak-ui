@@ -4,6 +4,7 @@ import type { TextMessage } from '../auth';
 import { useWSListener } from '../authHooks';
 import { isDefined } from './utils';
 import z from 'zod';
+import { logError } from '../logger';
 
 export interface PlayerEntry {
   username: string;
@@ -48,10 +49,10 @@ export function useUpdatePlayers() {
         if (result.success) {
           setPlayers(result.data.map((username) => ({ username })));
         } else {
-          console.error('Invalid player list:', result.error);
+          logError('Invalid player list:', result.error);
         }
       } catch (e) {
-        console.error('Failed to parse player list:', e);
+        logError('Failed to parse player list:', e);
       }
     }
   }, []);

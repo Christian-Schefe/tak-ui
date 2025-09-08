@@ -1,4 +1,5 @@
 import type { Game, GameSettings, GameState, Player } from '.';
+import { logError } from '../../logger';
 import { doMove, gameResultToString, newGame } from './game';
 import { moveFromString, moveToString } from './move';
 import { getDefaultReserve } from './piece';
@@ -94,7 +95,7 @@ export function PTNToGame(ptn: string): {
     try {
       doMove(game, move);
     } catch (error) {
-      console.error('Error applying move:', move, error);
+      logError('Error applying move:', move, error);
       return null;
     }
   }
