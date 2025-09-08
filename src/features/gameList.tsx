@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { create } from 'zustand';
 import type { TextMessage } from '../auth';
 import { useWSListener } from '../authHooks';
@@ -64,18 +64,21 @@ export function useGameById(gameId: string) {
   );
 }
 
-export function useGameByUsername(username: string | undefined) {
-  return useGameListState((state) => {
+export function useActiveGameByUsername(username: string | undefined) {
+  const activeGame = useGameListState((state) => {
     if (username === undefined) return undefined;
-    return (
-      Object.values(state.games).find(
-        (g) => g?.white === username || g?.black === username,
-      ) ??
-      Object.values(state.removedGames).find(
-        (g) => g?.white === username || g?.black === username,
-      )
+    return Object.values(state.games).find(
+      (g) => g?.white === username || g?.black === username,
     );
   });
+  const [lastActiveGame, setLastActiveGame] = useState(activeGame);
+  useEffect(() => {
+    if (activeGame) {
+      setLastActiveGame(activeGame);
+    }
+  }, [activeGame]);
+
+  return lastActiveGame;
 }
 
 export function useRemovedGamesList() {
