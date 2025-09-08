@@ -10,6 +10,7 @@ import { useRemoteGame } from '../../features/remoteGame';
 import type { GameState } from '../../packages/tak-core';
 import type { BoardMode, GameCallbacks } from '../board';
 import type { GameUI } from '../../packages/tak-core/ui';
+import { formatDuration } from '../../features/utils';
 
 export function GameActions({
   mode,
@@ -48,15 +49,6 @@ export function GameActions({
       {actions}
     </div>
   );
-}
-
-function formatDuration(ms: number) {
-  const hours = Math.floor(ms / 3600000);
-  const minutes = Math.floor((ms % 3600000) / 60000);
-  const seconds = Math.floor((ms % 60000) / 1000);
-  return hours > 0
-    ? `${hours.toString()}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-    : `${minutes.toString()}:${seconds.toString().padStart(2, '0')}`;
 }
 
 function GameInfoButton({ game }: { game: GameUI }) {

@@ -1,9 +1,8 @@
-import { useRafLoop } from 'react-use';
 import { type Player } from '../../packages/tak-core';
-import { getTimeRemaining, isClockActive } from '../../packages/tak-core/game';
 import type { GameUI } from '../../packages/tak-core/ui';
-import { useMemo, useState } from 'react';
 import { FaClock } from 'react-icons/fa6';
+import { formatDuration } from '../../features/utils';
+import { useClock } from '../../features/board';
 
 export function Clock({
   game,
@@ -14,30 +13,7 @@ export function Clock({
   onTimeout: () => void;
   player: Player;
 }) {
-  const [timeRemaining, setTimeRemaining] = useState(
-    getTimeRemaining(game.actualGame, player, new Date()),
-  );
-
-  const { seconds, minutes } = useMemo(() => {
-    const fullSeconds = Math.floor((timeRemaining ?? 0) / 1000);
-    return { seconds: fullSeconds % 60, minutes: Math.floor(fullSeconds / 60) };
-  }, [timeRemaining]);
-
-  useRafLoop(() => {
-    const remaining = getTimeRemaining(game.actualGame, player, new Date());
-    if (
-      isClockActive(game.actualGame, player) &&
-      remaining !== null &&
-      remaining === 0
-    ) {
-      onTimeout();
-    }
-    setTimeRemaining(remaining);
-  }, true);
-
-  const isActive =
-    player === game.actualGame.currentPlayer &&
-    game.actualGame.gameState.type === 'ongoing';
+  const { timeRemaining, isActive } = useClock(game, player, onTimeout);
 
   return (
     <div
@@ -55,9 +31,7 @@ export function Clock({
         }}
       />
       <p className="font-bold font-mono">
-        {timeRemaining !== null
-          ? `${minutes.toString()}:${seconds.toString().padStart(2, '0')}`
-          : '-:--'}
+        {timeRemaining !== null ? formatDuration(timeRemaining) : '-:--'}
       </p>
     </div>
   );
