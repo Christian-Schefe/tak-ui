@@ -14,7 +14,7 @@ import { gameResultToString } from '../../packages/tak-core/game';
 import { useGameHistory, useHistoryNavigation } from '../../features/history';
 import type { BoardMode, GameCallbacks } from '../board';
 import { useEvent } from 'react-use';
-import { GameActions } from '../classic/GameInfoDrawer';
+import { GameActions } from '../classic/GameActions';
 import { motion } from 'motion/react';
 import { useBreakpoint } from '../breakpoints';
 
@@ -169,6 +169,7 @@ export function History({
       <div className="flex">
         <GameActions
           mode={mode}
+          game={game}
           callbacks={callbacks}
           padding={isLarge ? '0.5rem' : '0.25rem'}
           gameState={game.actualGame.gameState}
@@ -186,6 +187,7 @@ export function History({
         viewportRef={viewport}
         className="grow"
         overscrollBehavior="contain"
+        styles={{ scrollbar: { backgroundColor: 'transparent' } }}
       >
         <div className="flex lg:flex-col">{rows}</div>
       </ScrollArea>

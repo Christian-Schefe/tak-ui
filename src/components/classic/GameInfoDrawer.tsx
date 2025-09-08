@@ -2,13 +2,10 @@ import { useDisclosure } from '@mantine/hooks';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { PlayerInfoBar } from './PlayerInfoBar';
 import type { BoardMode, GameCallbacks, PlayerInfo } from '../board';
-import type { GameState, Player } from '../../packages/tak-core';
+import type { Player } from '../../packages/tak-core';
 import {
   FaArrowLeft,
   FaArrowRight,
-  FaFlag,
-  FaHandshake,
-  FaArrowRotateLeft,
   FaAnglesLeft,
   FaAnglesRight,
   FaAngleLeft,
@@ -16,10 +13,9 @@ import {
 } from 'react-icons/fa6';
 import { ActionIcon, Button, Transition } from '@mantine/core';
 import { History } from './History';
-import { useGameOffer } from '../../features/gameOffers';
 import { useEvent } from 'react-use';
 import { useHistoryNavigation } from '../../features/history';
-import { useRemoteGame } from '../../features/remoteGame';
+import { GameActions } from './GameActions';
 
 export function GameInfoDrawer({
   game,
@@ -86,6 +82,7 @@ export function GameInfoDrawer({
             <div className="flex justify-center">
               <GameActions
                 mode={mode}
+                game={game}
                 callbacks={callbacks}
                 gameState={game.actualGame.gameState}
               />
@@ -134,127 +131,6 @@ export function GameInfoDrawer({
           {isSideOpen ? <FaArrowLeft /> : <FaArrowRight />}
         </Button>
       </div>
-    </div>
-  );
-}
-
-export function GameActions({
-  mode,
-  callbacks,
-  padding,
-  gameState,
-}: {
-  mode: BoardMode;
-  gameState: GameState;
-  callbacks: React.RefObject<GameCallbacks>;
-  padding?: string;
-}) {
-  switch (mode.type) {
-    case 'local':
-      return mode.review ? null : (
-        <LocalGameActions
-          callbacks={callbacks}
-          padding={padding}
-          gameState={gameState}
-        />
-      );
-    case 'remote':
-      return (
-        <RemoteGameActions
-          gameId={mode.gameId}
-          callbacks={callbacks}
-          padding={padding}
-          gameState={gameState}
-        />
-      );
-    case 'spectator':
-      return null;
-  }
-}
-
-export function LocalGameActions({
-  callbacks,
-  padding,
-  gameState,
-}: {
-  gameState: GameState;
-  callbacks: React.RefObject<GameCallbacks>;
-  padding?: string;
-}) {
-  return (
-    <div className="flex gap-2" style={{ padding: padding }}>
-      <ActionIcon
-        onClick={() => {
-          callbacks.current.sendUndoOffer(true);
-        }}
-        disabled={gameState.type !== 'ongoing'}
-      >
-        <FaArrowRotateLeft />
-      </ActionIcon>
-      <ActionIcon
-        onClick={() => {
-          callbacks.current.doResign();
-        }}
-        disabled={gameState.type !== 'ongoing'}
-      >
-        <FaFlag />
-      </ActionIcon>
-    </div>
-  );
-}
-
-export function RemoteGameActions({
-  gameId,
-  gameState,
-  callbacks,
-  padding,
-}: {
-  gameId: string;
-  gameState: GameState;
-  callbacks: React.RefObject<GameCallbacks>;
-  padding?: string;
-}) {
-  const {
-    hasOfferedDraw,
-    hasOfferedUndo,
-    setHasOfferedDraw,
-    setHasOfferedUndo,
-  } = useGameOffer(gameId, callbacks);
-
-  const { drawOffer, undoOffer } = useRemoteGame(gameId) ?? {
-    drawOffer: false,
-    undoOffer: false,
-  };
-
-  return (
-    <div className="flex gap-2" style={{ padding: padding }}>
-      <ActionIcon
-        onClick={() => {
-          setHasOfferedUndo(!hasOfferedUndo);
-        }}
-        disabled={gameState.type !== 'ongoing'}
-        color={undoOffer ? 'green' : hasOfferedUndo ? 'red' : undefined}
-      >
-        <FaArrowRotateLeft />
-      </ActionIcon>
-
-      <ActionIcon
-        onClick={() => {
-          setHasOfferedDraw(!hasOfferedDraw);
-        }}
-        disabled={gameState.type !== 'ongoing'}
-        color={drawOffer ? 'green' : hasOfferedDraw ? 'red' : undefined}
-      >
-        <FaHandshake />
-      </ActionIcon>
-      <ActionIcon
-        onClick={() => {
-          callbacks.current.doResign();
-        }}
-        disabled={gameState.type !== 'ongoing'}
-      >
-        <FaFlag />
-      </ActionIcon>
     </div>
   );
 }

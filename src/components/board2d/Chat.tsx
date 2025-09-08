@@ -40,7 +40,10 @@ export function Chat({ gameId }: { gameId?: string }) {
             setSelectedTab(e ?? globalId);
           }}
         />
-        <ScrollArea className="grow h-fit max-h-80 min-h-40 lg:min-h-0 lg:max-h-none w-full lg:pb-16">
+        <ScrollArea
+          className="grow h-fit max-h-80 min-h-40 lg:min-h-0 lg:max-h-none w-full lg:pb-16"
+          styles={{ scrollbar: { backgroundColor: 'transparent' } }}
+        >
           {tabValues.map((msg, index) => (
             <Fragment key={`${msg.timestamp}-${index.toString()}`}>
               {index === 0 ||

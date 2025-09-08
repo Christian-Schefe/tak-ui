@@ -86,6 +86,7 @@ export function isClockActive(game: Game, player: Player): boolean {
   return (
     game.gameState.type === 'ongoing' &&
     game.currentPlayer === player &&
+    game.history.length > 0 &&
     !!game.clock?.lastMove
   );
 }
@@ -119,6 +120,7 @@ export function getTimeRemaining(
         (now &&
         game.gameState.type === 'ongoing' &&
         game.currentPlayer === player &&
+        game.history.length > 0 &&
         game.clock.lastMove
           ? now.getTime() - game.clock.lastMove.getTime()
           : 0),
