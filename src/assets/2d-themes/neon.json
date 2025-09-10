@@ -28,6 +28,12 @@
   },
   "pieces": {
     "rounded": 10,
-    "border": "3px"
+    "border": "3px",
+    "shadow": {
+      "opacity": 0.1,
+      "blur": "2px",
+      "offsetY": 3,
+      "color": "#000000"
+    }
   }
 }

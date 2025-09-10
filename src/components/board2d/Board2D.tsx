@@ -11,6 +11,7 @@ import { History } from './History';
 import { usePieceIds } from '../../packages/tak-core/hooks';
 import { Chat } from './Chat';
 import { useEvent } from 'react-use';
+import { PieceShadow } from './PieceShadow';
 
 export function Board2D({ game, playerInfo, callbacks, mode }: BoardProps) {
   const [variant, setVariant] = useState<PieceVariant>('flat');
@@ -78,15 +79,30 @@ export function Board2D({ game, playerInfo, callbacks, mode }: BoardProps) {
           >
             {tileCoords.map((pos) => (
               <Tile
-                key={coordToString(pos)}
+                key={`coord-${coordToString(pos)}`}
                 pos={pos}
                 game={game}
                 interactive={areTilesInteractive}
                 onClick={onClickTile}
               />
             ))}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                opacity: themeParams.pieces.shadow
+                  ? themeParams.pieces.shadow.opacity
+                  : 0.1,
+                filter: themeParams.pieces.shadow
+                  ? `blur(${themeParams.pieces.shadow.blur})`
+                  : 'blur(5px)',
+              }}
+            >
+              {pieceIds.map((id) => (
+                <PieceShadow key={`shadow-${id}`} id={id} game={game} />
+              ))}
+            </div>
             {pieceIds.map((id) => (
-              <Piece key={id} id={id} game={game} />
+              <Piece key={`piece-${id}`} id={id} game={game} />
             ))}
           </div>
           {mode.type !== 'spectator' &&

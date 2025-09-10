@@ -74,6 +74,15 @@ export const themeSchema = z
     pieces: object({
       rounded: z.number(),
       border: z.string(),
+      shadow: z
+        .object({
+          opacity: z.number().min(0).max(1),
+          blur: z.string(),
+          offsetY: z.number(),
+          color: z.string().optional(),
+        })
+        .strict()
+        .optional(),
     }).strict(),
   })
   .strict();
