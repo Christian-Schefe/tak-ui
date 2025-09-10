@@ -1,6 +1,6 @@
 import { type Player } from '../../packages/tak-core';
 import type { GameUI } from '../../packages/tak-core/ui';
-import { useSettings } from '../../settings';
+import { useSettings } from '../../useSettings';
 import { FaClock } from 'react-icons/fa6';
 import { formatDuration } from '../../features/utils';
 import { useClock } from '../../features/board';

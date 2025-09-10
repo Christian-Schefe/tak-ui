@@ -2,7 +2,7 @@ import { ActionIcon, ScrollArea } from '@mantine/core';
 import type { MoveRecord, Player } from '../../packages/tak-core';
 import { moveToString } from '../../packages/tak-core/move';
 import type { GameUI } from '../../packages/tak-core/ui';
-import { useSettings } from '../../settings';
+import { useSettings } from '../../useSettings';
 import { useEffect, useRef } from 'react';
 import {
   FaAngleLeft,

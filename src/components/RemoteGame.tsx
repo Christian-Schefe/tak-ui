@@ -1,5 +1,5 @@
 import { Board3D } from './board3d/Board3D';
-import { useSettings } from '../settings';
+import { useSettings } from '../useSettings';
 import { Board2D } from './board2d/Board2D';
 import { GameOverDialog } from './dialogs/GameOverDialog';
 import type { BoardMode } from './board';

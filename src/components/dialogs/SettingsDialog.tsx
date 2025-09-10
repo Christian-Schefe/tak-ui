@@ -7,10 +7,10 @@ import {
 } from '@mantine/core';
 import { themes, type ColorTheme } from '../../assets/2d-themes';
 import {
-  useSettings,
   type BoardType,
   type Ninja2DThemes,
 } from '../../settings';
+import { useSettings } from '../../useSettings';
 import { FaGear } from 'react-icons/fa6';
 
 interface ThemeOption {

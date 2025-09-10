@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BoardProps } from '../board';
 import { moveFromString, moveToString } from '../../packages/tak-core/move';
-import { useSettings } from '../../settings';
+import { useSettings } from '../../useSettings';
 import { useEvent, useUpdate } from 'react-use';
 import z from 'zod';
 import { GameInfoDrawer } from '../classic/GameInfoDrawer';

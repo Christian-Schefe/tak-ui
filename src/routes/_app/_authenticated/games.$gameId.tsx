@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useGamePTN } from '../../../api/gameDatabase';
 import { Loader } from '@mantine/core';
 import { PTNToGame } from '../../../packages/tak-core/ptn';
-import { useSettings } from '../../../settings';
+import { useSettings } from '../../../useSettings';
 import { Board2D } from '../../../components/board2d/Board2D';
 import { Board3D } from '../../../components/board3d/Board3D';
 import { BoardNinja } from '../../../components/boardNinja/BoardNinja';

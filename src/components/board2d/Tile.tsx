@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { Coord } from '../../packages/tak-core';
 import type { GameUI } from '../../packages/tak-core/ui';
-import { useSettings } from '../../settings';
+import { useSettings } from '../../useSettings';
 import Color from 'colorjs.io';
 import { coordEquals } from '../../packages/tak-core/coord';
 

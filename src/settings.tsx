@@ -1,4 +1,4 @@
-import { createContext, use, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
 import {
   defaultTheme,
@@ -6,6 +6,7 @@ import {
   type ColorTheme,
   type ThemeParams,
 } from './assets/2d-themes';
+import { SettingsContext } from './useSettings';
 
 export type BoardType = '2d' | '3d' | 'ninja';
 
@@ -88,8 +89,6 @@ const defaultBoardNinjaSettings: BoardNinjaSettings = {
   perspective: 5,
 };
 
-const SettingsContext = createContext<SettingsState | undefined>(undefined);
-
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [boardType, setBoardType] = useLocalStorage<BoardType>(
     'boardType',
@@ -155,13 +154,4 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   ]);
 
   return <SettingsContext value={settingsMemo}>{children}</SettingsContext>;
-}
-
-/* eslint-disable-next-line react-refresh/only-export-components */
-export function useSettings() {
-  const context = use(SettingsContext);
-  if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
-  }
-  return context;
 }

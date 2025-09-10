@@ -4,7 +4,7 @@
   "board1": "#3a3f44",
   "board2": "#34393f",
   "highlight": "#3fb7a4aa",
-  "hover": "#3fb7a477",
+  "hover": "#f5f0e655",
   "piece1": { "background": "#a2a7ac", "border": "#3a3f44" },
   "piece2": {
     "background": "#b8860b",

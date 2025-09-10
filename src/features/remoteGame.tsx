@@ -18,7 +18,7 @@ import { dirFromAligned, offsetCoord } from '../packages/tak-core/coord';
 import { useGameOfferState } from './gameOffers';
 import { router } from '../router';
 import { ReadyState } from 'react-use-websocket';
-import { useSettings } from '../settings';
+import { useSettings } from '../useSettings';
 import { notifications } from '@mantine/notifications';
 import type { GameListEntry } from './gameList';
 import type { BoardMode, GameCallbacks } from '../components/board';

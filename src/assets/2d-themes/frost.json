@@ -3,8 +3,8 @@
   "text": "#1c2a33",
   "board1": "#cfe4ed",
   "board2": "#b5d2dd",
-  "highlight": "#b22222",
-  "hover": "#b2222277",
+  "highlight": "#b22222bb",
+  "hover": "#ffffff77",
   "piece1": { "background": "#ffffff", "border": "#8aa6b5" },
   "piece2": {
     "background": "#5a7b8c",

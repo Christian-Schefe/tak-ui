@@ -1,5 +1,5 @@
 import { Button, Input, ScrollArea, Select } from '@mantine/core';
-import { useSettings } from '../../settings';
+import { useSettings } from '../../useSettings';
 import { Fragment } from 'react/jsx-runtime';
 import { FaPaperPlane } from 'react-icons/fa6';
 import { globalId, useChatInterface } from '../../features/chat';

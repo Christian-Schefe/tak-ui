@@ -1,5 +1,5 @@
 import type { PieceVariant, Player } from '../../packages/tak-core';
-import { useSettings } from '../../settings';
+import { useSettings } from '../../useSettings';
 import type { GameUI } from '../../packages/tak-core/ui';
 import { useVariantSelector } from '../../features/variantSelector';
 

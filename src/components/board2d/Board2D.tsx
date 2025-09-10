@@ -4,7 +4,7 @@ import { coordToString } from '../../packages/tak-core/coord';
 import { Tile } from './Tile';
 import { Piece } from './Piece';
 import type { BoardProps } from '../board';
-import { useSettings } from '../../settings';
+import { useSettings } from '../../useSettings';
 import { VariantSelector } from './VariantSelector';
 import { PlayerInfoBar } from './PlayerInfoBar';
 import { History } from './History';

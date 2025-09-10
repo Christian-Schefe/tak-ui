@@ -5,7 +5,7 @@ import {
   type Move,
   type PieceVariant,
 } from '../../../packages/tak-core';
-import { useSettings } from '../../../settings';
+import { useSettings } from '../../../useSettings';
 import { Board2D } from '../../../components/board2d/Board2D';
 import { Board3D } from '../../../components/board3d/Board3D';
 import { GameOverDialog } from '../../../components/dialogs/GameOverDialog';

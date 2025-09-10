@@ -1,7 +1,7 @@
 import { logError } from '../../logger';
 import { ui, type PieceId } from '../../packages/tak-core';
 import type { GameUI } from '../../packages/tak-core/ui';
-import { useSettings } from '../../settings';
+import { useSettings } from '../../useSettings';
 import { AnimatePresence, motion } from 'motion/react';
 
 export function Piece({ id, game }: { id: PieceId; game: GameUI }) {

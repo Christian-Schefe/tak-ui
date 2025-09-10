@@ -10,7 +10,7 @@ import { router } from './router';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { AuthContext, WebSocketAPIContext } from './authHooks';
 import { Affix, Button } from '@mantine/core';
-import { useSettings } from './settings';
+import { useSettings } from './useSettings';
 import { logDebug, logInfo, logWarn } from './logger';
 
 interface User {
