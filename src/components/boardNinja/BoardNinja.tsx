@@ -57,14 +57,14 @@ export function BoardNinja({ game, mode, callbacks, playerInfo }: BoardProps) {
         theme: ninjaSettings.colorTheme,
         axisLabels: ninjaSettings.axisLabels !== 'none',
         axisLabelsSmall: ninjaSettings.axisLabels === 'small',
+        highlightSquares: ninjaSettings.highlightSquares,
+        animateBoard: ninjaSettings.animateBoard,
+        board3D: ninjaSettings.board3d,
+        orthographic: ninjaSettings.orthographic,
+        perspective: ninjaSettings.perspective,
       },
     });
-  }, [
-    hasLoaded,
-    sendMessageToIframe,
-    ninjaSettings.colorTheme,
-    ninjaSettings.axisLabels,
-  ]);
+  }, [hasLoaded, sendMessageToIframe, ninjaSettings]);
 
   const gameSettings = game.actualGame.settings;
 

@@ -10,7 +10,7 @@ export const wsOptions: Options = {
   protocols: ['binary'],
 };
 
-export const WS_URL = 'wss://playtak.com/ws';
+export const WS_URL = import.meta.env.VITE_WEBSOCKET_URL;
 
 export async function msgToString(msg: MessageEvent): Promise<string | null> {
   try {

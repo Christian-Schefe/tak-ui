@@ -16,10 +16,17 @@ export interface Board2DSettings {
   axisLabels: boolean;
   axisLabelSize: number;
 }
+
 export interface BoardNinjaSettings {
   colorTheme: Ninja2DThemes;
   axisLabels: 'normal' | 'small' | 'none';
+  highlightSquares: boolean;
+  animateBoard: boolean;
+  board3d: boolean;
+  orthographic: boolean;
+  perspective: number;
 }
+
 export type Ninja2DThemes =
   | 'aaron'
   | 'aer'
@@ -71,6 +78,16 @@ const defaultBoard2dSettings: Board2DSettings = {
   pieceSize: 50,
 };
 
+const defaultBoardNinjaSettings: BoardNinjaSettings = {
+  colorTheme: 'classic',
+  axisLabels: 'normal',
+  highlightSquares: true,
+  animateBoard: true,
+  board3d: false,
+  orthographic: false,
+  perspective: 5,
+};
+
 const SettingsContext = createContext<SettingsState | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
@@ -85,8 +102,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const [boardNinjaSettings, setBoardNinjaSettings] =
     useLocalStorage<BoardNinjaSettings>('boardNinjaSettings', {
-      colorTheme: 'classic',
-      axisLabels: 'normal',
+      ...defaultBoardNinjaSettings,
     });
 
   const [devMode, setDevMode] = useLocalStorage<boolean>('devMode', false);
@@ -109,8 +125,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           ...board2dSettings,
         },
         boardNinja: {
-          colorTheme: 'classic',
-          axisLabels: 'normal',
+          ...defaultBoardNinjaSettings,
           ...boardNinjaSettings,
         },
       },

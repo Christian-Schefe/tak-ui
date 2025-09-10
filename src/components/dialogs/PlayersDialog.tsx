@@ -1,5 +1,4 @@
 import { Modal, ScrollArea, Table } from '@mantine/core';
-import { useAuth } from '../../authHooks';
 import { useMemo } from 'react';
 import { useRatings } from '../../api/ratings';
 import { usePlayerList } from '../../features/players';
@@ -13,7 +12,6 @@ export function PlayersDialog({
   onClose: () => void;
 }) {
   const players = usePlayerList();
-  const auth = useAuth();
 
   const playerNames = useMemo(() => {
     return players.map((player) => player.username);
@@ -23,7 +21,6 @@ export function PlayersDialog({
 
   const rows = players
     .sort((a, b) => a.username.localeCompare(b.username))
-    .filter((player) => player.username !== auth.user?.username)
     .map((player) => (
       <Table.Tr key={player.username} className="cursor-pointer">
         <Table.Td>{player.username}</Table.Td>
