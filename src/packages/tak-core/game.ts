@@ -32,7 +32,8 @@ export function newGame(settings: GameSettings): Game {
     },
     gameState: { type: 'ongoing' },
     clock: settings.clock && {
-      lastMove: null,
+      hasStarted: false,
+      lastUpdate: null,
       remainingMs: {
         white: settings.clock.contingentMs,
         black: settings.clock.contingentMs,
@@ -87,8 +88,8 @@ export function isClockActive(game: Game, player: Player): boolean {
   return (
     game.gameState.type === 'ongoing' &&
     game.currentPlayer === player &&
-    game.history.length > 0 &&
-    !!game.clock?.lastMove
+    game.clock?.hasStarted === true &&
+    game.clock.lastUpdate !== null
   );
 }
 
@@ -121,9 +122,9 @@ export function getTimeRemaining(
         (now &&
         game.gameState.type === 'ongoing' &&
         game.currentPlayer === player &&
-        game.history.length > 0 &&
-        game.clock.lastMove
-          ? now.getTime() - game.clock.lastMove.getTime()
+        game.clock.hasStarted &&
+        game.clock.lastUpdate
+          ? now.getTime() - game.clock.lastUpdate.getTime()
           : 0),
     );
   }
@@ -138,7 +139,7 @@ export function setTimeRemaining(
   if (game.clock) {
     game.clock.remainingMs.white = remaining.white;
     game.clock.remainingMs.black = remaining.black;
-    game.clock.lastMove = now;
+    game.clock.lastUpdate = now;
     checkTimeout(game, now);
   }
 }
@@ -147,7 +148,7 @@ function applyTimeToClock(game: Game, now: Date) {
   const remaining = getTimeRemaining(game, game.currentPlayer, now);
   if (game.clock && remaining !== null) {
     game.clock.remainingMs[game.currentPlayer] = remaining;
-    game.clock.lastMove = now;
+    game.clock.lastUpdate = now;
   }
 }
 
@@ -218,6 +219,10 @@ export function doMove(game: Game, move: Move, now?: Date) {
       ? checkTimeout(game, now)
       : null;
 
+  if (game.settings.clock?.externallyDriven === true) {
+    applyTimeToClock(game, now);
+  }
+
   const err = canDoMove(game, move, now);
   if (err !== null) {
     throw new Error(`Invalid move: ${err}`);
@@ -248,22 +253,25 @@ export function doMove(game: Game, move: Move, now?: Date) {
     );
   }
 
-  if (game.clock && game.settings.clock && timeRemaining !== null) {
-    const move = Math.floor(game.history.length / 2) + 1;
-    const shouldGainExtra =
-      game.settings.clock.extra !== undefined &&
-      move === game.settings.clock.extra.move &&
-      !game.clock.hasGainedExtra[player];
+  if (game.clock && game.settings.clock) {
+    if (timeRemaining !== null) {
+      const move = Math.floor(game.history.length / 2) + 1;
+      const shouldGainExtra =
+        game.settings.clock.extra !== undefined &&
+        move === game.settings.clock.extra.move &&
+        !game.clock.hasGainedExtra[player];
 
-    if (shouldGainExtra) {
-      game.clock.hasGainedExtra[player] = true;
+      if (shouldGainExtra) {
+        game.clock.hasGainedExtra[player] = true;
+      }
+      const extraGain = shouldGainExtra
+        ? (game.settings.clock.extra?.amountMs ?? 0)
+        : 0;
+      game.clock.remainingMs[game.currentPlayer] =
+        timeRemaining + game.settings.clock.incrementMs + extraGain;
     }
-    const extraGain = shouldGainExtra
-      ? (game.settings.clock.extra?.amountMs ?? 0)
-      : 0;
-    game.clock.remainingMs[game.currentPlayer] =
-      timeRemaining + game.settings.clock.incrementMs + extraGain;
-    game.clock.lastMove = now;
+    game.clock.lastUpdate = now;
+    game.clock.hasStarted = true;
   }
 
   game.history.push(record);
