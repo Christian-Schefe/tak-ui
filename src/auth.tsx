@@ -177,10 +177,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (msg === 'NOK') {
           if (isAuthenticated) return;
           localStorage.removeItem('auth-token');
+          logWarn('Login failed, removed auth token');
         } else if (userMatch) {
           if (isAuthenticated) return;
           setUser({ username: userMatch[1] || '' });
           setIsAuthenticated(true);
+          logInfo('Login successful, welcome', userMatch[1]);
         } else if (msg.startsWith('Login or Register')) {
           logInfo('Server requested login, sending token');
           sendToken();

@@ -96,6 +96,55 @@ export function GameDataProvider({ children }: { children: React.ReactNode }) {
         } else {
           logError('Failed to parse told message:', text);
         }
+      } else if (text.startsWith('ShoutRoom')) {
+        const matches = /^ShoutRoom ([^<]*) <(.*)> (.+)/.exec(text);
+        if (matches) {
+          const room = matches[1];
+          const sender = matches[2];
+          const message = matches[3];
+          setChats((prev) => ({
+            ...prev,
+            room: {
+              ...prev.room,
+              [room]: [
+                ...(prev.room[room] ?? []),
+                {
+                  message,
+                  sender,
+                  timestamp: new Date(),
+                },
+              ],
+            },
+          }));
+          logDebug(
+            `Received room message in ${room} from`,
+            sender,
+            ':',
+            message,
+          );
+        } else {
+          logError('Failed to parse room message:', text);
+        }
+      } else if (text.startsWith('Shout')) {
+        const matches = /^Shout <(.*)> (.+)/.exec(text);
+        if (matches) {
+          const sender = matches[1];
+          const message = matches[2];
+          setChats((prev) => ({
+            ...prev,
+            global: [
+              ...prev.global,
+              {
+                message,
+                sender,
+                timestamp: new Date(),
+              },
+            ],
+          }));
+          logDebug('Received global message from', sender, ':', message);
+        } else {
+          logError('Failed to parse global message:', text);
+        }
       }
     },
     [user],
