@@ -20,7 +20,12 @@ function RouteComponent() {
       retypePassword: (value, values) =>
         value !== values.newPassword ? 'Passwords did not match' : null,
       oldPassword: (value) => (!value ? 'Old Password cannot be empty' : null),
-      newPassword: (value) => (!value ? 'New Password cannot be empty' : null),
+      newPassword: (value) =>
+        !value
+          ? 'New Password cannot be empty'
+          : /\s/.exec(value)
+            ? 'New password cannot contain spaces'
+            : null,
     },
   });
   return (
