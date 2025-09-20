@@ -18,5 +18,5 @@ export const Route = createFileRoute('/login')({
 function LoginComponent() {
   const { redirect } = Route.useSearch();
 
-  return <MainPage loginRedirect={redirect} />;
+  return <MainPage mode={{ type: 'login', redirect }} />;
 }

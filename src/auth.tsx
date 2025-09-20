@@ -25,6 +25,8 @@ export interface AuthState {
   signUp: (username: string, email: string) => void;
   changePassword: (oldPassword: string, newPassword: string) => void;
   loginGuest: () => void;
+  sendResetToken: (username: string, email: string) => void;
+  resetPassword: (username: string, token: string, newPassword: string) => void;
 }
 
 export interface WebSocketAPIState {
@@ -232,6 +234,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [sendMessage],
   );
 
+  const sendResetToken = useCallback(
+    (username: string, email: string) => {
+      sendMessage(`SendResetToken ${username} ${email}`);
+    },
+    [sendMessage],
+  );
+
+  const resetPassword = useCallback(
+    (username: string, token: string, newPassword: string) => {
+      sendMessage(`ResetPassword ${username} ${token} ${newPassword}`);
+    },
+    [sendMessage],
+  );
+
   const authContextMemo = useMemo<AuthState>(() => {
     return {
       isAuthenticated,
@@ -241,6 +257,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       changePassword,
       loginGuest,
+      sendResetToken,
+      resetPassword,
     };
   }, [
     isAuthenticated,
@@ -250,6 +268,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     changePassword,
     loginGuest,
+    sendResetToken,
+    resetPassword,
   ]);
 
   const { devMode } = useSettings();
